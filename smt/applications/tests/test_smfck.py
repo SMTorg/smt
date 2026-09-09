@@ -71,8 +71,9 @@ def make_doe(n_hf=12, n_lf=24, noise=0.0, seed=0):
     return x_lf, y_lf, x_hf, y_hf
 
 
-def train_smfck(n_hf=12, n_lf=24, n_inducing=(8, 5), noise=0.2, seed=0,
-                data=None, **options):
+def train_smfck(
+    n_hf=12, n_lf=24, n_inducing=(8, 5), noise=0.2, seed=0, data=None, **options
+):
     """A small trained two-fidelity sparse model."""
     if data is None:
         data = make_doe(n_hf=n_hf, n_lf=n_lf, noise=noise, seed=seed)
@@ -215,9 +216,16 @@ class TestSMFCK(SMTestCase):
     def test_eval_noise_is_restored(self):
         """Switching eval_noise off is refused with a warning, not silently."""
         x_lf, y_lf, x_hf, y_hf = make_doe()
-        sm = SMFCK(hyper_opt="Cobyla", theta0=[1.0], n_start=1, opt_max_eval=30,
-                   n_inducing=[6, 4], eval_noise=False, noise0=[1e-2],
-                   print_global=False)
+        sm = SMFCK(
+            hyper_opt="Cobyla",
+            theta0=[1.0],
+            n_start=1,
+            opt_max_eval=30,
+            n_inducing=[6, 4],
+            eval_noise=False,
+            noise0=[1e-2],
+            print_global=False,
+        )
         sm.set_training_values(x_lf, y_lf, name=0)
         sm.set_training_values(x_hf, y_hf)
         with self.assertWarns(UserWarning):
@@ -233,8 +241,9 @@ class TestSMFCK(SMTestCase):
         """k-means centres and random subsets have the expected shapes."""
         x_lf, _, x_hf, _ = make_doe()
         for method in ("kmeans", "random"):
-            sm = SMFCK(n_inducing=[7, 4], inducing_method=method, seed=0,
-                       print_global=False)
+            sm = SMFCK(
+                n_inducing=[7, 4], inducing_method=method, seed=0, print_global=False
+            )
             sm.lvl = 2
             inducing = sm._compute_inducing_points([x_lf, x_hf])
             self.assertEqual(len(inducing), 2)
@@ -291,8 +300,11 @@ class TestSMFCK(SMTestCase):
         n_inducing = sum(z.shape[0] for z in sm.Z_norma_all)
         for method in ("FITC", "VFE"):
             value, w_vec, w_inv = sm._sparse_likelihood(
-                sm.X_norma_all, sm.y_norma_all, sm.Z_norma_all,
-                sm.optimal_theta, method,
+                sm.X_norma_all,
+                sm.y_norma_all,
+                sm.Z_norma_all,
+                sm.optimal_theta,
+                method,
             )
             self.assertTrue(np.isfinite(value))
             self.assertIsInstance(value, float)
@@ -304,11 +316,11 @@ class TestSMFCK(SMTestCase):
         """The VFE bound adds a non-negative trace term to the FITC-like fit."""
         sm, _ = train_smfck()
         fitc = sm._sparse_likelihood(
-            sm.X_norma_all, sm.y_norma_all, sm.Z_norma_all,
-            sm.optimal_theta, "FITC")[0]
+            sm.X_norma_all, sm.y_norma_all, sm.Z_norma_all, sm.optimal_theta, "FITC"
+        )[0]
         vfe = sm._sparse_likelihood(
-            sm.X_norma_all, sm.y_norma_all, sm.Z_norma_all,
-            sm.optimal_theta, "VFE")[0]
+            sm.X_norma_all, sm.y_norma_all, sm.Z_norma_all, sm.optimal_theta, "VFE"
+        )[0]
         self.assertTrue(np.isfinite(fitc) and np.isfinite(vfe))
         # both are negative log-likelihoods of the same data at the same point
         self.assertNotAlmostEqual(fitc, vfe, places=6)
@@ -317,8 +329,11 @@ class TestSMFCK(SMTestCase):
         sm, _ = train_smfck()
         with self.assertRaises(ValueError):
             sm._sparse_likelihood(
-                sm.X_norma_all, sm.y_norma_all, sm.Z_norma_all,
-                sm.optimal_theta, "SoR",
+                sm.X_norma_all,
+                sm.y_norma_all,
+                sm.Z_norma_all,
+                sm.optimal_theta,
+                "SoR",
             )
 
     def test_fitc_vfe_wrappers(self):
@@ -326,11 +341,15 @@ class TestSMFCK(SMTestCase):
         sm, _ = train_smfck()
         for method, wrapper in (("FITC", sm._FITC), ("VFE", sm._VFE)):
             reference = sm._sparse_likelihood(
-                sm.X_norma_all, sm.y_norma_all, sm.Z_norma_all,
-                sm.optimal_theta, method,
+                sm.X_norma_all,
+                sm.y_norma_all,
+                sm.Z_norma_all,
+                sm.optimal_theta,
+                method,
             )
-            result = wrapper(sm.X_norma_all, sm.y_norma_all, sm.Z_norma_all,
-                             sm.optimal_theta)
+            result = wrapper(
+                sm.X_norma_all, sm.y_norma_all, sm.Z_norma_all, sm.optimal_theta
+            )
             self.assertAlmostEqual(result[0], reference[0], places=10)
             np.testing.assert_allclose(result[1], reference[1], rtol=1e-12)
 
@@ -369,9 +388,16 @@ class TestSMFCK(SMTestCase):
         data = make_doe(n_hf=10, n_lf=14, noise=0.2, seed=2)
         x_lf, y_lf, x_hf, y_hf = data
 
-        exact = MFCK(hyper_opt="Cobyla", theta0=[1.0], theta_bounds=[1e-2, 1e2],
-                     n_start=1, opt_max_eval=60, eval_noise=True,
-                     noise0=[1e-2], print_global=False)
+        exact = MFCK(
+            hyper_opt="Cobyla",
+            theta0=[1.0],
+            theta_bounds=[1e-2, 1e2],
+            n_start=1,
+            opt_max_eval=60,
+            eval_noise=True,
+            noise0=[1e-2],
+            print_global=False,
+        )
         exact.set_training_values(x_lf, y_lf, name=0)
         exact.set_training_values(x_hf, y_hf)
         with Silence():
@@ -392,7 +418,8 @@ class TestSMFCK(SMTestCase):
         np.testing.assert_allclose(
             np.asarray(sparse.predict_values(x)).ravel(),
             np.asarray(exact.predict_values(x)).ravel(),
-            rtol=1e-5, atol=1e-8,
+            rtol=1e-5,
+            atol=1e-8,
         )
 
         # The sparse predictive variance subtracts two nearly equal terms, so
@@ -403,7 +430,8 @@ class TestSMFCK(SMTestCase):
         np.testing.assert_allclose(
             np.asarray(sparse.predict_variances(x)).ravel(),
             np.asarray(exact.predict_variances(x)).ravel(),
-            rtol=5e-3, atol=1e-6,
+            rtol=5e-3,
+            atol=1e-6,
         )
 
     # ------------------------------------------------------------------
@@ -473,8 +501,14 @@ class TestSMFCK(SMTestCase):
 
         x_lf, y_lf, x_hf, y_hf = make_doe()
         for hyper_opt in ("TNC", "Lbfgs-nlopt"):
-            model = SMFCK(hyper_opt=hyper_opt, theta0=[1.0], n_inducing=[6, 4],
-                          n_start=1, noise0=[1e-2], print_global=False)
+            model = SMFCK(
+                hyper_opt=hyper_opt,
+                theta0=[1.0],
+                n_inducing=[6, 4],
+                n_start=1,
+                noise0=[1e-2],
+                print_global=False,
+            )
             model.set_training_values(x_lf, y_lf, name=0)
             model.set_training_values(x_hf, y_hf)
             with self.assertRaises(ValueError):
@@ -543,9 +577,7 @@ class TestSMFCK(SMTestCase):
         auxiliary = sm.noise_model
         self.assertIsInstance(auxiliary, SMFCK)
         self.assertEqual(auxiliary.options["method"], sm.options["method"])
-        self.assertEqual(
-            [z.shape[0] for z in auxiliary.Z], [z.shape[0] for z in sm.Z]
-        )
+        self.assertEqual([z.shape[0] for z in auxiliary.Z], [z.shape[0] for z in sm.Z])
         self.assertFalse(auxiliary.options["predict_with_noise"])
         self.assertIsNone(auxiliary.noise_model)
 
@@ -565,8 +597,10 @@ class TestSMFCK(SMTestCase):
         _, var_without = without.predict_all_levels(x)
         fields = with_noise.predict_noise_all_levels(x)
         for level in range(with_noise.lvl):
-            delta = (np.asarray(var_with[level]).ravel()
-                     - np.asarray(var_without[level]).ravel())
+            delta = (
+                np.asarray(var_with[level]).ravel()
+                - np.asarray(var_without[level]).ravel()
+            )
             np.testing.assert_allclose(
                 delta, np.asarray(fields[level]).ravel(), rtol=1e-8, atol=1e-12
             )
@@ -728,9 +762,15 @@ class TestSMFCK(SMTestCase):
         yt_e = hf(xt_e) + np.sqrt(tau2_e)[:, None] * rng.standard_normal(xt_e.shape)
 
         sm = SMFCK(
-            hyper_opt="Cobyla", theta0=[1.0], n_inducing=[10, 6], n_start=1,
-            method="FITC", use_het_noise=True, predict_with_noise=True,
-            noise0=[tau2_c, tau2_e], print_global=False,
+            hyper_opt="Cobyla",
+            theta0=[1.0],
+            n_inducing=[10, 6],
+            n_start=1,
+            method="FITC",
+            use_het_noise=True,
+            predict_with_noise=True,
+            noise0=[tau2_c, tau2_e],
+            print_global=False,
         )
         sm.set_training_values(xt_c, yt_c, name=0)
         sm.set_training_values(xt_e, yt_e)
@@ -739,9 +779,11 @@ class TestSMFCK(SMTestCase):
         x = np.linspace(0, 1, 101).reshape(-1, 1)
         mean, variance = sm.predict_all_levels(x)  # noise already included
         noise = sm.predict_noise(x)  # HF noise field
-        print(f"HF mean in [{float(np.min(mean[-1])):.2f}, "
-              f"{float(np.max(mean[-1])):.2f}], "
-              f"predicted noise in [{noise.min():.4f}, {noise.max():.4f}]")
+        print(
+            f"HF mean in [{float(np.min(mean[-1])):.2f}, "
+            f"{float(np.max(mean[-1])):.2f}], "
+            f"predicted noise in [{noise.min():.4f}, {noise.max():.4f}]"
+        )
 
     # run scripts are used in documentation as documentation is not always rebuild
     # make a test run by pytest to test the run scripts

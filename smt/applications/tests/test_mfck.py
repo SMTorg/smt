@@ -68,14 +68,20 @@ def toy_levels(x, level):
     """Smooth, mildly correlated levels for the multi-level tests."""
     total = np.sum(x, axis=1, keepdims=True)
     return (
-        np.sin(3.0 * total)
-        + 0.3 * level * total
-        + 0.1 * level * np.cos(7.0 * x[:, :1])
+        np.sin(3.0 * total) + 0.3 * level * total + 0.1 * level * np.cos(7.0 * x[:, :1])
     )
 
 
-def build_untrained_model(n_levels=2, dim=1, n_points=(24, 14, 9), corr="squar_exp",
-                          eval_noise=True, nested=False, seed=3, **options):
+def build_untrained_model(
+    n_levels=2,
+    dim=1,
+    n_points=(24, 14, 9),
+    corr="squar_exp",
+    eval_noise=True,
+    nested=False,
+    seed=3,
+    **options,
+):
     """
     Sets a model up exactly as train() does, but without the optimisation, so
     that the likelihood and its gradient can be probed at chosen points.
@@ -86,16 +92,22 @@ def build_untrained_model(n_levels=2, dim=1, n_points=(24, 14, 9), corr="squar_e
     x_low = rng.uniform(0.0, 1.0, (n_points[0], dim))
     xt, yt = [], []
     for level in range(n_levels):
-        x = x_low[: n_points[level]] if nested else rng.uniform(
-            0.0, 1.0, (n_points[level], dim)
+        x = (
+            x_low[: n_points[level]]
+            if nested
+            else rng.uniform(0.0, 1.0, (n_points[level], dim))
         )
         xt.append(x)
         yt.append(toy_levels(x, level) + 0.01 * rng.standard_normal((x.shape[0], 1)))
 
     options = {k: v for k, v in options.items() if v is not None}
     model = MFCK(
-        theta0=[0.7] * dim, corr=corr, eval_noise=eval_noise, noise0=[1e-3],
-        print_global=False, **options
+        theta0=[0.7] * dim,
+        corr=corr,
+        eval_noise=eval_noise,
+        noise0=[1e-3],
+        print_global=False,
+        **options,
     )
     for level in range(n_levels - 1):
         model.set_training_values(xt[level], yt[level], name=level)
@@ -105,8 +117,8 @@ def build_untrained_model(n_levels=2, dim=1, n_points=(24, 14, 9), corr="squar_e
     model.X = xt
     model.y = np.vstack(yt)
     model._check_param_het_safe()
-    (_, _, model.X_offset, model.y_mean, model.X_scale, model.y_std) = (
-        standardization(np.concatenate(xt, axis=0), np.concatenate(yt, axis=0))
+    (_, _, model.X_offset, model.y_mean, model.X_scale, model.y_std) = standardization(
+        np.concatenate(xt, axis=0), np.concatenate(yt, axis=0)
     )
     model.X_norma_all = [(x - model.X_offset) / model.X_scale for x in xt]
     model.y_norma_all = np.vstack([(f - model.y_mean) / model.y_std for f in yt])
@@ -332,7 +344,9 @@ class TestMFCK(SMTestCase):
         for n_levels in (1, 2, 3):
             for eval_noise in (True, False):
                 sm = build_untrained_model(
-                    n_levels=n_levels, dim=2, eval_noise=eval_noise,
+                    n_levels=n_levels,
+                    dim=2,
+                    eval_noise=eval_noise,
                     nugget=None if eval_noise else 1e-6,
                 )
                 for _ in range(2):
@@ -420,7 +434,9 @@ class TestMFCK(SMTestCase):
         optimizers = ["TNC"] if NO_NLOPT else ["TNC", "Lbfgs-nlopt"]
         for hyper_opt in optimizers:
             sm = train_forrester(
-                hyper_opt=hyper_opt, eval_noise=True, noise0=[1e-3],
+                hyper_opt=hyper_opt,
+                eval_noise=True,
+                noise0=[1e-3],
                 opt_max_eval=200,
             )
             self.assertTrue(np.all(np.isfinite(sm.optimal_theta)))
@@ -490,10 +506,12 @@ class TestMFCK(SMTestCase):
 
     def test_sequential_training(self):
         """sequential_opt trains level by level and reports the stages."""
-        joint = train_forrester(sequential_opt=False, eval_noise=True,
-                                noise0=[1e-3], opt_max_eval=60)
-        sequential = train_forrester(sequential_opt=True, eval_noise=True,
-                                     noise0=[1e-3], opt_max_eval=60)
+        joint = train_forrester(
+            sequential_opt=False, eval_noise=True, noise0=[1e-3], opt_max_eval=60
+        )
+        sequential = train_forrester(
+            sequential_opt=True, eval_noise=True, noise0=[1e-3], opt_max_eval=60
+        )
 
         self.assertEqual(joint.opt_report["mode"], "joint")
         self.assertEqual(sequential.opt_report["mode"], "sequential")
@@ -516,8 +534,13 @@ class TestMFCK(SMTestCase):
 
     def test_sequential_refine(self):
         """sequential_refine appends a joint polishing stage."""
-        sm = train_forrester(sequential_opt=True, sequential_refine=True,
-                             eval_noise=True, noise0=[1e-3], opt_max_eval=60)
+        sm = train_forrester(
+            sequential_opt=True,
+            sequential_refine=True,
+            eval_noise=True,
+            noise0=[1e-3],
+            opt_max_eval=60,
+        )
         stages = sm.opt_report["stages"]
         self.assertEqual(stages[-1]["stage"], "refine")
         self.assertEqual(stages[-1]["n_free_params"], sm.optimal_theta.size)
@@ -528,8 +551,15 @@ class TestMFCK(SMTestCase):
         """With one fidelity level the sequential flag falls back to joint."""
         rng = np.random.default_rng(0)
         x = np.sort(rng.uniform(0.0, 1.0, (15, 1)), axis=0)
-        sm = MFCK(theta0=[1.0], n_start=1, sequential_opt=True, eval_noise=True,
-                  noise0=[1e-3], print_global=False, opt_max_eval=40)
+        sm = MFCK(
+            theta0=[1.0],
+            n_start=1,
+            sequential_opt=True,
+            eval_noise=True,
+            noise0=[1e-3],
+            print_global=False,
+            opt_max_eval=40,
+        )
         sm.set_training_values(x, forrester_hf(x))
         with Silence():
             sm.train()
@@ -553,15 +583,15 @@ class TestMFCK(SMTestCase):
 
     def test_n_start_one_terminates(self):
         """Regression: n_start=1 used to build a degenerate LHS and hang."""
-        sm = train_forrester(n_start=1, opt_max_eval=30, eval_noise=True,
-                             noise0=[1e-3])
+        sm = train_forrester(n_start=1, opt_max_eval=30, eval_noise=True, noise0=[1e-3])
         self.assertTrue(np.all(np.isfinite(sm.optimal_theta)))
 
     def test_opt_max_eval_is_respected(self):
         """The evaluation budget bounds the number of likelihood calls."""
         for budget in (20, 40):
-            sm = train_forrester(n_start=1, opt_max_eval=budget, eval_noise=True,
-                                 noise0=[1e-3])
+            sm = train_forrester(
+                n_start=1, opt_max_eval=budget, eval_noise=True, noise0=[1e-3]
+            )
             self.assertLessEqual(sm.opt_report["n_eval"], budget + OPT_BUDGET_SLACK)
             self.assertEqual(len(sm.opt_report["history"]), sm.opt_report["n_eval"])
 
@@ -573,8 +603,7 @@ class TestMFCK(SMTestCase):
             raise np.linalg.LinAlgError("not positive definite")
 
         self.assertEqual(sm._safe_call(broken, np.zeros(3)), sm._FAILED_NLL)
-        self.assertEqual(sm._safe_call(lambda _: np.nan, np.zeros(3)),
-                         sm._FAILED_NLL)
+        self.assertEqual(sm._safe_call(lambda _: np.nan, np.zeros(3)), sm._FAILED_NLL)
         value, grad = sm._safe_call_grad(
             lambda _x, with_grad=False: (np.inf, np.zeros(3)), np.zeros(3)
         )
@@ -631,8 +660,13 @@ class TestMFCK(SMTestCase):
         rng = np.random.default_rng(2)
         x = np.sort(rng.uniform(0.0, 1.0, (20, 1)), axis=0)
         y = forrester_hf(x)
-        sm = MFCK(theta0=[1.0], n_start=1, eval_noise=False, print_global=False,
-                  opt_max_eval=80)
+        sm = MFCK(
+            theta0=[1.0],
+            n_start=1,
+            eval_noise=False,
+            print_global=False,
+            opt_max_eval=80,
+        )
         sm.set_training_values(x, y)
         with Silence():
             sm.train()
@@ -642,16 +676,17 @@ class TestMFCK(SMTestCase):
 
     def test_kernel_exponent(self):
         """The correlation exponent follows the kernel, not pow_exp_power."""
-        expected = {"squar_exp": 2.0, "abs_exp": 1.0, "matern32": 1.0,
-                    "matern52": 1.0}
+        expected = {"squar_exp": 2.0, "abs_exp": 1.0, "matern32": 1.0, "matern52": 1.0}
         for corr, power in expected.items():
             sm = build_untrained_model(n_levels=2, dim=1, corr=corr)
             self.assertEqual(sm._pow_exp_power, power)
         # matern kernels used to produce non-SPD matrices with power = 1.9
-        sm = train_forrester(corr="matern32", eval_noise=True, noise0=[1e-3],
-                             opt_max_eval=40)
-        self.assertTrue(np.all(np.isfinite(sm.predict_values(
-            np.linspace(0, 1, 5).reshape(-1, 1)))))
+        sm = train_forrester(
+            corr="matern32", eval_noise=True, noise0=[1e-3], opt_max_eval=40
+        )
+        self.assertTrue(
+            np.all(np.isfinite(sm.predict_values(np.linspace(0, 1, 5).reshape(-1, 1))))
+        )
 
     # ------------------------------------------------------------------
     # heteroscedastic noise
@@ -707,21 +742,25 @@ class TestMFCK(SMTestCase):
         _, var_without = without.predict_all_levels(x)
         fields = with_noise.predict_noise_all_levels(x)
         for level in range(with_noise.lvl):
-            delta = (np.asarray(var_with[level]).ravel()
-                     - np.asarray(var_without[level]).ravel())
+            delta = (
+                np.asarray(var_with[level]).ravel()
+                - np.asarray(var_without[level]).ravel()
+            )
             np.testing.assert_allclose(
                 delta, np.asarray(fields[level]).ravel(), rtol=1e-8, atol=1e-12
             )
         np.testing.assert_allclose(
             np.asarray(with_noise.predict_variances(x)).ravel(),
-            np.asarray(var_with[-1]).ravel(), rtol=1e-10,
+            np.asarray(var_with[-1]).ravel(),
+            rtol=1e-10,
         )
         self.assertIsNone(without.noise_model)
 
     def test_noise_target_transform_log(self):
         """The log transform keeps the predicted variance strictly positive."""
-        sm, _ = train_het_noise(predict_with_noise=True,
-                                noise_target_transform="log", opt_max_eval=40)
+        sm, _ = train_het_noise(
+            predict_with_noise=True, noise_target_transform="log", opt_max_eval=40
+        )
         x = np.linspace(-1.0, 2.0, 41).reshape(-1, 1)
         field = sm.predict_noise(x)
         self.assertTrue(np.all(field > 0.0))
@@ -731,8 +770,9 @@ class TestMFCK(SMTestCase):
 
     def test_het_noise_without_eval_noise(self):
         """use_het_noise no longer conflicts with eval_noise=False."""
-        sm, _ = train_het_noise(eval_noise=False, predict_with_noise=True,
-                                opt_max_eval=40)
+        sm, _ = train_het_noise(
+            eval_noise=False, predict_with_noise=True, opt_max_eval=40
+        )
         self.assertFalse(sm._has_noise_params())
         x = np.linspace(0.0, 1.0, 7).reshape(-1, 1)
         self.assertTrue(np.all(np.isfinite(sm.predict_values(x))))
@@ -753,7 +793,6 @@ class TestMFCK(SMTestCase):
         with self.assertRaises(ValueError):  # wrong number of points at level 0
             sm._check_noise_targets()
 
-
     def test_het_noise_enters_the_likelihood(self):
         """The heteroscedastic diagonal is used even when eval_noise=False."""
         sm, data = train_het_noise(eval_noise=False, opt_max_eval=30)
@@ -769,14 +808,13 @@ class TestMFCK(SMTestCase):
         np.testing.assert_allclose(
             np.diag(implied),
             sm._het_noise_vector() + sm.options["nugget"],
-            rtol=1e-8, atol=1e-12,
+            rtol=1e-8,
+            atol=1e-12,
         )
 
         # the gradient path uses the same diagonal
         value, grad = sm.neg_log_likelihood_grad(sm.optimal_theta)
-        self.assertAlmostEqual(
-            value, sm.neg_log_likelihood(sm.optimal_theta), places=6
-        )
+        self.assertAlmostEqual(value, sm.neg_log_likelihood(sm.optimal_theta), places=6)
         self.assertEqual(grad.size, sm.optimal_theta.size)
 
     def test_het_noise_variances_all_levels(self):
@@ -801,22 +839,20 @@ class TestMFCK(SMTestCase):
 
     def test_sequential_with_het_noise(self):
         """The level restriction also truncates the heteroscedastic noise."""
-        sm, data = train_het_noise(sequential_opt=True, predict_with_noise=True,
-                                   opt_max_eval=30)
+        sm, data = train_het_noise(
+            sequential_opt=True, predict_with_noise=True, opt_max_eval=30
+        )
         self.assertEqual(sm.opt_report["mode"], "sequential")
         with sm._restricted_levels(1):
             self.assertEqual(sm.lvl, 1)
             self.assertEqual(len(sm.options["noise0"]), 1)
-            self.assertEqual(
-                np.size(sm.options["noise0"][0]), data["x_lf"].shape[0]
-            )
+            self.assertEqual(np.size(sm.options["noise0"][0]), data["x_lf"].shape[0])
         self.assertEqual(len(sm.options["noise0"]), 2)
         self.assertEqual(sm.lvl, 2)
 
     def test_sequential_without_noise_parameters(self):
         """Sequential stages also work when no noise is estimated."""
-        sm = train_forrester(sequential_opt=True, eval_noise=False,
-                             opt_max_eval=40)
+        sm = train_forrester(sequential_opt=True, eval_noise=False, opt_max_eval=40)
         self.assertEqual(sm.optimal_theta.size, sm._n_kernel_params())
         stages = sm.opt_report["stages"]
         self.assertEqual(stages[0]["n_free_params"], 2)  # sigma_0, l_0
@@ -826,8 +862,9 @@ class TestMFCK(SMTestCase):
     def test_nlopt_optimizers(self):
         """The nlopt back-ends train and fill the report."""
         for hyper_opt in ("Cobyla-nlopt", "Lbfgs-nlopt"):
-            sm = train_forrester(hyper_opt=hyper_opt, eval_noise=True,
-                                 noise0=[1e-3], opt_max_eval=60)
+            sm = train_forrester(
+                hyper_opt=hyper_opt, eval_noise=True, noise0=[1e-3], opt_max_eval=60
+            )
             self.assertTrue(np.all(np.isfinite(sm.optimal_theta)))
             self.assertGreater(sm.opt_report["n_eval"], 0)
             self.assertTrue(np.isfinite(sm.opt_report["joint_nll"]))
@@ -974,9 +1011,14 @@ class TestMFCK(SMTestCase):
 
         for sequential in (False, True):
             sm = MFCK(
-                theta0=[1.0], eval_noise=True, noise0=[1e-3],
-                hyper_opt="Cobyla", n_start=1, sequential_opt=sequential,
-                opt_max_eval=100, print_global=False,
+                theta0=[1.0],
+                eval_noise=True,
+                noise0=[1e-3],
+                hyper_opt="Cobyla",
+                n_start=1,
+                sequential_opt=sequential,
+                opt_max_eval=100,
+                print_global=False,
             )
             sm.set_training_values(xt_lf, lf_function(xt_lf), name=0)
             sm.set_training_values(xt_hf, hf_function(xt_hf))
@@ -987,8 +1029,10 @@ class TestMFCK(SMTestCase):
                 f"joint NLL = {report['joint_nll']:.3f}"
             )
             for stage in report["stages"]:
-                print(f"    {stage['stage']:<8} {stage['n_free_params']} free "
-                      f"params, nll = {stage['nll']:.3f}")
+                print(
+                    f"    {stage['stage']:<8} {stage['n_free_params']} free "
+                    f"params, nll = {stage['nll']:.3f}"
+                )
 
     # run scripts are used in documentation as documentation is not always rebuild
     # make a test run by pytest to test the run scripts

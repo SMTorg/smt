@@ -279,9 +279,7 @@ class MFCK(KrgBased):
                 self.options["hyper_opt"] = hyper_opt
                 return
             het_noise0 = self.options["noise0"]
-            self.options["noise0"] = [
-                max(float(self.options["noise_bounds"][0]), 1e-6)
-            ]
+            self.options["noise0"] = [max(float(self.options["noise_bounds"][0]), 1e-6)]
         try:
             with warnings.catch_warnings():
                 warnings.filterwarnings("ignore", message=".*TNC not available.*")
@@ -784,9 +782,7 @@ class MFCK(KrgBased):
         `self.noise_model`.
         """
         if not self.options["use_het_noise"]:
-            raise ValueError(
-                "the auxiliary noise model requires use_het_noise=True"
-            )
+            raise ValueError("the auxiliary noise model requires use_het_noise=True")
         targets = self._check_noise_targets()
         if self.options["noise_target_transform"] == "log":
             floor = np.finfo(float).tiny
@@ -1333,7 +1329,7 @@ class MFCK(KrgBased):
         param = np.asarray(param, dtype=float)
         lvl, nx = self.lvl, self.nx
         noisy = self._has_noise_params()
-        kernel_param = param[: -lvl] if noisy else param
+        kernel_param = param[:-lvl] if noisy else param
         sigmas, thetas, rho = self._unpack_kernel_param(kernel_param)
 
         Xall = np.vstack(self.X_norma_all)
@@ -1383,9 +1379,7 @@ class MFCK(KrgBased):
 
             # length-scales of gamma_j
             for i_dim in range(nx):
-                dR = self._corr_from_distance(
-                    d, thetas[j], (n, n), grad_ind=i_dim
-                )
+                dR = self._corr_from_distance(d, thetas[j], (n, n), grad_ind=i_dim)
                 grad[sl_theta.start + i_dim] = sigmas[j] * float(
                     e[j] @ ((W * dR) @ e[j])
                 )

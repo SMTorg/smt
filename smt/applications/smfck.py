@@ -192,9 +192,7 @@ class SMFCK(MFCK):
         if self.options["use_het_noise"]:
             return param, self._het_noise_vector()
         noises = param[-self.lvl : :]
-        varis = np.hstack(
-            [np.full(X[i].shape[0], noises[i]) for i in range(self.lvl)]
-        )
+        varis = np.hstack([np.full(X[i].shape[0], noises[i]) for i in range(self.lvl)])
         return param[: -self.lvl], varis
 
     def _sparse_likelihood(self, X, Y, Z, param, method):
@@ -209,7 +207,10 @@ class SMFCK(MFCK):
         Y = np.asarray(Y, dtype=float).reshape(-1, 1)
 
         Kdiag = np.concatenate(
-            [self.compute_diag_K(X[i], X[i], i, i, kernel_param) for i in range(self.lvl)]
+            [
+                self.compute_diag_K(X[i], X[i], i, i, kernel_param)
+                for i in range(self.lvl)
+            ]
         )
         Kmm = self.compute_blockwise_K(Z, Z, kernel_param)
         Knm = self.compute_blockwise_K(X, Z, kernel_param)
