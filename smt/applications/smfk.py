@@ -396,9 +396,14 @@ class SMFK(MFK):
                     + sigma2 * (u_**2).sum(axis=0)
                 )
             else:
+                print(
+                    self.optimal_noise_all[i].shape,
+                    (r_t**2).sum(axis=0).shape,
+                    (u_**2).sum(axis=0).shape,
+                )
                 MSE[:, i] = sigma2 * (
                     1
-                    + self.optimal_noise_all[i]
+                    # + self.optimal_noise_all[i]
                     - (r_t**2).sum(axis=0)
                     + (u_**2).sum(axis=0)
                     # 1 - (r_t**2).sum(axis=0) + (u_**2).sum(axis=0)
