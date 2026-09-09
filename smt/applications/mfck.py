@@ -72,7 +72,7 @@ from smt.utils.misc import standardization
 
 try:
     import nlopt as _nlopt  # pyright: ignore[reportMissingImports]
-except ImportError:
+except ImportError:  # pragma: no cover - depends on the installation
     _nlopt = None
 
 
@@ -99,7 +99,7 @@ class MFCK(KrgBased):
 
     @staticmethod
     def _get_nlopt() -> Any:
-        if _nlopt is None:
+        if _nlopt is None:  # pragma: no cover - depends on the installation
             raise ImportError("nlopt is required when hyper_opt='Cobyla-nlopt'")
         return _nlopt
 
@@ -268,15 +268,43 @@ class MFCK(KrgBased):
         raw option would raise an inhomogeneous-array error.  The per-level
         structure is therefore restored right after the check.
         """
-        if not self.options["use_het_noise"]:
-            self._check_param()
-            return
-        het_noise0 = self.options["noise0"]
-        self.options["noise0"] = [max(float(self.options["noise_bounds"][0]), 1e-6)]
+        # KrgBased switches hyper_opt from TNC to Cobyla when a noise is
+        # estimated, because its own TNC path has no noise gradient.  MFCK does
+        # (see neg_log_likelihood_grad), so the user choice is restored.
+        hyper_opt = self.options["hyper_opt"]
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", message=".*TNC not available.*")
+            if not self.options["use_het_noise"]:
+                self._check_param()
+                self.options["hyper_opt"] = hyper_opt
+                return
+            het_noise0 = self.options["noise0"]
+            self.options["noise0"] = [
+                max(float(self.options["noise_bounds"][0]), 1e-6)
+            ]
         try:
-            self._check_param()
+            with warnings.catch_warnings():
+                warnings.filterwarnings("ignore", message=".*TNC not available.*")
+                self._check_param()
         finally:
             self.options["noise0"] = het_noise0
+            self.options["hyper_opt"] = hyper_opt
+
+    def _het_noise_vector(self):
+        """
+        Heteroscedastic noise variances on the *normalised* output scale.
+
+        `noise0` is given by the user in the original output units (a physical
+        variance, e.g. CXC_std**2), while K is assembled for the standardised
+        outputs: the variances must therefore be divided by y_std**2.  Without
+        this the noise is silently interpreted as already normalised, which
+        rescales it by var(y) -- a factor of several hundreds on aerodynamic
+        coefficients.
+        """
+        noise = np.concatenate(
+            [np.asarray(v, dtype=float).ravel() for v in self.options["noise0"]]
+        )
+        return noise / float(np.asarray(self.y_std).ravel()[0]) ** 2
 
     def _has_noise_params(self):
         """True when the noise variances belong to the parameter vector."""
@@ -756,7 +784,9 @@ class MFCK(KrgBased):
         `self.noise_model`.
         """
         if not self.options["use_het_noise"]:
-            raise ValueError("the auxiliary noise model requires use_het_noise=True")
+            raise ValueError(
+                "the auxiliary noise model requires use_het_noise=True"
+            )
         targets = self._check_noise_targets()
         if self.options["noise_target_transform"] == "log":
             floor = np.finfo(float).tiny
@@ -853,11 +883,9 @@ class MFCK(KrgBased):
             self.X_norma_all, self.X_norma_all, kernel_params
         )
 
-        if self.options["eval_noise"]:
+        if self.options["eval_noise"] or self.options["use_het_noise"]:
             if self.options["use_het_noise"]:
-                noise_matrix = np.concatenate(self.options["noise0"]) * np.eye(
-                    self.K.shape[0]
-                )
+                noise_matrix = self._het_noise_vector() * np.eye(self.K.shape[0])
                 noises = None
             else:
                 noises = self.optimal_theta[-self.lvl : :]
@@ -1138,14 +1166,12 @@ class MFCK(KrgBased):
         reg_term = self.options["lambda"] * np.sum(np.power(param, 2))
         nugget = self.options["nugget"]
 
-        if self.options["eval_noise"]:
+        if self.options["eval_noise"] or self.options["use_het_noise"]:
             if self.options["use_het_noise"]:
                 self.K = self.compute_blockwise_K(
                     self.X_norma_all, self.X_norma_all, param
                 )
-                noise_matrix = np.concatenate(self.options["noise0"]) * np.eye(
-                    self.K.shape[0]
-                )
+                noise_matrix = self._het_noise_vector() * np.eye(self.K.shape[0])
             else:
                 self.K = self.compute_blockwise_K(
                     self.X_norma_all, self.X_norma_all, param[: -self.lvl]
@@ -1307,7 +1333,7 @@ class MFCK(KrgBased):
         param = np.asarray(param, dtype=float)
         lvl, nx = self.lvl, self.nx
         noisy = self._has_noise_params()
-        kernel_param = param[:-lvl] if noisy else param
+        kernel_param = param[: -lvl] if noisy else param
         sigmas, thetas, rho = self._unpack_kernel_param(kernel_param)
 
         Xall = np.vstack(self.X_norma_all)
@@ -1329,7 +1355,7 @@ class MFCK(KrgBased):
         if noisy:
             varis = np.asarray(param[-lvl:], dtype=float)[lev]
         elif self.options["use_het_noise"]:
-            varis = np.concatenate(self.options["noise0"]).ravel()
+            varis = self._het_noise_vector()
         else:
             varis = np.zeros(n)
         Kt = K + np.diag(varis + self.options["nugget"])
@@ -1357,7 +1383,9 @@ class MFCK(KrgBased):
 
             # length-scales of gamma_j
             for i_dim in range(nx):
-                dR = self._corr_from_distance(d, thetas[j], (n, n), grad_ind=i_dim)
+                dR = self._corr_from_distance(
+                    d, thetas[j], (n, n), grad_ind=i_dim
+                )
                 grad[sl_theta.start + i_dim] = sigmas[j] * float(
                     e[j] @ ((W * dR) @ e[j])
                 )
