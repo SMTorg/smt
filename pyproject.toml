@@ -28,7 +28,7 @@ classifiers = [
 dependencies = [
     "packaging",
     "scikit-learn",
-    "pyDOE3>=1.5.0",
+    "pydoe>=1.0.0,<2.0",
     "scipy",
     "jenn>=2.0.0,<3.0",
 ]
@@ -36,6 +36,7 @@ dependencies = [
 [project.optional-dependencies]
 numba = ["numba~=0.64"]
 gpx = ["egobox~=0.36"]
+rbfgen = ["torch>=2.4.1"]
 
 [project.urls]
 Homepage = "https://github.com/SMTorg/smt"

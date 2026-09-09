@@ -565,7 +565,7 @@ class MFK(KrgBased):
                 dx,
                 self.options["corr"],
                 self.nx,
-                power=self.options["pow_exp_power"],
+                power=self._pow_exp_power,
                 theta=None,
                 return_derivative=False,
             )
@@ -582,7 +582,7 @@ class MFK(KrgBased):
             r_ = self._matrix_data_corr(
                 corr=self.options["corr"],
                 design_space=self.design_space,
-                power=self.options["pow_exp_power"],
+                power=self._pow_exp_power,
                 theta=self.optimal_theta[0],
                 theta_bounds=self.options["theta_bounds"],
                 dx=dx,
@@ -622,7 +622,7 @@ class MFK(KrgBased):
                     dx,
                     self.options["corr"],
                     self.nx,
-                    power=self.options["pow_exp_power"],
+                    power=self._pow_exp_power,
                     theta=None,
                     return_derivative=False,
                 )
@@ -639,7 +639,7 @@ class MFK(KrgBased):
                 r_ = self._matrix_data_corr(
                     corr=self.options["corr"],
                     design_space=self.design_space,
-                    power=self.options["pow_exp_power"],
+                    power=self._pow_exp_power,
                     theta=self.optimal_theta[i],
                     theta_bounds=self.options["theta_bounds"],
                     dx=dx,
@@ -754,7 +754,7 @@ class MFK(KrgBased):
                 dx,
                 self.options["corr"],
                 self.nx,
-                power=self.options["pow_exp_power"],
+                power=self._pow_exp_power,
                 theta=None,
                 return_derivative=False,
             )
@@ -771,7 +771,7 @@ class MFK(KrgBased):
             r_ = self._matrix_data_corr(
                 corr=self.options["corr"],
                 design_space=self.design_space,
-                power=self.options["pow_exp_power"],
+                power=self._pow_exp_power,
                 theta=self.optimal_theta[0],
                 theta_bounds=self.options["theta_bounds"],
                 dx=dx,
@@ -826,7 +826,7 @@ class MFK(KrgBased):
                     dx,
                     self.options["corr"],
                     self.nx,
-                    power=self.options["pow_exp_power"],
+                    power=self._pow_exp_power,
                     theta=None,
                     return_derivative=False,
                 )
@@ -843,7 +843,7 @@ class MFK(KrgBased):
                 r_ = self._matrix_data_corr(
                     corr=self.options["corr"],
                     design_space=self.design_space,
-                    power=self.options["pow_exp_power"],
+                    power=self._pow_exp_power,
                     theta=self.optimal_theta[i],
                     theta_bounds=self.options["theta_bounds"],
                     dx=dx,

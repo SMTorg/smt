@@ -3,7 +3,7 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-.. image:: logos_band.png
+.. image:: logosbands.svg
   :height: 120
   :width:  1250
 
@@ -14,6 +14,11 @@ The surrogate modeling toolbox (SMT) is an open-source Python package consisting
 SMT is designed to make it easy for developers to implement new surrogate models in a well-tested and well-document platform, and for users to have a library of surrogate modeling methods with which to use and compare methods.
 
 The code is available open-source on `GitHub <https://github.com/SMTorg/SMT>`_ together with `introducing tutorials <https://github.com/SMTorg/smt/tree/master/tutorial>`_. 
+
+Other toolboxes linked to SMT are available:
+ - `smt-optim <https://github.com/SMTorg/smt-optim>`_ for multi-fidelity and multi-objective Bayesian optimization with or without constraint
+ - `smt-design-space-ext <https://github.com/SMTorg/smt-design-space-ext>`_ to handle   hierarchical variables in the design space
+ - `smt-explainability <https://github.com/SMTorg/smt-explainability>`_ to provide a collection of model-agnostic explainable AI  methods
 
 Cite us
 -------

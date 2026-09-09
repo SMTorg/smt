@@ -3,19 +3,19 @@ Author: Antoine Averland <antoine.averland@onera.fr> and Rémi Lafage <remi.lafa
 
 This package is distributed under New BSD license.
 
-pyDOE3 sampling methods
+pydoe sampling methods
 """
 
 import numpy as np
-from pyDOE3 import doe_box_behnken, doe_factorial, doe_gsd, doe_plackett_burman
+from pydoe import bbdesign, fullfact, gsd, pbdesign
 
 from smt.sampling_methods.sampling_method import SamplingMethod
 
 
 class PyDoeSamplingMethod(SamplingMethod):
     """
-    Base class adapting pyDOE3 designs to SMT SamplingMethod interface
-    See https://pydoe3.readthedocs.io/
+    Base class adapting pydoe designs to SMT SamplingMethod interface
+    See https://pydoe.github.io/pydoe/
     """
 
     def __init__(self, **kwargs):
@@ -25,14 +25,14 @@ class PyDoeSamplingMethod(SamplingMethod):
 
     def _compute(self, nt: int = None):
         """
-        Use pydoe3 design to produce [nsamples, nx] matrix
-        where nsamples depends on the pyDOE3 method and nx is the dimension of x.
-        Warning: In pyDOE3 design setting user requested number of points nt is not used
+        Use pydoe design to produce [nsamples, nx] matrix
+        where nsamples depends on the pydoe method and nx is the dimension of x.
+        Warning: In pydoe design setting user requested number of points nt is not used
         """
         xlimits = self.options["xlimits"]
         levels = self.levels
 
-        # Retrieve indices from pyDOE3 design
+        # Retrieve indices from pydoe design
         doe = np.array(self._compute_doe(), dtype=int)
 
         # Compute scaled values for each x components
@@ -66,7 +66,7 @@ class PyDoeSamplingMethod(SamplingMethod):
 
 
 class BoxBehnken(PyDoeSamplingMethod):
-    """See https://pydoe3.readthedocs.io/en/latest/rsm.html#box-behnken"""
+    """See https://pydoe.github.io/pydoe/rsm.html#box-behnken"""
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -76,11 +76,11 @@ class BoxBehnken(PyDoeSamplingMethod):
 
     def _compute_doe(self):
         # Increment Box Behnken levels to get indices [0, 1, 2]
-        return doe_box_behnken.bbdesign(self.nx) + 1
+        return bbdesign(self.nx) + 1
 
 
 class Gsd(PyDoeSamplingMethod):
-    """See https://pydoe3.readthedocs.io/en/latest/rsm.html#gsd"""
+    """See https://pydoe.github.io/pydoe/rsm.html#gsd"""
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -105,11 +105,11 @@ class Gsd(PyDoeSamplingMethod):
         levels = self.options["levels"]
         reduction = self.options["reduction"]
 
-        return doe_gsd.gsd(levels, reduction)
+        return gsd(levels, reduction)
 
 
 class Factorial(PyDoeSamplingMethod):
-    """See https://pydoe3.readthedocs.io/en/latest/factorial.html#general-full-factorial"""
+    """See https://pydoe.github.io/pydoe/factorial.html#general-full-factorial"""
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -125,11 +125,11 @@ class Factorial(PyDoeSamplingMethod):
 
     def _compute_doe(self):
         levels = self.options["levels"]
-        return doe_factorial.fullfact(levels)
+        return fullfact(levels)
 
 
 class PlackettBurman(PyDoeSamplingMethod):
-    """See https://pydoe3.readthedocs.io/en/latest/factorial.html#plackett-burman"""
+    """See https://pydoe.github.io/pydoe/factorial.html#plackett-burman"""
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -138,7 +138,7 @@ class PlackettBurman(PyDoeSamplingMethod):
         self.levels = [2] * self.nx
 
     def _compute_doe(self):
-        doe = doe_plackett_burman.pbdesign(self.nx)
+        doe = pbdesign(self.nx)
         # Change -1 level to get indices [0, 1]
         doe[doe < 0] = 0
 

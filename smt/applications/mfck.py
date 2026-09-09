@@ -746,7 +746,7 @@ class MFCK(KrgBased):
             dx,
             self.options["corr"],
             self.X[0].shape[1],
-            power=self.options["pow_exp_power"],
+            power=self._pow_exp_power,
         )
         self.corr.theta = np.asarray(param[1])
         r = self.corr(d)
