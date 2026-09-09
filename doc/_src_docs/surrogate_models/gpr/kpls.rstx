@@ -31,6 +31,11 @@ Usage with an automatic number of components
 
 .. embed-test-print :: smt.surrogate_models.tests.test_surrogate_model_examples , Test , test_kpls_auto
 
+Usage with a range of number of components
+--------------------------------------------
+
+.. embed-test-print :: smt.surrogate_models.tests.test_surrogate_model_examples , Test , test_kpls_range
+
 Options
 -------
 
