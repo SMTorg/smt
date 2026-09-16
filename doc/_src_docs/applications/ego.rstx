@@ -1,6 +1,11 @@
 Efficient Global Optimization (EGO)
 ===================================
 
+.. IMPORTANT::
+   
+	The EGO implementation here is given for educational purpose as an illustration of surrogate-based optimization, 
+	if you seek for a more complete and robust implementation for production use, please refer to `smt-optim <https://github.com/SMTorg/smt-optim>`_
+
 Bayesian Optimization
 ---------------------
 

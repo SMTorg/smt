@@ -1,7 +1,7 @@
 .. _smfck-ref-label:
 
 Sparse Multi-Fidelity Co-Kriging (SMFCK)
-================================
+========================================
 
 SMFCK is a multi-fidelity modeling method adding sparsity to the MFCK model. This model allows to add sparsity to all the fidelity levels.
 
@@ -24,7 +24,6 @@ References
 .. [2] Le Gratiet, L., Multi-fidelity Gaussian process regression for computer experiments. PhD Thesis. 2013
 .. [3] Titsias, M.K., Variational Learning of Inducing Variables in Sparse Gaussian Processes. In Proceedings of the 12th International Conference on Artificial Intelligence and Statistics (AISTATS), 2009
 .. [4] Castano-Aguirre, M., López-Lopera, F. A., Bartoli, N., Massa, F., & Lefebvre, T. Scalable Sparse Co-Kriging for Multi-Fidelity Data Fusion: An Application to Aerodynamics. Reliability Engineering & System Safety, 112485, 2026
-
 
 Usage
 -----
@@ -100,7 +99,6 @@ Usage
   mean, cov = sm.predict_all_levels(x)
   
   y = mean[-1]
-  # _derivs = sm.predict_derivatives(x, kx=0)
   
   plt.figure()
   
@@ -204,7 +202,7 @@ Options
      -  None
      -  The kernel to use for mixed hierarchical inputs. Only for non continuous Kriging
   *  -  nugget
-     -  2.220446049250313e-13
+     -  2.220446049250313e-14
      -  None
      -  ['float']
      -  a jitter for numerical stability
@@ -219,15 +217,15 @@ Options
      -  ['list', 'ndarray']
      -  bounds for hyperparameters
   *  -  hyper_opt
-     -  Cobyla
-     -  ['Cobyla', 'Cobyla-nlopt']
+     -  Cobyla-nlopt
+     -  ['Cobyla', 'Cobyla-nlopt', 'TNC', 'Lbfgs-nlopt']
      -  None
-     -  Optimiser for hyperparameters optimisation
+     -  Optimiser for hyperparameters optimisation. 'Cobyla' and                   'Cobyla-nlopt' are derivative free, 'TNC' (scipy) and                   'Lbfgs-nlopt' use the analytical likelihood gradient
   *  -  eval_noise
      -  False
      -  [True, False]
      -  ['bool']
-     -  If True, the model evaluates noise variance, can be homoscedastic or heteroscedastic
+     -  noise evaluation flag
   *  -  noise0
      -  [0.0]
      -  None
@@ -242,7 +240,7 @@ Options
      -  False
      -  [True, False]
      -  ['bool']
-     -  If True, the model considers Heteroscedastic noise, array with the same size of y(x) is expected
+     -  heteroscedastic noise evaluation flag
   *  -  n_start
      -  10
      -  None
@@ -264,22 +262,17 @@ Options
      -  ['bool']
      -  activate reinterpolation for noisy cases
   *  -  seed
-     -  0
+     -  41
      -  None
-     -  ['NoneType', 'int']
-     -  seed number which controls random draws
-  *  -  predict_with_noise
-     -  False
-     -  [True, False]
-     -  ['bool']
-     -  if use_het_noise is true, then the prediction of the noise variance over the test set will given
+     -  ['NoneType', 'int', 'Generator']
+     -  Numpy Generator object or seed number which controls random draws                 for internal optim (set by default to get reproductibility)
   *  -  rho0
-     -  1.0
+     -  2.0
      -  None
      -  ['float']
      -  Initial rho for the autoregressive model ,                   (scalar factor between two consecutive fidelities,                     e.g., Y_HF = (Rho) * Y_LF + Gamma
   *  -  rho_bounds
-     -  [-5.0, 5.0]
+     -  [-5, 5]
      -  None
      -  ['list', 'ndarray']
      -  Bounds for the rho parameter used in the autoregressive model
@@ -289,7 +282,7 @@ Options
      -  ['float']
      -  Initial variance parameter
   *  -  sigma_bounds
-     -  [1e-06, 100]
+     -  [0.1, 100]
      -  None
      -  ['list', 'ndarray']
      -  Bounds for the variance parameter
@@ -298,6 +291,31 @@ Options
      -  None
      -  ['float']
      -  Regularization parameter
+  *  -  sequential_opt
+     -  False
+     -  None
+     -  ['bool']
+     -  For sequential optimization of hyperparameters, if True,                   the optimization is performed sequentially for each fidelity level
+  *  -  sequential_refine
+     -  False
+     -  None
+     -  ['bool']
+     -  Only used when sequential_opt=True. If True, a final joint                   optimization of all the hyperparameters is run, initialized                   at the sequential solution
+  *  -  predict_with_noise
+     -  False
+     -  [True, False]
+     -  ['bool']
+     -  If use_het_noise is True, an auxiliary multi-fidelity model is                   fitted on the observed noise variances so that the noise field                   can be predicted at any input, and is added to the predictive                   variances
+  *  -  noise_target_transform
+     -  none
+     -  ['none', 'log']
+     -  None
+     -  Transformation applied to the noise variances before fitting                   the auxiliary noise model. 'log' guarantees positive                   predictions and is usually more accurate
+  *  -  opt_max_eval
+     -  None
+     -  None
+     -  ['int', 'NoneType']
+     -  Maximum number of likelihood evaluations per optimizer run.                   None means 100 for 'Cobyla' and 1000 for 'Cobyla-nlopt'
   *  -  n_inducing
      -  [6, 5]
      -  None
@@ -305,8 +323,8 @@ Options
      -  Number of inducing points per fidelity level
   *  -  method
      -  FITC
-     -  ['FITC']
-     -  ['str']
+     -  ['FITC', 'VFE']
+     -  None
      -  Methods available for Sparse Multi-fidelity
   *  -  inducing_method
      -  kmeans

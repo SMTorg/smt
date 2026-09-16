@@ -1,7 +1,7 @@
 .. _smfk-ref-label:
 
 Sparse Multi-Fidelity Kriging (SMFK)
-================================
+====================================
 
 SMFK is a multi-fidelity modeling method which uses an autoregressive model of order 1 (AR1) introducing sparsity to the lowest fidelity level.
 
@@ -17,6 +17,7 @@ is a scaling/correlation factor (constant, linear or quadratic) and :math:`\delt
 The additive AR1 formulation was first introduced by Kennedy and O'Hagan [1]_.
 The implementation here follows the one proposed by Le Gratiet [2]_. It offers the advantage of being recursive, easily extended to :math:`n` levels of fidelity and offers better scaling for high numbers of samples.
 This method only uses nested sampling training points as described by Le Gratiet [2]_.
+The sparse approximations are based on the formulations of Titsias [3]_.
 
 References
 ----------
@@ -116,7 +117,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  1.1885984
+     Training - done. Time (sec):  1.2798197
   ___________________________________________________________________________
      
    Evaluation

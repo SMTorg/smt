@@ -1,7 +1,7 @@
 .. _smfck-ref-label:
 
 Sparse Multi-Fidelity Co-Kriging (SMFCK)
-================================
+========================================
 
 SMFCK is a multi-fidelity modeling method adding sparsity to the MFCK model. This model allows to add sparsity to all the fidelity levels.
 

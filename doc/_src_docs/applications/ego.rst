@@ -1,6 +1,11 @@
 Efficient Global Optimization (EGO)
 ===================================
 
+.. IMPORTANT::
+   
+	The EGO implementation here is given for educational purpose as an illustration of surrogate-based optimization, 
+	if you seek for a more complete and robust implementation for production use, please refer to `smt-optim <https://github.com/SMTorg/smt-optim>`_
+
 Bayesian Optimization
 ---------------------
 
@@ -604,7 +609,7 @@ Options
      -  ['str']
      -  Approximated q-EI maximization strategy
   *  -  evaluator
-     -  <smt.applications.ego.Evaluator object at 0x000001AD7D2F7490>
+     -  <smt.applications.ego.Evaluator object at 0x00000274AE9714F0>
      -  None
      -  ['Evaluator']
      -  Object used to run function fun to optimize at x points (nsamples, nxdim)
@@ -639,9 +644,9 @@ Options
      -  ['bool']
      -  Enable to re interpolate the variance for training points
   *  -  surrogate
-     -  <smt.surrogate_models.krg.KRG object at 0x000001AD7DC3DB50>
+     -  <smt.surrogate_models.krg.KRG object at 0x00000274AE99E330>
      -  None
-     -  ['KRG', 'KPLS', 'KPLSK', 'GEKPLS', 'MGP', 'GPX']
+     -  ['KRG', 'KPLS', 'KPLSK', 'GEKPLS', 'MGP', 'GPX', 'CoopCompKRG']
      -  SMT kriging-based surrogate model used internaly
   *  -  seed
      -  None

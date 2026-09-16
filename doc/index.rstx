@@ -3,10 +3,6 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-.. image:: logosbands.svg
-  :height: 120
-  :width:  1250
-
 SMT: Surrogate Modeling Toolbox
 -------------------------------
 
@@ -19,6 +15,8 @@ Other toolboxes linked to SMT are available:
  - `smt-optim <https://github.com/SMTorg/smt-optim>`_ for multi-fidelity and multi-objective Bayesian optimization with or without constraint
  - `smt-design-space-ext <https://github.com/SMTorg/smt-design-space-ext>`_ to handle   hierarchical variables in the design space
  - `smt-explainability <https://github.com/SMTorg/smt-explainability>`_ to provide a collection of model-agnostic explainable AI  methods
+
+SMT is developped and maintained by `contributors worldwide <https://github.com/SMTorg/smt/blob/master/AUTHORS.md>`_ and supported by :ref:`research institutions <supporters>`.
 
 Cite us
 -------
@@ -52,29 +50,6 @@ To cite SMT legacy: M. A. Bouhlel and J. T. Hwang and N. Bartoli and R. Lafage a
 		doi = {https://doi.org/10.1016/j.advengsoft.2019.03.005},
 		Year = {2019}}
 
-Focus on derivatives
---------------------
-
-SMT is meant to be a general library for surrogate modeling (also known as metamodeling, interpolation, and regression), but its distinguishing characteristic is its focus on derivatives, e.g., to be used for gradient-based optimization.
-A surrogate model can be represented mathematically as
-
-.. math ::
-  y = f(\mathbf{x}, \mathbf{xt}, \mathbf{yt}),
-
-where
-:math:`\mathbf{xt} \in \mathbb{R}^{nt \times nx}` contains the training inputs,
-:math:`\mathbf{yt} \in \mathbb{R}^{nt}` contains the training outputs,
-:math:`\mathbf{x} \in \mathbb{R}^{nx}` contains the prediction inputs,
-and
-:math:`y \in \mathbb{R}` contains the prediction outputs.
-There are three types of derivatives of interest in SMT:
-
-1. Derivatives (:math:`{dy}/{dx}`): derivatives of predicted outputs with respect to the inputs at which the model is evaluated.
-2. Training derivatives (:math:`{dyt}/{dxt}`): derivatives of training outputs, given as part of the training data set, e.g., for gradient-enhanced kriging.
-3. Output derivatives (:math:`{dy}/{dyt}`): derivatives of predicted outputs with respect to training outputs, representing how the prediction changes if the training outputs change and the surrogate model is re-trained.
-
-Not all surrogate modeling methods support or are required to support all three types of derivatives; all are optional.
-
 Documentation contents
 ----------------------
 
@@ -89,7 +64,7 @@ Documentation contents
    _src_docs/examples
    _src_docs/applications
    _src_docs/dev_docs
-
+   _src_docs/supporters
 
 Indices and tables
 ==================
