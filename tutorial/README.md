@@ -1,6 +1,7 @@
 # SMT Toolbox
 
 These tutorials introduce to use the opensource Surrogate Modeling Toolbox where different surrogate models are available.
+More advanced notebooks or script could be find here: https://github.com/SMTorg/smt-use-cases
 
 
 ## SMT Tutorial (linear, quadratic, gaussian process, ...)
@@ -59,8 +60,7 @@ These tutorials introduce to use the opensource Surrogate Modeling Toolbox where
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/SMTorg/smt/blob/master/tutorial/PODI/SMT_PODI_tutorial.ipynb)
 
 * ### PODI+I application to airfoil design
-
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/SMTorg/smt/blob/master/tutorial/PODI/SMT_PODI_Airfoil.ipynb)
+### Warning: [This advanced  tutorial has been moved to SMTorg/smt-use-cases](https://github.com/SMTorg/smt-use-cases)
 
 
 ## Kernel Engineering
@@ -70,8 +70,8 @@ These tutorials introduce to use the opensource Surrogate Modeling Toolbox where
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/SMTorg/smt/blob/master/tutorial/Kernels/SMT_Kernel_tutorial.ipynb)
 
 * ### Kernel engineering application to aeroelasticity prediction
+### Warning: [This advanced  tutorial has been moved to SMTorg/smt-use-cases](https://github.com/SMTorg/smt-use-cases)
 
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/SMTorg/smt/blob/master/tutorial/Kernels/SMT_Kernel_Hale.ipynb)
 
 ## Explainability and conformal prediction
 
@@ -112,7 +112,7 @@ These tutorials introduce to use the opensource Surrogate Modeling Toolbox where
 
 * ### Specific notebook associated to the SMT 2.0 Journal Paper (submitted) with a focus on mixed integer and mixed hierarchical surrogate models (continuous, discrete, categorical)
 
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/SMTorg/smt/blob/master/tutorial/MixedInteger/RunTestCases_Paper_SMT_v2.ipynb)
+### Warning: [This advanced  tutorial has been moved to SMTorg/smt-use-cases](https://github.com/SMTorg/smt-use-cases)
 
 * ### Mixed-Integer Gaussian Process and Bayesian Optimization to solve unconstrained problems with mixed variables (continuous, discrete, categorical)
 
@@ -120,6 +120,5 @@ These tutorials introduce to use the opensource Surrogate Modeling Toolbox where
 
 * ### Mixed-Integer Gaussian Process and Bayesian Optimization for Engineering application
 
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/SMTorg/smt/blob/master/tutorial/MixedInteger/SMT_MixedInteger_Engineering_applications.ipynb)
-
+### Warning: [This advanced  tutorial has been moved to SMTorg/smt-use-cases](https://github.com/SMTorg/smt-use-cases)
 
