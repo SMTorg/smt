@@ -2,7 +2,7 @@ import numpy as np
 from smt.design_space import DesignSpace, FloatVariable
 from smt.surrogate_models import KRG
 from copy import deepcopy
-from smt.utils.block_update import update_smt_model 
+from smt.surrogate_models.krg_based.block_update import update_smt_model 
 
 def xsinx(x:np.ndarray)->np.floating:
     return x*np.sin(x)
