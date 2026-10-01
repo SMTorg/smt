@@ -42,7 +42,7 @@ class KRG(KrgBased):
         )
         return d
 
-    def fast_update_training_values(self, X, Y):
+    def fast_update_model(self, X, Y):
         """
         Update the KRG model training and predictions using a block matrix approach, with the same scalarization factors on X and Y.
         """

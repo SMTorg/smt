@@ -13,7 +13,7 @@ def verify_block_update(base_model, X_new, Y_new, test_name):
     and compare it against the mathematically true Cholesky decomposition.
     """
     model_block_update = deepcopy(base_model)
-    model_block_update.fast_update_training_values(X_new, Y_new)
+    model_block_update.fast_update_model(X_new, Y_new)
     C_block_update = model_block_update.optimal_par["C"]
 
     model_reference = deepcopy(base_model)
