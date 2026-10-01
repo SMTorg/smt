@@ -7,6 +7,7 @@ This package is distributed under New BSD license.
 from smt.kernels import Kernel
 from smt.surrogate_models.krg_based import KrgBased
 from smt.surrogate_models.krg_based.distances import componentwise_distance
+from smt.surrogate_models.krg_based.block_update import update_smt_model
 
 
 class KRG(KrgBased):
@@ -40,3 +41,13 @@ class KRG(KrgBased):
             return_derivative=return_derivative,
         )
         return d
+
+    def fast_update_training_values(self, X, Y):
+        """
+        Update the KRG model training and predictions using a block matrix approach, with the same scalarization factors on X and Y.
+        """
+        self = update_smt_model(
+            sm_model=self,
+            X_new=X,
+            Y_new=Y
+        )
