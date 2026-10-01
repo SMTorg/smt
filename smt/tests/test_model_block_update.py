@@ -2,7 +2,6 @@ import numpy as np
 from smt.design_space import DesignSpace, FloatVariable
 from smt.surrogate_models import KRG
 from copy import deepcopy
-from smt.surrogate_models.krg_based.block_update import update_smt_model 
 import unittest
 
 def xsinx(x:np.ndarray)->np.floating:
@@ -14,7 +13,7 @@ def verify_block_update(base_model, X_new, Y_new, test_name):
     and compare it against the mathematically true Cholesky decomposition.
     """
     model_block_update = deepcopy(base_model)
-    model_block_update = update_smt_model(sm_model=model_block_update, X_new=X_new, Y_new=Y_new)
+    model_block_update.fast_update_training_values(X_new, Y_new)
     C_block_update = model_block_update.optimal_par["C"]
 
     model_reference = deepcopy(base_model)
@@ -70,13 +69,10 @@ def verify_block_update(base_model, X_new, Y_new, test_name):
             model_reference.y_mean,
             model_reference.X_scale,
             model_reference.y_std,
-        ) = mocked_standardization(X.copy(), y.copy())
+        ) = mocked_standardization(X.copy(), y.copy()) # mocked standardization inserted here
 
         if not model_reference._eval_noise:
             model_reference.optimal_noise = np.array(model_reference._noise0)
-        elif model_reference.options["use_het_noise"]:
-            from smt.surrogate_models.krg_based.krg_based import compute_unique_inputs
-            X, y = compute_unique_inputs(X, y)
 
         return X, y, is_acting
 
