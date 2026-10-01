@@ -26,13 +26,12 @@ def verify_block_update(base_model, X_new, Y_new, test_name):
     model_reference.options["theta0"] = base_model.optimal_theta.tolist()
 
     # Monkey-patch the standardization function just for this test
-    # so that the reference model uses the original model's offsets.
+    # so that the reference model uses the original model's offsets as the block update approach.
     import smt.surrogate_models.krg_based.krg_based
     from smt.utils.misc import standardization as real_standardization
     original_standardization = smt.surrogate_models.krg_based.krg_based.standardization
 
     def mocked_standardization(X, y):
-        # still do normal logic to avoid missing side-effects, but override return variables
         X_norma, y_norma, X_offset, y_mean, X_scale, y_std = real_standardization(X, y)
 
         X_offset = base_model.X_offset
@@ -52,7 +51,6 @@ def verify_block_update(base_model, X_new, Y_new, test_name):
         X = model_reference.training_points[None][0][0]
         y = model_reference.training_points[None][0][1]
 
-        # Get is_acting status from design space model if needed (might correct training points)
         is_acting = model_reference.is_acting_points.get(None)
         if is_acting is None and not model_reference.is_continuous:
             X, is_acting = model_reference.design_space.correct_get_acting(X)
@@ -65,7 +63,6 @@ def verify_block_update(base_model, X_new, Y_new, test_name):
         from smt.surrogate_models.krg_based.krg_based import compute_X_cont
         _, model_reference.cat_features = compute_X_cont(model_reference.X_train, model_reference.design_space)
 
-        # Center and scale X and y USING MOCKED STANDARDIZATION
         (
             model_reference.X_norma,
             model_reference.y_norma,
@@ -88,7 +85,6 @@ def verify_block_update(base_model, X_new, Y_new, test_name):
     try:
         model_reference.train()
     finally:
-        # Restore original standardization
         smt.surrogate_models.krg_based.krg_based.standardization = original_standardization
         model_reference._prepare_training_data = original_prepare_training_data
 
@@ -115,7 +111,7 @@ def verify_block_update(base_model, X_new, Y_new, test_name):
     return max_c_diff, max_y_diff
 
 class TestModelBlockUpdate(unittest.TestCase):
-    def test_block_update(self):
+    def test_block_update_cont_KRG(self):
         lower_bound, upper_bound = 0, 25
         x_DOI = np.array([
                 [3.5],
