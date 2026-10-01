@@ -129,14 +129,14 @@ def _check_model_compatibility(sm_model: KRG) -> None:
     """
     is_krg_model = isinstance(sm_model, KRG)
     if not is_krg_model:
-        raise TypeError(
+        raise NotImplementedError(
             f"Block update is only supported for KRG models, "
             f"got {type(sm_model).__name__}."
         )
 
     is_continuous_design_space = sm_model.design_space.is_all_cont
     if not is_continuous_design_space:
-        raise TypeError(
+        raise NotImplementedError(
             "Block update is only supported for continuous design variables."
         )
 
@@ -231,7 +231,7 @@ def update_smt_model(
     Returns
     -------
     sm_model : KRG
-        The updated KRG model.
+        The updated KRG model, whose training values have been normalized (X) or standardized (Y) based on already existing scaling factors.
     """
     _check_model_compatibility(sm_model)
 
