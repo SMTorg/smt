@@ -140,6 +140,12 @@ def _check_model_compatibility(sm_model: KRG) -> None:
             "Block update is only supported for continuous design variables."
         )
 
+    is_hierarchical = sm_model.design_space.is_conditionally_acting.any()
+    if is_hierarchical:
+        raise NotImplementedError(
+            "Block update is only supported for non-hierarchical design spaces."
+        )
+
 
 def predict_covariance(
     sm_model: KRG,
