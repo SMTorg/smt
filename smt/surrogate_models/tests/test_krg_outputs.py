@@ -118,11 +118,6 @@ class TestKRG(unittest.TestCase):
             ]
         ).T
 
-        print("diff_gpx:", diff_gpx)
-        print("diff_krg:", diff_krg)
-        print("deriv_gpx:", deriv_gpx)
-        print("deriv_krg:", deriv_krg)
-
         np.testing.assert_allclose(diff_krg, deriv_krg, atol=5e-2)
         np.testing.assert_allclose(diff_gpx, deriv_gpx, atol=5e-2)
         np.testing.assert_allclose(deriv_krg, deriv_gpx, atol=5e-2)
