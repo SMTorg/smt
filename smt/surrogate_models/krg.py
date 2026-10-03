@@ -8,6 +8,7 @@ from smt.kernels import Kernel
 from smt.surrogate_models.krg_based import KrgBased
 from smt.surrogate_models.krg_based.distances import componentwise_distance
 
+
 class KRG(KrgBased):
     name = "Kriging"
 
@@ -46,8 +47,5 @@ class KRG(KrgBased):
         with the same scalarization factors on X and Y.
         """
         from smt.surrogate_models.krg_based.block_update import update_smt_model
-        update_smt_model(
-            sm_model=self,
-            X_new=X,
-            Y_new=Y
-        )
+
+        update_smt_model(sm_model=self, X_new=X, Y_new=Y)

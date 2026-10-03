@@ -4,8 +4,10 @@ from smt.surrogate_models import KRG
 from copy import deepcopy
 import unittest
 
-def xsinx(x:np.ndarray)->np.floating:
-    return x*np.sin(x)
+
+def xsinx(x: np.ndarray) -> np.floating:
+    return x * np.sin(x)
+
 
 def verify_block_update(base_model, X_new, Y_new, test_name):
     """
@@ -28,6 +30,7 @@ def verify_block_update(base_model, X_new, Y_new, test_name):
     # so that the reference model uses the original model's offsets as the block update approach.
     import smt.surrogate_models.krg_based.krg_based
     from smt.utils.misc import standardization as real_standardization
+
     original_standardization = smt.surrogate_models.krg_based.krg_based.standardization
 
     def mocked_standardization(X, y):
@@ -46,6 +49,7 @@ def verify_block_update(base_model, X_new, Y_new, test_name):
     smt.surrogate_models.krg_based.krg_based.standardization = mocked_standardization
 
     original_prepare_training_data = model_reference._prepare_training_data
+
     def mocked_prepare_training_data():
         X = model_reference.training_points[None][0][0]
         y = model_reference.training_points[None][0][1]
@@ -60,7 +64,10 @@ def verify_block_update(base_model, X_new, Y_new, test_name):
         model_reference.X_train = X
         model_reference.is_acting_train = is_acting
         from smt.surrogate_models.krg_based.krg_based import compute_X_cont
-        _, model_reference.cat_features = compute_X_cont(model_reference.X_train, model_reference.design_space)
+
+        _, model_reference.cat_features = compute_X_cont(
+            model_reference.X_train, model_reference.design_space
+        )
 
         (
             model_reference.X_norma,
@@ -69,7 +76,9 @@ def verify_block_update(base_model, X_new, Y_new, test_name):
             model_reference.y_mean,
             model_reference.X_scale,
             model_reference.y_std,
-        ) = mocked_standardization(X.copy(), y.copy()) # mocked standardization inserted here
+        ) = mocked_standardization(
+            X.copy(), y.copy()
+        )  # mocked standardization inserted here
 
         if not model_reference._eval_noise:
             model_reference.optimal_noise = np.array(model_reference._noise0)
@@ -81,7 +90,9 @@ def verify_block_update(base_model, X_new, Y_new, test_name):
     try:
         model_reference.train()
     finally:
-        smt.surrogate_models.krg_based.krg_based.standardization = original_standardization
+        smt.surrogate_models.krg_based.krg_based.standardization = (
+            original_standardization
+        )
         model_reference._prepare_training_data = original_prepare_training_data
 
     C_reference = model_reference.optimal_par["C"]
@@ -89,7 +100,9 @@ def verify_block_update(base_model, X_new, Y_new, test_name):
     print(f"--- Matrix Comparison: {test_name} ---")
     print(f"New points added: {X_new.shape[0]}")
     print(f"Resulting Matrix Shape: {C_block_update.shape}")
-    print(f"Are C_new and C_true the same shape? {C_block_update.shape == C_reference.shape}")
+    print(
+        f"Are C_new and C_true the same shape? {C_block_update.shape == C_reference.shape}"
+    )
 
     max_c_diff = np.max(np.abs(C_reference - C_block_update))
     print(f"Max absolute difference in C: {max_c_diff:.4e}")
@@ -106,14 +119,11 @@ def verify_block_update(base_model, X_new, Y_new, test_name):
 
     return max_c_diff, max_y_diff
 
+
 class TestModelBlockUpdate(unittest.TestCase):
     def test_block_update_cont_KRG(self):
         lower_bound, upper_bound = 0, 25
-        x_DOI = np.array([
-                [3.5],
-                [8.0],
-                [12.0]
-                ])
+        x_DOI = np.array([[3.5], [8.0], [12.0]])
         y_doi = xsinx(x_DOI)
 
         ds = DesignSpace([FloatVariable(lower_bound, upper_bound)])
@@ -149,6 +159,7 @@ class TestModelBlockUpdate(unittest.TestCase):
         self.assertLess(max_y_diff_single, 1e-6)
         self.assertLess(max_c_diff_multiple, 1e-6)
         self.assertLess(max_y_diff_multiple, 1e-6)
+
 
 if __name__ == "__main__":
     unittest.main()

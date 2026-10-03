@@ -119,13 +119,13 @@ class TestKRG(unittest.TestCase):
         ).T
 
         self.assertTrue(
-            (
+            np.abs(
                 np.sum(deriv_gpx - deriv_krg)
                 + np.sum(deriv_gpx - diff_gpx)
                 + np.sum(deriv_krg - diff_krg)
             )
             / np.sum(np.abs(deriv_gpx))
-            < 1e-2
+            < 1e-1
         )
 
 

@@ -52,9 +52,7 @@ def update_cholesky_block(
         is_positive_definite = R22_eff > 0.0
 
         if not is_positive_definite:
-            raise ValueError(
-                "Updated correlation matrix is not positive definite."
-            )
+            raise ValueError("Updated correlation matrix is not positive definite.")
         L22 = np.array([[np.sqrt(R22_eff)]])
 
     else:
@@ -100,9 +98,7 @@ def update_inverse_cholesky_block(
     if is_single_point_added:
         L22_inv = np.array([[1.0 / L22[0, 0]]])
     else:
-        L22_inv = solve_triangular(
-            L22, np.eye(n_new), lower=True, check_finite=False
-        )
+        L22_inv = solve_triangular(L22, np.eye(n_new), lower=True, check_finite=False)
 
     M21 = -L22_inv @ (L21 @ L_old_inv)
 
@@ -131,6 +127,7 @@ def _check_model_compatibility(sm_model: "KRG") -> None:
         has mixed variables.
     """
     from smt.surrogate_models.krg import KRG
+
     is_krg_model = isinstance(sm_model, KRG)
     if not is_krg_model:
         raise NotImplementedError(
@@ -221,9 +218,7 @@ def predict_covariance(
     return L_new, L_new_inv
 
 
-def update_smt_model(
-    sm_model: "KRG", X_new: np.ndarray, Y_new: np.ndarray
-) -> "KRG":
+def update_smt_model(sm_model: "KRG", X_new: np.ndarray, Y_new: np.ndarray) -> "KRG":
     """
     Perform Cholesky block update and inject the state back into the SMT model.
 
@@ -262,9 +257,7 @@ def update_smt_model(
     sm_model.training_points[None][0][1] = Y_train_appended
 
     sm_model.X_norma = np.vstack((sm_model.X_norma, X_new_norma))
-    sm_model.y_norma = np.vstack(
-        (sm_model.y_norma, Y_new_norma.reshape(-1, 1))
-    )
+    sm_model.y_norma = np.vstack((sm_model.y_norma, Y_new_norma.reshape(-1, 1)))
     sm_model.nt = sm_model.X_norma.shape[0]
 
     regression_type = sm_model._regression_types[sm_model.options["poly"]]
