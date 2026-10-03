@@ -1,9 +1,10 @@
-from typing import Tuple, Optional
+from typing import Tuple, Optional, TYPE_CHECKING
 
 import numpy as np
 from scipy.linalg import solve_triangular, cholesky
 
-from smt.surrogate_models.krg import KRG
+if TYPE_CHECKING:
+    from smt.surrogate_models.krg import KRG
 from smt.surrogate_models.krg_based.distances import differences
 
 
@@ -112,7 +113,7 @@ def update_inverse_cholesky_block(
     return L_new_inv
 
 
-def _check_model_compatibility(sm_model: KRG) -> None:
+def _check_model_compatibility(sm_model: "KRG") -> None:
     """
     Check if the surrogate model is compatible with block updates.
 
@@ -127,6 +128,7 @@ def _check_model_compatibility(sm_model: KRG) -> None:
         If the model is not an instance of KRG or if the design space
         has mixed variables.
     """
+    from smt.surrogate_models.krg import KRG
     is_krg_model = isinstance(sm_model, KRG)
     if not is_krg_model:
         raise NotImplementedError(
@@ -148,7 +150,7 @@ def _check_model_compatibility(sm_model: KRG) -> None:
 
 
 def predict_covariance(
-    sm_model: KRG,
+    sm_model: "KRG",
     X_new: np.ndarray,
     is_normalized: bool = False,
     compute_inverse: bool = True,
@@ -218,8 +220,8 @@ def predict_covariance(
 
 
 def update_smt_model(
-    sm_model: KRG, X_new: np.ndarray, Y_new: np.ndarray
-) -> KRG:
+    sm_model: "KRG", X_new: np.ndarray, Y_new: np.ndarray
+) -> "KRG":
     """
     Perform Cholesky block update and inject the state back into the SMT model.
 
