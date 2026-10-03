@@ -42,7 +42,8 @@ class KRG(KrgBased):
 
     def fast_update_model(self, X, Y):
         """
-        Update the KRG model training and predictions using a block matrix approach, with the same scalarization factors on X and Y.
+        Update the KRG model training and predictions using a block matrix approach,
+        with the same scalarization factors on X and Y.
         """
         from smt.surrogate_models.krg_based.block_update import update_smt_model
         update_smt_model(

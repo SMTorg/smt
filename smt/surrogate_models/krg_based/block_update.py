@@ -237,7 +237,8 @@ def update_smt_model(
     Returns
     -------
     sm_model : KRG
-        The updated KRG model, whose training values have been normalized (X) or standardized (Y) based on already existing scaling factors.
+        The updated KRG model, whose training values have been normalized (X)
+        or standardized (Y) based on already existing scaling factors.
     """
     _check_model_compatibility(sm_model)
 

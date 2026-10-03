@@ -138,8 +138,12 @@ class TestModelBlockUpdate(unittest.TestCase):
         y_eval_single = model.predict_values(x_eval_single)
         Y_eval_multiple = model.predict_values(X_eval_multiple)
 
-        max_c_diff_single, max_y_diff_single = verify_block_update(model, x_eval_single, y_eval_single, "Single Point Update (x_eval)")
-        max_c_diff_multiple, max_y_diff_multiple = verify_block_update(model, X_eval_multiple, Y_eval_multiple, "Multiple Points Update (X_eval)")
+        max_c_diff_single, max_y_diff_single = verify_block_update(
+            model, x_eval_single, y_eval_single, "Single Point Update (x_eval)"
+        )
+        max_c_diff_multiple, max_y_diff_multiple = verify_block_update(
+            model, X_eval_multiple, Y_eval_multiple, "Multiple Points Update (X_eval)"
+        )
 
         self.assertLess(max_c_diff_single, 1e-6)
         self.assertLess(max_y_diff_single, 1e-6)
