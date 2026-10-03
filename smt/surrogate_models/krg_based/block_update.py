@@ -1,9 +1,13 @@
-from typing import Tuple, Optional
+from typing import Tuple, Optional, TYPE_CHECKING
 
 import numpy as np
 from scipy.linalg import solve_triangular, cholesky
 
-from smt.surrogate_models.krg import KRG
+# We will type hint KRG but we do not import it here globally to avoid circular imports.
+# KRG will be imported locally inside `_check_model_compatibility`.
+if TYPE_CHECKING:
+    from smt.surrogate_models.krg import KRG
+
 from smt.surrogate_models.krg_based.distances import differences
 
 
@@ -112,7 +116,7 @@ def update_inverse_cholesky_block(
     return L_new_inv
 
 
-def _check_model_compatibility(sm_model: KRG) -> None:
+def _check_model_compatibility(sm_model: "KRG") -> None:
     """
     Check if the surrogate model is compatible with block updates.
 
@@ -127,22 +131,29 @@ def _check_model_compatibility(sm_model: KRG) -> None:
         If the model is not an instance of KRG or if the design space
         has mixed variables.
     """
+    from smt.surrogate_models.krg import KRG
     is_krg_model = isinstance(sm_model, KRG)
     if not is_krg_model:
-        raise TypeError(
+        raise NotImplementedError(
             f"Block update is only supported for KRG models, "
             f"got {type(sm_model).__name__}."
         )
 
     is_continuous_design_space = sm_model.design_space.is_all_cont
     if not is_continuous_design_space:
-        raise TypeError(
+        raise NotImplementedError(
             "Block update is only supported for continuous design variables."
+        )
+
+    is_hierarchical = sm_model.design_space.is_conditionally_acting.any()
+    if is_hierarchical:
+        raise NotImplementedError(
+            "Block update is only supported for non-hierarchical design spaces."
         )
 
 
 def predict_covariance(
-    sm_model: KRG,
+    sm_model: "KRG",
     X_new: np.ndarray,
     is_normalized: bool = False,
     compute_inverse: bool = True,
@@ -212,8 +223,8 @@ def predict_covariance(
 
 
 def update_smt_model(
-    sm_model: KRG, X_new: np.ndarray, Y_new: np.ndarray
-) -> KRG:
+    sm_model: "KRG", X_new: np.ndarray, Y_new: np.ndarray
+) -> "KRG":
     """
     Perform Cholesky block update and inject the state back into the SMT model.
 
@@ -231,7 +242,8 @@ def update_smt_model(
     Returns
     -------
     sm_model : KRG
-        The updated KRG model.
+        The updated KRG model, whose training values have been normalized (X)
+        or standardized (Y) based on already existing scaling factors.
     """
     _check_model_compatibility(sm_model)
 
