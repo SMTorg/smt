@@ -3,8 +3,7 @@ from typing import Tuple, Optional, TYPE_CHECKING
 import numpy as np
 from scipy.linalg import solve_triangular, cholesky
 
-# We will type hint KRG but we do not import it here globally to avoid circular imports.
-# KRG will be imported locally inside `_check_model_compatibility`.
+# KRG is only imported for type hints during static analysis to prevent circular import errors at runtime.
 if TYPE_CHECKING:
     from smt.surrogate_models.krg import KRG
 
