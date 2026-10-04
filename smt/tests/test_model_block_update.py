@@ -24,11 +24,8 @@ def verify_block_update(base_model, X_new, Y_new, test_name):
     model_reference.theta0 = base_model.optimal_theta.tolist()
     model_reference.options["theta0"] = base_model.optimal_theta.tolist()
 
-    # Monkey-patch the standardization function just for this test
-    # so that the reference model uses the original model's offsets as the block update approach.
-    import smt.surrogate_models.krg_based.krg_based
     from smt.utils.misc import standardization as real_standardization
-    original_standardization = smt.surrogate_models.krg_based.krg_based.standardization
+    from unittest.mock import patch
 
     def mocked_standardization(X, y):
         X_norma, y_norma, X_offset, y_mean, X_scale, y_std = real_standardization(X, y)
@@ -43,9 +40,6 @@ def verify_block_update(base_model, X_new, Y_new, test_name):
 
         return X_norma, y_norma, X_offset, y_mean, X_scale, y_std
 
-    smt.surrogate_models.krg_based.krg_based.standardization = mocked_standardization
-
-    original_prepare_training_data = model_reference._prepare_training_data
     def mocked_prepare_training_data():
         X = model_reference.training_points[None][0][0]
         y = model_reference.training_points[None][0][1]
@@ -69,30 +63,26 @@ def verify_block_update(base_model, X_new, Y_new, test_name):
             model_reference.y_mean,
             model_reference.X_scale,
             model_reference.y_std,
-        ) = mocked_standardization(X.copy(), y.copy()) # mocked standardization inserted here
+        ) = mocked_standardization(X.copy(), y.copy())
 
         if not model_reference._eval_noise:
             model_reference.optimal_noise = np.array(model_reference._noise0)
 
         return X, y, is_acting
 
-    model_reference._prepare_training_data = mocked_prepare_training_data
-
-    try:
+    with patch('smt.surrogate_models.krg_based.krg_based.standardization', side_effect=mocked_standardization), \
+         patch.object(model_reference, '_prepare_training_data', side_effect=mocked_prepare_training_data):
         model_reference.train()
-    finally:
-        smt.surrogate_models.krg_based.krg_based.standardization = original_standardization
-        model_reference._prepare_training_data = original_prepare_training_data
 
     C_reference = model_reference.optimal_par["C"]
 
-    print(f"--- Matrix Comparison: {test_name} ---")
-    print(f"New points added: {X_new.shape[0]}")
-    print(f"Resulting Matrix Shape: {C_block_update.shape}")
-    print(f"Are C_new and C_true the same shape? {C_block_update.shape == C_reference.shape}")
+    # print(f"--- Matrix Comparison: {test_name} ---")
+    # print(f"New points added: {X_new.shape[0]}")
+    # print(f"Resulting Matrix Shape: {C_block_update.shape}")
+    # print(f"Are C_new and C_true the same shape? {C_block_update.shape == C_reference.shape}")
 
     max_c_diff = np.max(np.abs(C_reference - C_block_update))
-    print(f"Max absolute difference in C: {max_c_diff:.4e}")
+    # print(f"Max absolute difference in C: {max_c_diff:.4e}")
 
     X_test = np.linspace(0, 25, 200).reshape(-1, 1)
 
@@ -101,8 +91,8 @@ def verify_block_update(base_model, X_new, Y_new, test_name):
 
     max_y_diff = np.max(np.abs(Y_upd - Y_true))
 
-    print(f"Max absolute difference in Predictions (Y): {max_y_diff:.4e}")
-    print("-" * 55 + "\n")
+    # print(f"Max absolute difference in Predictions (Y): {max_y_diff:.4e}")
+    # print("-" * 55 + "\n")
 
     return max_c_diff, max_y_diff
 
