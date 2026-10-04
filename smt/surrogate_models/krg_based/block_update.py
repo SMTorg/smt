@@ -73,9 +73,7 @@ def update_inverse_cholesky_block(
     L_old_inv: np.ndarray, L21: np.ndarray, L22: np.ndarray
 ) -> np.ndarray:
     """
-    Update the inverse of the Cholesky factor L^{-1}.
-
-    This function is optimized for sequential additions.
+    Compute the inverse of the Cholesky Gram matrix L^{-1} block update.
 
     Parameters
     ----------
