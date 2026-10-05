@@ -12,5 +12,5 @@ pytest-cov      # allows to get coverage report
 ruff            # format and lint code
 setuptools-scm  # version from git tags
 jenn >= 2.0.0, <3.0
-egobox >= 0.36, <1.0
+egobox >= 0.38, <1.0
 torch >= 2.4.1
