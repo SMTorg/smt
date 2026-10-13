@@ -313,7 +313,6 @@ class BaseDesignSpace:
         x_mat = np.atleast_2d(x)
         if x_mat.shape[1] != n_dv:
             if x_mat.shape[1] == self._get_n_dim_unfolded():
-                print(f"switching from mask enum to index enum")
                 x_mat, _ = self.fold_x(x_mat)
             else:
                 raise ValueError(
