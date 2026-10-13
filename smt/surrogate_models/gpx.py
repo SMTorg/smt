@@ -139,7 +139,7 @@ class GPX(SurrogateModel):
             "corr_spec": CORRELATIONS[self.options["corr"]],
             "theta_init": np.array(self.options["theta0"]),
             "theta_bounds": np.array([self.options["theta_bounds"]]),
-            "n_start": self.options["n_start"],
+            "theta_n_start": self.options["n_start"],
             "seed": self.options["seed"],
         }
         kpls_dim = self.options["kpls_dim"]

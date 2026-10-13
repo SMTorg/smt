@@ -35,7 +35,7 @@ dependencies = [
 
 [project.optional-dependencies]
 numba = ["numba~=0.64"]
-gpx = ["egobox~=0.36"]
+gpx = ["egobox~=0.38"]
 rbfgen = ["torch>=2.4.1"]
 
 [project.urls]
