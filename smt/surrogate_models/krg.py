@@ -171,7 +171,7 @@ class KRG(KrgBased):
 
         Parameters
         ----------
-        sm_model : KRG
+        self : KRG
             The surrogate model being updated.
 
         Raises
@@ -203,7 +203,7 @@ class KRG(KrgBased):
 
         Parameters
         ----------
-        sm_model : KRG
+        self : KRG
             The KRG surrogate model to update.
         X_new : np.ndarray
             New input points to add to the covariance structure.
@@ -273,7 +273,7 @@ class KRG(KrgBased):
 
         Parameters
         ----------
-        sm_model : KRG
+        self : KRG
             The KRG surrogate model to update.
         X_new : np.ndarray
             New input points to add to the model.
