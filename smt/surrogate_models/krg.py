@@ -53,7 +53,6 @@ class KRG(KrgBased):
         using a block matrix approach instead of being recomputed from scratch.
         """
         self._update_smt_model(
-            sm_model=self,
             X_new=X,
             Y_new=Y
         )
