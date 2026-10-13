@@ -8,7 +8,7 @@ from smt.kernels import Kernel
 from smt.surrogate_models.krg_based import KrgBased
 from smt.surrogate_models.krg_based.distances import componentwise_distance
 
-from typing import Tuple, Optional, TYPE_CHECKING
+from typing import Tuple, Optional
 
 import numpy as np
 from scipy.linalg import solve_triangular, cholesky
@@ -60,9 +60,9 @@ class KRG(KrgBased):
 
     @staticmethod
     def _update_cholesky_block(
-        L_old: np.ndarray, 
-        R12: np.ndarray, 
-        R22: np.ndarray, 
+        L_old: np.ndarray,
+        R12: np.ndarray,
+        R22: np.ndarray,
         nugget: float = 1e-10
     ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
         """
@@ -124,8 +124,8 @@ class KRG(KrgBased):
 
     @staticmethod
     def _update_inverse_cholesky_block(
-        L_old_inv: np.ndarray, 
-        L21: np.ndarray, 
+        L_old_inv: np.ndarray,
+        L21: np.ndarray,
         L22: np.ndarray
     ) -> np.ndarray:
         """
@@ -263,8 +263,8 @@ class KRG(KrgBased):
         return L_new, L_new_inv
 
     def _update_smt_model(
-        self, 
-        X_new: np.ndarray, 
+        self,
+        X_new: np.ndarray,
         Y_new: np.ndarray
     ) -> "KRG":
         """
