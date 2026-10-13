@@ -292,7 +292,7 @@ class KRG(KrgBased):
         Y_new_norma = (Y_new - self.y_mean) / self.y_std
 
         L_new, L_new_inv = self._predict_covariance(
-            self, X_new_norma, is_normalized=True, compute_inverse=True
+            X_new_norma, is_normalized=True, compute_inverse=True
         )
 
         self.X_train = np.vstack((self.X_train, X_new))
