@@ -15,6 +15,7 @@ from smt.surrogate_models.krg_based.distances import (
     componentwise_distance,
     differences,
 )
+from smt.utils.checks import check_nx, ensure_2d_array
 
 
 class KRG(KrgBased):
@@ -293,7 +294,24 @@ class KRG(KrgBased):
             The updated KRG model, whose training values have been normalized (X)
             or standardized (Y) based on already existing scaling factors.
         """
+        if not hasattr(self, "optimal_par"):
+            raise RuntimeError("update_model requires a trained model.")
+
         self._check_model_compatibility()
+
+        X_new = ensure_2d_array(X_new, "X")
+        check_nx(self, X_new)
+        Y_new = ensure_2d_array(Y_new, "Y")
+        if Y_new.shape[0] != X_new.shape[0]:
+            raise ValueError(
+                f"X and Y must have the same number of rows "
+                f"(got {X_new.shape[0]} and {Y_new.shape[0]})."
+            )
+        if Y_new.shape[1] != self.ny:
+            raise ValueError(
+                f"Y has {Y_new.shape[1]} outputs, but the model was trained "
+                f"with {self.ny}."
+            )
 
         X_new_norma = (X_new - self.X_offset) / self.X_scale
         Y_new_norma = (Y_new - self.y_mean) / self.y_std
@@ -305,13 +323,18 @@ class KRG(KrgBased):
         self.X_train = np.vstack((self.X_train, X_new))
         self.training_points[None][0][0] = self.X_train
 
-        Y_train_appended = np.vstack(
-            (self.training_points[None][0][1], Y_new.reshape(-1, 1))
-        )
+        Y_train_appended = np.vstack((self.training_points[None][0][1], Y_new))
         self.training_points[None][0][1] = Y_train_appended
 
+        # Keep the acting status in sync when it was provided (all acting here)
+        is_acting = self.is_acting_points.get(None)
+        if is_acting is not None:
+            is_acting_new = np.ones(X_new.shape, dtype=bool)
+            self.is_acting_points[None] = np.vstack((is_acting, is_acting_new))
+            self.is_acting_train = self.is_acting_points[None]
+
         self.X_norma = np.vstack((self.X_norma, X_new_norma))
-        self.y_norma = np.vstack((self.y_norma, Y_new_norma.reshape(-1, 1)))
+        self.y_norma = np.vstack((self.y_norma, Y_new_norma))
         self.nt = self.X_norma.shape[0]
 
         regression_type = self._regression_types[self.options["poly"]]
