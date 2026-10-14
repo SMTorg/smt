@@ -59,7 +59,7 @@ class KRG(KrgBased):
 
     @staticmethod
     def _update_cholesky_block(
-        L_old: np.ndarray, R12: np.ndarray, R22: np.ndarray, nugget: float = 1e-10
+        L_old: np.ndarray, R12: np.ndarray, R22: np.ndarray, nugget: float
     ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
         """
         Compute the Cholesky block update.
@@ -75,8 +75,9 @@ class KRG(KrgBased):
             Cross-correlation matrix between old and new points.
         R22 : np.ndarray
             Correlation matrix of new points.
-        nugget : float, optional
-            Nugget to add to the diagonal of the new block for stability.
+        nugget : float
+            Value added to the diagonal of the new block (nugget plus
+            homoscedastic noise variance).
 
         Returns
         -------
@@ -185,6 +186,16 @@ class KRG(KrgBased):
                 "Block update is only supported for non-hierarchical design spaces."
             )
 
+        if self.options["use_het_noise"]:
+            raise NotImplementedError(
+                "Block update is not supported with heteroscedastic noise."
+            )
+
+        if self.options["is_ri"]:
+            raise NotImplementedError(
+                "Block update is not supported with reinterpolation (is_ri)."
+            )
+
     def _predict_covariance(
         self,
         X_new: np.ndarray,
@@ -231,12 +242,13 @@ class KRG(KrgBased):
 
         L_old = self.optimal_par["C"]
 
-        try:
-            nugget = self.options["nugget"]
-        except KeyError:
-            nugget = 1e-8
+        # Same diagonal term as in the likelihood evaluation: 1 + nugget + noise
+        nugget = 0.0 if self._eval_noise else self.options["nugget"]
+        noise = float(np.atleast_1d(self.optimal_noise)[0])
 
-        L_new, L21, L22 = self._update_cholesky_block(L_old, R12, R22, nugget=nugget)
+        L_new, L21, L22 = self._update_cholesky_block(
+            L_old, R12, R22, nugget=nugget + noise
+        )
 
         should_skip_inverse = not compute_inverse
         if should_skip_inverse:
