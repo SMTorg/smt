@@ -174,6 +174,12 @@ class KRG(KrgBased):
             If the model is not an instance of KRG or if the design space
             has mixed variables.
         """
+        # Subclasses (e.g. SGP) store a different model state in optimal_par
+        if type(self) is not KRG:
+            raise NotImplementedError(
+                f"Block update is not supported for {type(self).__name__} models."
+            )
+
         is_continuous_design_space = self.design_space.is_all_cont
         if not is_continuous_design_space:
             raise NotImplementedError(
