@@ -308,7 +308,13 @@ class KRG(KrgBased):
 
         residuals = self.y_norma - (F_combined @ beta_new)
 
-        gamma_new = L_new_inv.T @ (L_new_inv @ residuals)
+        rho = L_new_inv @ residuals
+        gamma_new = L_new_inv.T @ rho
+
+        # GLS estimate of the process variance, as in the likelihood evaluation
+        p, q = self._get_pq()
+        sigma2 = (rho**2.0).sum(axis=0) / (self.nt - p - q)
+        self.optimal_par["sigma2"] = sigma2 * self.y_std**2.0
 
         self.optimal_par["C"] = L_new
         self.optimal_par["C_inv"] = L_new_inv
