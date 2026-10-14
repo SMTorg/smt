@@ -1,155 +1,192 @@
-import numpy as np
-from smt.design_space import DesignSpace, FloatVariable
-from smt.surrogate_models import KRG
-from copy import deepcopy
 import unittest
+from copy import deepcopy
+
+import numpy as np
+
+from smt.design_space import (
+    CategoricalVariable,
+    DesignSpace,
+    FloatVariable,
+)
+from smt.surrogate_models import KRG, SGP
+from smt.surrogate_models.krg_based.distances import cross_distances
 
 
-def xsinx(x: np.ndarray) -> np.floating:
+def xsinx(x: np.ndarray) -> np.ndarray:
     return x * np.sin(x)
 
 
-def verify_block_update(base_model, X_new, Y_new, test_name):
+def reference_model(base_model, X_all, Y_all):
     """
-    Helper function to copy the base model, apply the block update,
-    and compare it against the mathematically true Cholesky decomposition.
+    Return a copy of base_model holding the GLS parameters recomputed from
+    scratch on (X_all, Y_all) by the regular likelihood evaluation, with the
+    hyperparameters and the scaling factors of base_model kept fixed.
     """
-    model_block_update = deepcopy(base_model)
-    model_block_update.update_model(X_new, Y_new)
-    C_block_update = model_block_update.optimal_par["C"]
+    ref = deepcopy(base_model)
+    ref.training_points[None][0] = [X_all, Y_all]
+    ref.X_train = X_all
+    ref.X_norma = (X_all - ref.X_offset) / ref.X_scale
+    ref.y_norma = (Y_all - ref.y_mean) / ref.y_std
+    ref.nt = X_all.shape[0]
+    ref.F = ref._regression_types[ref.options["poly"]](ref.X_norma)
+    D, ref.ij = cross_distances(ref.X_norma)
+    ref.D = ref._componentwise_distance(D)
 
-    model_reference = deepcopy(base_model)
-    X_new_training_matrix = np.vstack((base_model.X_train, X_new))
-    Y_new_training_matrix = np.vstack((base_model.training_points[None][0][1], Y_new))
-    model_reference.set_training_values(X_new_training_matrix, Y_new_training_matrix)
-    model_reference.options["hyper_opt"] = "NoOp"
-    model_reference.theta0 = base_model.optimal_theta.tolist()
-    model_reference.options["theta0"] = base_model.optimal_theta.tolist()
-
-    from smt.utils.misc import standardization as real_standardization
-    from unittest.mock import patch
-
-    def mocked_standardization(X, y):
-        X_norma, y_norma, X_offset, y_mean, X_scale, y_std = real_standardization(X, y)
-
-        X_offset = base_model.X_offset
-        X_scale = base_model.X_scale
-        y_mean = base_model.y_mean
-        y_std = base_model.y_std
-
-        X_norma = (X - X_offset) / X_scale
-        y_norma = (y - y_mean) / y_std
-
-        return X_norma, y_norma, X_offset, y_mean, X_scale, y_std
-
-    def mocked_prepare_training_data():
-        X = model_reference.training_points[None][0][0]
-        y = model_reference.training_points[None][0][1]
-
-        is_acting = model_reference.is_acting_points.get(None)
-        if is_acting is None and not model_reference.is_continuous:
-            X, is_acting = model_reference.design_space.correct_get_acting(X)
-            model_reference.training_points[None][0][0] = X
-            model_reference.is_acting_points[None] = is_acting
-
-        model_reference._check_param()
-        model_reference.X_train = X
-        model_reference.is_acting_train = is_acting
-        from smt.surrogate_models.krg_based.krg_based import compute_X_cont
-
-        _, model_reference.cat_features = compute_X_cont(
-            model_reference.X_train, model_reference.design_space
-        )
-
-        (
-            model_reference.X_norma,
-            model_reference.y_norma,
-            model_reference.X_offset,
-            model_reference.y_mean,
-            model_reference.X_scale,
-            model_reference.y_std,
-        ) = mocked_standardization(X.copy(), y.copy())
-
-        if not model_reference._eval_noise:
-            model_reference.optimal_noise = np.array(model_reference._noise0)
-
-        return X, y, is_acting
-
-    with (
-        patch(
-            "smt.surrogate_models.krg_based.krg_based.standardization",
-            side_effect=mocked_standardization,
-        ),
-        patch.object(
-            model_reference,
-            "_prepare_training_data",
-            side_effect=mocked_prepare_training_data,
-        ),
-    ):
-        model_reference.train()
-
-    C_reference = model_reference.optimal_par["C"]
-
-    # print(f"--- Matrix Comparison: {test_name} ---")
-    # print(f"New points added: {X_new.shape[0]}")
-    # print(f"Resulting Matrix Shape: {C_block_update.shape}")
-    # print(f"Are C_new and C_true the same shape? {C_block_update.shape == C_reference.shape}")
-
-    max_c_diff = np.max(np.abs(C_reference - C_block_update))
-    # print(f"Max absolute difference in C: {max_c_diff:.4e}")
-
-    X_test = np.linspace(0, 25, 200).reshape(-1, 1)
-
-    Y_upd = model_block_update.predict_values(X_test)
-    Y_true = model_reference.predict_values(X_test)
-
-    max_y_diff = np.max(np.abs(Y_upd - Y_true))
-
-    # print(f"Max absolute difference in Predictions (Y): {max_y_diff:.4e}")
-    # print("-" * 55 + "\n")
-
-    return max_c_diff, max_y_diff
+    theta = ref.optimal_theta
+    if ref._eval_noise:
+        theta = np.append(theta, ref.optimal_noise)
+    _, par = ref._reduced_likelihood_function(theta=theta)
+    ref.optimal_par = par
+    return ref
 
 
 class TestModelBlockUpdate(unittest.TestCase):
-    def test_block_update_cont_KRG(self):
-        lower_bound, upper_bound = 0, 25
-        x_DOI = np.array([[3.5], [8.0], [12.0]])
-        y_doi = xsinx(x_DOI)
+    def setUp(self):
+        self.xt = np.array([[3.5], [8.0], [12.0], [17.0]])
+        self.yt = xsinx(self.xt)
+        self.x_test = np.linspace(0, 25, 50).reshape(-1, 1)
 
-        ds = DesignSpace([FloatVariable(lower_bound, upper_bound)])
-
-        model = KRG(
-            design_space=ds,
+    def _trained_krg(self, **options):
+        sm = KRG(
+            design_space=DesignSpace([FloatVariable(0, 25)]),
             theta0=[1e-1],
             theta_bounds=[1e-2, 1e2],
-            eval_noise=False,
             seed=42,
-            hyper_opt="TNC",
-            corr="squar_exp",
             print_global=False,
+            **options,
+        )
+        sm.set_training_values(self.xt, self.yt)
+        sm.train()
+        return sm
+
+    def assert_matches_reference(self, sm, updated, X_new, Y_new):
+        ref = reference_model(
+            sm,
+            np.vstack((sm.training_points[None][0][0], X_new)),
+            np.vstack((sm.training_points[None][0][1], Y_new)),
+        )
+        for key in ["C", "beta", "gamma", "sigma2"]:
+            np.testing.assert_allclose(
+                updated.optimal_par[key],
+                ref.optimal_par[key],
+                rtol=1e-6,
+                atol=1e-8,
+                err_msg=key,
+            )
+        np.testing.assert_allclose(
+            updated.predict_values(self.x_test),
+            ref.predict_values(self.x_test),
+            rtol=1e-6,
+            atol=1e-8,
+        )
+        np.testing.assert_allclose(
+            updated.predict_variances(self.x_test),
+            ref.predict_variances(self.x_test),
+            rtol=1e-6,
+            atol=1e-8,
         )
 
-        model.set_training_values(xt=x_DOI, yt=y_doi)
-        model.train()
+    def test_single_point_update(self):
+        sm = self._trained_krg()
+        X_new = np.array([[23.0]])
+        updated = deepcopy(sm)
+        updated.update_model(X_new, xsinx(X_new))
 
-        x_eval_single = np.array([[23.0]])
-        X_eval_multiple = np.array([[16.0], [19.0], [23.0], [25.0]])
-
-        y_eval_single = model.predict_values(x_eval_single)
-        Y_eval_multiple = model.predict_values(X_eval_multiple)
-
-        max_c_diff_single, max_y_diff_single = verify_block_update(
-            model, x_eval_single, y_eval_single, "Single Point Update (x_eval)"
-        )
-        max_c_diff_multiple, max_y_diff_multiple = verify_block_update(
-            model, X_eval_multiple, Y_eval_multiple, "Multiple Points Update (X_eval)"
+        self.assertEqual(updated.nt, 5)
+        self.assert_matches_reference(sm, updated, X_new, xsinx(X_new))
+        # noiseless model interpolates the added point
+        np.testing.assert_allclose(
+            updated.predict_values(X_new), xsinx(X_new), atol=1e-6
         )
 
-        self.assertLess(max_c_diff_single, 1e-6)
-        self.assertLess(max_y_diff_single, 1e-6)
-        self.assertLess(max_c_diff_multiple, 1e-6)
-        self.assertLess(max_y_diff_multiple, 1e-6)
+    def test_multiple_points_update(self):
+        for poly in ["constant", "linear", "quadratic"]:
+            with self.subTest(poly=poly):
+                sm = self._trained_krg(poly=poly)
+                X_new = np.array([[16.0], [19.0], [23.0], [25.0]])
+                updated = deepcopy(sm)
+                updated.update_model(X_new, xsinx(X_new))
+                self.assert_matches_reference(sm, updated, X_new, xsinx(X_new))
+
+    def test_successive_updates(self):
+        sm = self._trained_krg()
+        X1 = np.array([[1.0], [20.0]])
+        X2 = np.array([[23.0]])
+        updated = deepcopy(sm)
+        updated.update_model(X1, xsinx(X1))
+        updated.update_model(X2, xsinx(X2))
+
+        X_new = np.vstack((X1, X2))
+        self.assert_matches_reference(sm, updated, X_new, xsinx(X_new))
+
+    def test_noisy_update(self):
+        for options in [{"noise0": [1e-2]}, {"eval_noise": True}]:
+            with self.subTest(**options):
+                sm = self._trained_krg(**options)
+                X_new = np.array([[16.0], [23.0]])
+                updated = deepcopy(sm)
+                updated.update_model(X_new, xsinx(X_new))
+                self.assert_matches_reference(sm, updated, X_new, xsinx(X_new))
+
+    def test_multi_output_update(self):
+        sm = KRG(theta0=[1e-1], print_global=False)
+        sm.set_training_values(self.xt, np.hstack((self.yt, np.cos(self.xt))))
+        sm.train()
+
+        X_new = np.array([16.0, 23.0])  # 1-D input is accepted
+        Y_new = np.hstack((xsinx(X_new[:, None]), np.cos(X_new[:, None])))
+        updated = deepcopy(sm)
+        updated.update_model(X_new, Y_new)
+        self.assert_matches_reference(sm, updated, X_new[:, None], Y_new)
+
+    def test_variance_derivatives_after_update(self):
+        sm = self._trained_krg()
+        X_new = np.array([[16.0], [23.0]])
+        sm.update_model(X_new, xsinx(X_new))
+
+        derivs = sm.predict_variance_derivatives(self.x_test, 0)
+        self.assertEqual(derivs.shape, (self.x_test.shape[0], 1))
+        self.assertTrue(np.all(np.isfinite(derivs)))
+
+    def test_invalid_inputs(self):
+        sm = self._trained_krg()
+        with self.assertRaises(ValueError):
+            sm.update_model(np.array([[1.0, 2.0]]), np.array([[1.0]]))
+        with self.assertRaises(ValueError):
+            sm.update_model(np.array([[1.0], [2.0]]), np.array([[1.0]]))
+        with self.assertRaises(ValueError):
+            sm.update_model(np.array([[1.0]]), np.array([[1.0, 2.0]]))
+
+        with self.assertRaises(RuntimeError):
+            KRG().update_model(np.array([[1.0]]), np.array([[1.0]]))
+
+    def test_unsupported_models(self):
+        X_new, Y_new = np.array([[23.0]]), np.array([[1.0]])
+
+        xt = np.repeat(np.linspace(0, 25, 6), 2).reshape(-1, 1)
+        noise = 0.1 * np.random.default_rng(42).standard_normal(xt.shape)
+        sm = KRG(use_het_noise=True, eval_noise=True, print_global=False)
+        sm.set_training_values(xt, xsinx(xt) + noise)
+        sm.train()
+        self.assertIn("C", sm.optimal_par)
+        with self.assertRaises(NotImplementedError):
+            sm.update_model(X_new, Y_new)
+
+        ds = DesignSpace([FloatVariable(0, 25), CategoricalVariable(["a", "b"])])
+        xt = np.array([[3.5, 0], [8.0, 1], [12.0, 0], [17.0, 1]])
+        sm = KRG(design_space=ds, print_global=False)
+        sm.set_training_values(xt, xsinx(xt[:, :1]))
+        sm.train()
+        with self.assertRaises(NotImplementedError):
+            sm.update_model(np.array([[23.0, 0]]), Y_new)
+
+        x = np.linspace(0, 25, 20).reshape(-1, 1)
+        sm = SGP(print_global=False, seed=42)
+        sm.set_training_values(x, xsinx(x))
+        sm.set_inducing_inputs(Z=x[::4].copy())
+        sm.train()
+        with self.assertRaises(NotImplementedError):
+            sm.update_model(X_new, Y_new)
 
 
 if __name__ == "__main__":
