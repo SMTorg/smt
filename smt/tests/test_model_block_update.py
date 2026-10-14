@@ -4,8 +4,10 @@ from smt.surrogate_models import KRG
 from copy import deepcopy
 import unittest
 
-def xsinx(x:np.ndarray)->np.floating:
-    return x*np.sin(x)
+
+def xsinx(x: np.ndarray) -> np.floating:
+    return x * np.sin(x)
+
 
 def verify_block_update(base_model, X_new, Y_new, test_name):
     """
@@ -54,7 +56,10 @@ def verify_block_update(base_model, X_new, Y_new, test_name):
         model_reference.X_train = X
         model_reference.is_acting_train = is_acting
         from smt.surrogate_models.krg_based.krg_based import compute_X_cont
-        _, model_reference.cat_features = compute_X_cont(model_reference.X_train, model_reference.design_space)
+
+        _, model_reference.cat_features = compute_X_cont(
+            model_reference.X_train, model_reference.design_space
+        )
 
         (
             model_reference.X_norma,
@@ -70,8 +75,17 @@ def verify_block_update(base_model, X_new, Y_new, test_name):
 
         return X, y, is_acting
 
-    with patch('smt.surrogate_models.krg_based.krg_based.standardization', side_effect=mocked_standardization), \
-         patch.object(model_reference, '_prepare_training_data', side_effect=mocked_prepare_training_data):
+    with (
+        patch(
+            "smt.surrogate_models.krg_based.krg_based.standardization",
+            side_effect=mocked_standardization,
+        ),
+        patch.object(
+            model_reference,
+            "_prepare_training_data",
+            side_effect=mocked_prepare_training_data,
+        ),
+    ):
         model_reference.train()
 
     C_reference = model_reference.optimal_par["C"]
@@ -96,14 +110,11 @@ def verify_block_update(base_model, X_new, Y_new, test_name):
 
     return max_c_diff, max_y_diff
 
+
 class TestModelBlockUpdate(unittest.TestCase):
     def test_block_update_cont_KRG(self):
         lower_bound, upper_bound = 0, 25
-        x_DOI = np.array([
-                [3.5],
-                [8.0],
-                [12.0]
-                ])
+        x_DOI = np.array([[3.5], [8.0], [12.0]])
         y_doi = xsinx(x_DOI)
 
         ds = DesignSpace([FloatVariable(lower_bound, upper_bound)])
@@ -139,6 +150,7 @@ class TestModelBlockUpdate(unittest.TestCase):
         self.assertLess(max_y_diff_single, 1e-6)
         self.assertLess(max_c_diff_multiple, 1e-6)
         self.assertLess(max_y_diff_multiple, 1e-6)
+
 
 if __name__ == "__main__":
     unittest.main()

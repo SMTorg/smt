@@ -4,15 +4,18 @@ Author: Dr. Mohamed A. Bouhlel <mbouhlel@umich.edu>
 This package is distributed under New BSD license.
 """
 
-from smt.kernels import Kernel
-from smt.surrogate_models.krg_based import KrgBased
-from smt.surrogate_models.krg_based.distances import componentwise_distance
-
-from typing import Tuple, Optional
+from typing import Optional, Tuple
 
 import numpy as np
-from scipy.linalg import solve_triangular, cholesky
-from smt.surrogate_models.krg_based.distances import differences
+from scipy.linalg import cholesky, solve_triangular
+
+from smt.kernels import Kernel
+from smt.surrogate_models.krg_based import KrgBased
+from smt.surrogate_models.krg_based.distances import (
+    componentwise_distance,
+    differences,
+)
+
 
 class KRG(KrgBased):
     name = "Kriging"
@@ -52,17 +55,11 @@ class KRG(KrgBased):
         Theta hyperparameters and scaling factors on X and Y are kept fixed while the correlation matrix is updated
         using a block matrix approach instead of being recomputed from scratch.
         """
-        self._update_smt_model(
-            X_new=X,
-            Y_new=Y
-        )
+        self._update_smt_model(X_new=X, Y_new=Y)
 
     @staticmethod
     def _update_cholesky_block(
-        L_old: np.ndarray,
-        R12: np.ndarray,
-        R22: np.ndarray,
-        nugget: float = 1e-10
+        L_old: np.ndarray, R12: np.ndarray, R22: np.ndarray, nugget: float = 1e-10
     ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
         """
         Compute the Cholesky block update.
@@ -103,9 +100,7 @@ class KRG(KrgBased):
             is_positive_definite = R22_eff > 0.0
 
             if not is_positive_definite:
-                raise ValueError(
-                    "Updated correlation matrix is not positive definite."
-                )
+                raise ValueError("Updated correlation matrix is not positive definite.")
             L22 = np.array([[np.sqrt(R22_eff)]])
 
         else:
@@ -123,9 +118,7 @@ class KRG(KrgBased):
 
     @staticmethod
     def _update_inverse_cholesky_block(
-        L_old_inv: np.ndarray,
-        L21: np.ndarray,
-        L22: np.ndarray
+        L_old_inv: np.ndarray, L21: np.ndarray, L22: np.ndarray
     ) -> np.ndarray:
         """
         Compute the inverse of the Cholesky Gram matrix L^{-1} block update.
@@ -261,11 +254,7 @@ class KRG(KrgBased):
 
         return L_new, L_new_inv
 
-    def _update_smt_model(
-        self,
-        X_new: np.ndarray,
-        Y_new: np.ndarray
-    ) -> "KRG":
+    def _update_smt_model(self, X_new: np.ndarray, Y_new: np.ndarray) -> "KRG":
         """
         Perform Cholesky block update and inject the state back into the SMT model.
 
@@ -304,9 +293,7 @@ class KRG(KrgBased):
         self.training_points[None][0][1] = Y_train_appended
 
         self.X_norma = np.vstack((self.X_norma, X_new_norma))
-        self.y_norma = np.vstack(
-            (self.y_norma, Y_new_norma.reshape(-1, 1))
-        )
+        self.y_norma = np.vstack((self.y_norma, Y_new_norma.reshape(-1, 1)))
         self.nt = self.X_norma.shape[0]
 
         regression_type = self._regression_types[self.options["poly"]]
