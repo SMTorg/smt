@@ -298,6 +298,7 @@ class KRG(KrgBased):
 
         regression_type = self._regression_types[self.options["poly"]]
         F_combined = regression_type(self.X_norma)
+        self.F = F_combined
 
         v_F = L_new_inv @ F_combined
         v_Y = L_new_inv @ self.y_norma
