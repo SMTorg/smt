@@ -52,9 +52,34 @@ class KRG(KrgBased):
 
     def update_model(self, X, Y):
         """
-        Update the KRG model with n training points (X, Y) without full re-train:
-        Theta hyperparameters and scaling factors on X and Y are kept fixed while the correlation matrix is updated
-        using a block matrix approach instead of being recomputed from scratch.
+        Add training points to a trained model without re-training it.
+
+        The hyperparameters (theta, noise) and the scaling factors of X and Y
+        are kept fixed. The Cholesky factor of the correlation matrix is
+        extended by a block update instead of being recomputed from scratch,
+        then the regression coefficients (beta), the GP weights (gamma) and
+        the process variance (sigma2) are re-estimated on the whole training
+        set.
+
+        Contrary to ``train()``, the scaling factors are not recomputed, so
+        results differ slightly from a re-training with ``hyper_opt="NoOp"``.
+
+        Only continuous, non-hierarchical design spaces with homoscedastic
+        noise and ``is_ri=False`` are supported.
+
+        Parameters
+        ----------
+        X : np.ndarray[n_new, nx] or np.ndarray[n_new]
+            New input points.
+        Y : np.ndarray[n_new, ny] or np.ndarray[n_new]
+            Output values at the new input points.
+
+        Raises
+        ------
+        RuntimeError
+            If the model has not been trained.
+        NotImplementedError
+            If the model or its options are not supported by the block update.
         """
         self._update_smt_model(X_new=X, Y_new=Y)
 
@@ -122,16 +147,12 @@ class KRG(KrgBased):
         """
         Check if the surrogate model is compatible with block updates.
 
-        Parameters
-        ----------
-        self : KRG
-            The surrogate model being updated.
-
         Raises
         ------
-        TypeError
-            If the model is not an instance of KRG or if the design space
-            has mixed variables.
+        NotImplementedError
+            If the model is a subclass of KRG, if the design space has
+            non-continuous or conditionally acting variables, or if
+            heteroscedastic noise or reinterpolation is used.
         """
         # Subclasses (e.g. SGP) store a different model state in optimal_par
         if type(self) is not KRG:
@@ -161,22 +182,17 @@ class KRG(KrgBased):
                 "Block update is not supported with reinterpolation (is_ri)."
             )
 
-    def _predict_covariance(
-        self,
-        X_new: np.ndarray,
-        is_normalized: bool = False,
+    def _extend_cholesky(
+        self, X_new_norma: np.ndarray
     ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
         """
-        Compute joint Cholesky factorization of training data and new candidates.
+        Extend the Cholesky factor of the training correlation matrix with
+        new points.
 
         Parameters
         ----------
-        self : KRG
-            The KRG surrogate model to update.
-        X_new : np.ndarray
-            New input points to add to the covariance structure.
-        is_normalized : bool, optional
-            If True, bypasses the internal SMT normalization step.
+        X_new_norma : np.ndarray
+            New input points, normalized with the model scaling factors.
 
         Returns
         -------
@@ -187,20 +203,15 @@ class KRG(KrgBased):
         L22 : np.ndarray
             New diagonal block of the Cholesky matrix.
         """
-        self._check_model_compatibility()
-
-        if is_normalized:
-            X_new_norma = X_new
-        else:
-            X_new_norma = (X_new - self.X_offset) / self.X_scale
+        n_new = X_new_norma.shape[0]
 
         dx12 = differences(self.X_norma, Y=X_new_norma)
         d12 = self._componentwise_distance(dx12)
-        R12 = self.corr(d12).reshape(self.nt, X_new.shape[0])
+        R12 = self.corr(d12).reshape(self.nt, n_new)
 
         dx22 = differences(X_new_norma, Y=X_new_norma)
         d22 = self._componentwise_distance(dx22)
-        R22 = self.corr(d22).reshape(X_new.shape[0], X_new.shape[0])
+        R22 = self.corr(d22).reshape(n_new, n_new)
 
         L_old = self.optimal_par["C"]
 
@@ -210,27 +221,21 @@ class KRG(KrgBased):
 
         return self._update_cholesky_block(L_old, R12, R22, nugget=nugget + noise)
 
-    def _update_smt_model(self, X_new: np.ndarray, Y_new: np.ndarray) -> "KRG":
+    def _update_smt_model(self, X_new: np.ndarray, Y_new: np.ndarray) -> None:
         """
-        Perform Cholesky block update and inject the state back into the SMT model.
+        Perform the Cholesky block update and store the new state in the model
+        (training points, normalized data and optimal_par), in place.
 
         Only the rows of the new points are solved against the block factor, so
         no full factorization or inverse of the correlation matrix is needed.
+        New points are normalized with the existing scaling factors.
 
         Parameters
         ----------
-        self : KRG
-            The KRG surrogate model to update.
         X_new : np.ndarray
             New input points to add to the model.
         Y_new : np.ndarray
-            Target values corresponding to the new input points.
-
-        Returns
-        -------
-        sm_model : KRG
-            The updated KRG model, whose training values have been normalized (X)
-            or standardized (Y) based on already existing scaling factors.
+            Output values at the new input points.
         """
         if not hasattr(self, "optimal_par"):
             raise RuntimeError("update_model requires a trained model.")
@@ -255,7 +260,7 @@ class KRG(KrgBased):
         Y_new_norma = (Y_new - self.y_mean) / self.y_std
 
         L_old = self.optimal_par["C"]
-        L_new, L21, L22 = self._predict_covariance(X_new_norma, is_normalized=True)
+        L_new, L21, L22 = self._extend_cholesky(X_new_norma)
 
         # Whitened (L^-1 applied) regression matrix and outputs of the old points.
         # Ft_old comes from training; Yt_old costs one O(nt^2) triangular solve.
