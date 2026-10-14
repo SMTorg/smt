@@ -23,6 +23,7 @@ SMT has been developed thanks to contributions from:
 * Ewout ter Hoeven
 * Florent Vergnes
 * Frederick Zahle
+* Gaston Plat
 * Heine Røstum
 * Hugo Reimeringer
 * Hugo Valayer
@@ -52,4 +53,3 @@ SMT has been developed thanks to contributions from:
 * Vincent Drouet
 * Yingqian Liao
 * Zhou Tianxun
-* Gaston Plat
