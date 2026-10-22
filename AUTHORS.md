@@ -23,6 +23,7 @@ SMT has been developed thanks to contributions from:
 * Ewout ter Hoeven
 * Florent Vergnes
 * Frederick Zahle
+* Gaston Plat
 * Heine Røstum
 * Hugo Reimeringer
 * Hugo Valayer
