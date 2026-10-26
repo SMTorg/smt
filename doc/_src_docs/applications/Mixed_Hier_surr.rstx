@@ -52,6 +52,7 @@ Mixed Integer Kriging with Homoscedastic Hypersphere (HH)
 ---------------------------------------------------------
 
 This surrogate model assumes that the correlation kernel between the levels of a given variable is a symmetric positive definite matrix. The latter matrix is estimated through an hypersphere parametrization depending on several hyperparameters. To finish with, the data correlation matrix is build as the product of the correlation matrices over the various variables. Details can be found in [1]_ . Note that this model is the only one to consider negative correlations between levels ("blue" can be correlated negatively to "red").
+When combined with KPLS, the option ``cat_kernel_comps`` allows dimension reduction of the categorical correlation space via Row-Normalized PLS (RN-PLS) and certified Mean-Deflated Gershgorin (MDG*) diagonal repair [5]_, strictly preserving unit diagonal variances and positive definiteness.
 
 Example of mixed integer Homoscedastic Hypersphere model
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -63,6 +64,7 @@ Mixed Integer Kriging with Exponential Homoscedastic Hypersphere (EHH)
 ----------------------------------------------------------------------
 
 This surrogate model also considers that the correlation kernel between the levels of a given variable is a symmetric positive definite matrix. The latter matrix is estimated through an hypersphere parametrization depending on several hyperparameters. Thereafter, an exponential kernel is applied to the matrix. To finish with, the data correlation matrix is build as the product of the correlation matrices over the various variables. Therefore, this model could not model negative correlation and only works with absolute exponential and Gaussian kernels. Details can be found in [1]_ .
+Similarly, ``cat_kernel_comps`` enables PLS dimension reduction for EHH with MDG* repair, mapping latent correlations through the Schoenberg chordal exponential kernel [5]_.
 
 Example of mixed integer Exponential Homoscedastic Hypersphere model
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -111,4 +113,6 @@ References
 .. [3] Da Veiga, S. (2025). "Distributional Encoding for Categorical Variables in Gaussian Process Regression". 
 
 .. [4] Saves, P., Halle‑Hannan, E., Bussemaker, J., Diouane, Y., Bartoli, N. (2025). "Hierarchical Modeling and Architecture Optimization: Review and Unified Framework", arXiv:2506.22621.
+
+.. [5] Saves, P. (2026). "Partial Least Squares for Correlation Matrices: Theory and Applications", DOI: 10.13140/RG.2.2.16959.06569.
 
