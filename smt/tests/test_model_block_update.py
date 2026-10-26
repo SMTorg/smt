@@ -129,7 +129,7 @@ class TestModelBlockUpdate(unittest.TestCase):
                 self.assert_matches_reference(sm, updated, X_new, xsinx(X_new))
 
     def test_multi_output_update(self):
-        sm = KRG(theta0=[1e-1], print_global=False,seed=42)
+        sm = KRG(theta0=[1e-1], print_global=False, seed=42)
         sm.set_training_values(self.xt, np.hstack((self.yt, np.cos(self.xt))))
         sm.train()
 
@@ -165,7 +165,7 @@ class TestModelBlockUpdate(unittest.TestCase):
 
         xt = np.repeat(np.linspace(0, 25, 6), 2).reshape(-1, 1)
         noise = 0.1 * np.random.default_rng(42).standard_normal(xt.shape)
-        sm = KRG(use_het_noise=True, eval_noise=True, print_global=False,seed=42)
+        sm = KRG(use_het_noise=True, eval_noise=True, print_global=False, seed=42)
         sm.set_training_values(xt, xsinx(xt) + noise)
         sm.train()
         self.assertIn("C", sm.optimal_par)
@@ -174,7 +174,7 @@ class TestModelBlockUpdate(unittest.TestCase):
 
         ds = DesignSpace([FloatVariable(0, 25), CategoricalVariable(["a", "b"])])
         xt = np.array([[3.5, 0], [8.0, 1], [12.0, 0], [17.0, 1]])
-        sm = KRG(design_space=ds, print_global=False,seed=42)
+        sm = KRG(design_space=ds, print_global=False, seed=42)
         sm.set_training_values(xt, xsinx(xt[:, :1]))
         sm.train()
         with self.assertRaises(NotImplementedError):
