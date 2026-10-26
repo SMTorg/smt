@@ -7,6 +7,7 @@ This package is distributed under New BSD license.
 import numpy as np
 from sklearn.cross_decomposition import PLSRegression as pls
 
+from smt.design_space import CategoricalVariable
 from smt.surrogate_models.krg_based import KrgBased, MixIntKernelType
 from smt.surrogate_models.krg_based.distances import componentwise_distance_PLS
 
@@ -108,16 +109,32 @@ class KPLS(KrgBased):
         """
         Validates KPLS-specific parameters before calling base class validation.
         """
-        if (
-            self.options["categorical_kernel"]
-            not in [
-                MixIntKernelType.EXP_HOMO_HSPHERE,
-                MixIntKernelType.HOMO_HSPHERE,
-            ]
-            and self._use_pls
-        ):
-            if self.options["cat_kernel_comps"] is not None:
+        if self.options["cat_kernel_comps"] is not None:
+            if (
+                self.options["categorical_kernel"]
+                not in [
+                    MixIntKernelType.EXP_HOMO_HSPHERE,
+                    MixIntKernelType.HOMO_HSPHERE,
+                ]
+                and self._use_pls
+            ):
                 raise ValueError("cat_kernel_comps option is for homoscedastic kernel.")
+            cat_n_values = [
+                dv.n_values
+                for dv in self.design_space.design_variables
+                if isinstance(dv, CategoricalVariable)
+            ]
+            cat_comps = self.options["cat_kernel_comps"]
+            if len(cat_comps) != len(cat_n_values):
+                raise ValueError(
+                    f"cat_kernel_comps length ({len(cat_comps)}) must match the "
+                    f"number of categorical variables ({len(cat_n_values)})."
+                )
+            for idx, (c, n_val) in enumerate(zip(cat_comps, cat_n_values)):
+                if int(c) < 2 or int(c) > n_val:
+                    raise ValueError(
+                        f"cat_kernel_comps[{idx}]={c} must be in [2, {n_val}]."
+                    )
 
         if not self.options["eval_n_comp"]:
             if (
