@@ -117,13 +117,10 @@ class KPLS(KrgBased):
                     f"cat_kernel_comps must be a list or tuple of integers, "
                     f"got {type(self.options['cat_kernel_comps']).__name__}."
                 )
-            if (
-                self.options["categorical_kernel"]
-                not in [
-                    MixIntKernelType.EXP_HOMO_HSPHERE,
-                    MixIntKernelType.HOMO_HSPHERE,
-                ]
-            ):
+            if self.options["categorical_kernel"] not in [
+                MixIntKernelType.EXP_HOMO_HSPHERE,
+                MixIntKernelType.HOMO_HSPHERE,
+            ]:
                 raise ValueError(
                     "cat_kernel_comps option is only supported for HOMO_HSPHERE or EXP_HOMO_HSPHERE kernels."
                 )

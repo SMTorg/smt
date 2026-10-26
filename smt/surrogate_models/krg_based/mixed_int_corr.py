@@ -535,9 +535,7 @@ def latent_hypersphere_corr_matrix(ell: int, theta_cat: np.ndarray):
     return T_lat
 
 
-def compute_rn_pls_cat_weights(
-    X_cont, X_icat, y_data, n_levels_orig: int, ell: int
-):
+def compute_rn_pls_cat_weights(X_cont, X_icat, y_data, n_levels_orig: int, ell: int):
     """Compute Row-Normalized PLS (RN-PLS) categorical rotation weights ``G_*``.
 
     Fits PLS regression on the joint continuous-categorical design matrix
@@ -719,7 +717,6 @@ def matrix_data_corr_levels_cat_mod_comps(
                         Theta_i_red[indijk], d_cat_i[k : k + 1][0][indijk]
                     )
                 r_cat[k] = kval_cat
-
 
 
 def compute_n_param(design_space, cat_kernel, d, n_comp, mat_dim):

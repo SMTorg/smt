@@ -1991,7 +1991,9 @@ class TestMixedInteger(unittest.TestCase):
         ).reshape(-1, 1)
 
         G_star = compute_rn_pls_cat_weights(X_cont, X_icat, y_data, n_levels_orig, ell)
-        self.assertEqual(G_star.shape, (n_levels_orig * (n_levels_orig - 1) // 2, d_out))
+        self.assertEqual(
+            G_star.shape, (n_levels_orig * (n_levels_orig - 1) // 2, d_out)
+        )
         # Exact unit Euclidean row norms across both observed and unobserved pairs
         np.testing.assert_allclose(np.sum(G_star**2, axis=1), 1.0, atol=1e-14)
 
@@ -2019,7 +2021,9 @@ class TestMixedInteger(unittest.TestCase):
         T_reconstructed = reconstruct_and_mdg_repair(
             T_safe_lat, G_star, n_levels_orig, 20.0, is_ehh=False, eps=1e-6
         )
-        ds_cat = DesignSpace([CategoricalVariable([str(k) for k in range(n_levels_orig)])])
+        ds_cat = DesignSpace(
+            [CategoricalVariable([str(k) for k in range(n_levels_orig)])]
+        )
         X_train_cat = X_icat.reshape(-1, 1)
         X_pred_cat = rng.integers(0, n_levels_orig, size=(10, 1))
         X_full_train = compute_X_cross(X_icat, n_levels_orig)
@@ -2042,7 +2046,9 @@ class TestMixedInteger(unittest.TestCase):
         np.testing.assert_allclose(r_new_train, r_legacy_train, atol=1e-14)
 
         # 2) Prediction cross-correlations equivalence
-        _, ij_pred = cross_distances(X_pred_cat.astype(float), X_train_cat.astype(float))
+        _, ij_pred = cross_distances(
+            X_pred_cat.astype(float), X_train_cat.astype(float)
+        )
         Lij_pred, _ = cross_levels(
             X=X_pred_cat, ij=ij_pred, design_space=ds_cat, y=X_train_cat
         )
@@ -2056,9 +2062,7 @@ class TestMixedInteger(unittest.TestCase):
         matrix_data_corr_levels_cat_mod_comps(
             0, Lij_pred, r_legacy_pred, np.array([ell]), T_safe_lat, d_cat_pred, True
         )
-        matrix_data_corr_levels_cat_mod(
-            0, Lij_pred, r_new_pred, T_reconstructed, True
-        )
+        matrix_data_corr_levels_cat_mod(0, Lij_pred, r_new_pred, T_reconstructed, True)
         np.testing.assert_allclose(r_new_pred, r_legacy_pred, atol=1e-14)
 
         # Certified SPD + exact unit diagonal across random spherical angles (HH and EHH over full [0, 2*pi])
