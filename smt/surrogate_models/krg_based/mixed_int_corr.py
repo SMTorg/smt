@@ -21,6 +21,7 @@ correct_distances_cat_decreed
     Corrects distances for conditionally-acting categorical variables.
 """
 
+import warnings
 import numpy as np
 from sklearn.cross_decomposition import PLSRegression as pls
 
@@ -587,8 +588,21 @@ def compute_rn_pls_cat_weights(
                 G_cat_eff = np.asarray(rotations[d_cont:, :], dtype=np.float64)
                 G_cat_eff = np.nan_to_num(G_cat_eff, nan=0.0, posinf=0.0, neginf=0.0)
                 G_raw[:, :n_comp_eff] = G_cat_eff
-        except (ValueError, StopIteration, np.linalg.LinAlgError):
-            pass
+        except (ValueError, StopIteration, np.linalg.LinAlgError) as err:
+            warnings.warn(
+                f"PLS regression failed during RN-PLS categorical weight computation ({err}). "
+                "Falling back to uniform categorical subspace weights.",
+                UserWarning,
+                stacklevel=2,
+            )
+
+    if n_comp_eff < d_out:
+        warnings.warn(
+            f"Effective categorical PLS rank ({n_comp_eff}) is smaller than requested latent dimension "
+            f"d_out={d_out} (ell={ell}). Trailing latent components are unconstrained by data.",
+            UserWarning,
+            stacklevel=2,
+        )
 
     omega = np.sum(G_raw**2, axis=1, keepdims=True)
     G_star = np.empty_like(G_raw)
@@ -610,7 +624,7 @@ def reconstruct_and_mdg_repair(
     """Reconstruct ``L x L`` correlation matrix via RN-PLS and apply ``O(L^2)`` MDG* repair.
 
     Implements the convex reconstruction operator ``T_{G_*}(T_lat)``, the
-    Mean-Deflated Weyl-Gershgorin (MDG*) diagonal shift-and-scaling repair
+    Mean-Deflated Gershgorin (MDG*) diagonal shift-and-scaling repair
     preserving exact unit diagonals and strict positive definiteness, and the
     Schoenberg Hilbertian chordal exponential kernel for ``EXP_HOMO_HSPHERE``
     (Saves, 2026, https://hal.science/hal-05835102).
@@ -706,10 +720,6 @@ def matrix_data_corr_levels_cat_mod_comps(
                     )
                 r_cat[k] = kval_cat
 
-
-# ======================================================================
-# Original mixed_int_corr.py content
-# ======================================================================
 
 
 def compute_n_param(design_space, cat_kernel, d, n_comp, mat_dim):

@@ -2061,7 +2061,7 @@ class TestMixedInteger(unittest.TestCase):
         )
         np.testing.assert_allclose(r_new_pred, r_legacy_pred, atol=1e-14)
 
-        # Certified SPD + exact unit diagonal across random spherical angles (HH and EHH)
+        # Certified SPD + exact unit diagonal across random spherical angles (HH and EHH over full [0, 2*pi])
         for _ in range(25):
             angles_hh = rng.uniform(0.0, 2.0 * np.pi, size=d_out)
             T_lat_hh = latent_hypersphere_corr_matrix(ell, angles_hh)
@@ -2073,7 +2073,8 @@ class TestMixedInteger(unittest.TestCase):
             np.testing.assert_allclose(np.diag(T_spd_hh), 1.0, atol=1e-15)
             self.assertGreater(np.linalg.eigvalsh(T_spd_hh).min(), 0.0)
 
-            angles_ehh = rng.uniform(0.0, 0.5 * np.pi, size=d_out)
+            # EHH with full [0, 2*pi] spherical angles (including negative correlation regions)
+            angles_ehh = rng.uniform(0.0, 2.0 * np.pi, size=d_out)
             T_lat_ehh = latent_hypersphere_corr_matrix(ell, angles_ehh)
             T_spd_ehh = reconstruct_and_mdg_repair(
                 T_lat_ehh, G_star, n_levels_orig, 20.0, is_ehh=True, eps=1e-6
@@ -2081,7 +2082,53 @@ class TestMixedInteger(unittest.TestCase):
             np.testing.assert_allclose(np.diag(T_spd_ehh), 1.0, atol=1e-15)
             self.assertGreater(np.linalg.eigvalsh(T_spd_ehh).min(), 0.0)
 
-        # Parameter validation checks
+        # Edge case: ell == n_levels_orig (L = 15)
+        d_in = n_levels_orig * (n_levels_orig - 1) // 2
+        G_star_full = compute_rn_pls_cat_weights(
+            X_cont, X_icat, y_data, n_levels_orig, n_levels_orig
+        )
+        np.testing.assert_allclose(G_star_full, np.eye(d_in), atol=1e-15)
+
+        # Edge case: minimal dimension ell = 2 (d_out = 1)
+        G_star_2 = compute_rn_pls_cat_weights(X_cont, X_icat, y_data, n_levels_orig, 2)
+        self.assertEqual(G_star_2.shape, (d_in, 1))
+        np.testing.assert_allclose(np.sum(G_star_2**2, axis=1), 1.0, atol=1e-14)
+        T_lat_2 = latent_hypersphere_corr_matrix(2, np.array([0.4]))
+        self.assertEqual(T_lat_2.shape, (2, 2))
+        np.testing.assert_allclose(np.diag(T_lat_2), 1.0, atol=1e-15)
+
+        # Explicit verification of active eta > 0 closed-form repair branch
+        L_test = 4
+        d_in_test = L_test * (L_test - 1) // 2
+        G_star_test = np.eye(d_in_test)
+        T_raw_lat = np.array(
+            [
+                [1.0, 0.9, -0.8, 0.7],
+                [0.9, 1.0, 0.6, -0.75],
+                [-0.8, 0.6, 1.0, 0.85],
+                [0.7, -0.75, 0.85, 1.0],
+            ]
+        )
+        eps_test = 1e-5
+        T_repaired = reconstruct_and_mdg_repair(
+            T_raw_lat, G_star_test, L_test, 20.0, is_ehh=False, eps=eps_test
+        )
+        off_vals = [0.9, -0.8, 0.7, 0.6, -0.75, 0.85]
+        rho_plus = max(0.0, float(np.mean(off_vals)))
+        max_g = max(np.sum(np.abs(T_raw_lat), axis=1) - 1.0)
+        max_m = max(
+            np.sum(np.abs(T_raw_lat - rho_plus), axis=1) - np.abs(1.0 - rho_plus)
+        )
+        eta_g = max(0.0, max_g - 1.0 + eps_test)
+        eta_m = max(0.0, rho_plus + max_m - 1.0 + eps_test)
+        eta_expected = min(eta_g, eta_m)
+        self.assertGreater(eta_expected, 0.0)
+        T_expected = (T_raw_lat + eta_expected * np.eye(L_test)) / (1.0 + eta_expected)
+        np.fill_diagonal(T_expected, 1.0)
+        np.testing.assert_allclose(T_repaired, T_expected, atol=1e-15)
+        self.assertGreater(np.linalg.eigvalsh(T_repaired).min(), 0.0)
+
+        # Parameter validation checks: types, bounds, kernels, and design spaces
         ds_val = DesignSpace(
             [
                 FloatVariable(0.0, 1.0),
@@ -2090,6 +2137,8 @@ class TestMixedInteger(unittest.TestCase):
         )
         xt_val = np.array([[0.1, 0], [0.4, 1], [0.7, 2], [0.9, 3]])
         yt_val = np.array([[1.0], [2.0], [0.5], [1.5]])
+
+        # 1) Out of bounds or wrong length
         for bad_comps in [[1], [6], [3, 2]]:
             sm_bad = KPLS(
                 design_space=ds_val,
@@ -2101,6 +2150,52 @@ class TestMixedInteger(unittest.TestCase):
             sm_bad.set_training_values(xt_val, yt_val)
             with self.assertRaises(ValueError):
                 sm_bad.train()
+
+        # 2) Non-integer float element [2.5] raises TypeError on train()
+        sm_bad_float = KPLS(
+            design_space=ds_val,
+            n_comp=1,
+            categorical_kernel=MixIntKernelType.HOMO_HSPHERE,
+            cat_kernel_comps=[2.5],
+            print_global=False,
+        )
+        sm_bad_float.set_training_values(xt_val, yt_val)
+        with self.assertRaises(TypeError):
+            sm_bad_float.train()
+
+        # Non-sequence type (e.g. integer 3) rejected at initialization
+        with self.assertRaises((TypeError, AssertionError)):
+            KPLS(
+                design_space=ds_val,
+                n_comp=1,
+                categorical_kernel=MixIntKernelType.HOMO_HSPHERE,
+                cat_kernel_comps=3,
+                print_global=False,
+            )
+
+        # 3) Non-homoscedastic kernel with cat_kernel_comps
+        sm_bad_kernel = KPLS(
+            design_space=ds_val,
+            n_comp=1,
+            categorical_kernel=MixIntKernelType.CONT_RELAX,
+            cat_kernel_comps=[3],
+            print_global=False,
+        )
+        sm_bad_kernel.set_training_values(xt_val, yt_val)
+        with self.assertRaises(ValueError):
+            sm_bad_kernel.train()
+
+        # 4) Purely continuous design space with cat_kernel_comps
+        ds_cont_only = DesignSpace([FloatVariable(0.0, 1.0), FloatVariable(0.0, 1.0)])
+        sm_bad_ds = KPLS(
+            design_space=ds_cont_only,
+            n_comp=1,
+            cat_kernel_comps=[3],
+            print_global=False,
+        )
+        sm_bad_ds.set_training_values(xt_val, yt_val)
+        with self.assertRaises(ValueError):
+            sm_bad_ds.train()
 
     def test_high_cardinality_cat_pls_mdg(self):
         rng = np.random.default_rng(123)
