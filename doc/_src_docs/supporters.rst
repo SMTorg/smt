@@ -4,5 +4,5 @@ Supporting Research Institutions
 --------------------------------
 
 .. image:: ../logosbands.svg
-  :height: 120
-  :width:  1250
+  :height: 400
+  :width:  1600
