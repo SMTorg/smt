@@ -13,12 +13,16 @@ This model is suitable for high-dimensional problems due to the kernel construct
 Both absolute exponential and squared exponential kernels are available for KPLS model. More details about the KPLS approach could be found in these sources [2]_.
 
 For an automatic selection of the number of components :math:`h`, the adjusted Wold's R criterion is implemented  as detailed in [3]_.
+
+For categorical variables with homoscedastic kernels (``HOMO_HSPHERE`` and ``EXP_HOMO_HSPHERE``), the ``cat_kernel_comps`` option enables latent dimension reduction via Row-Normalized PLS (RN-PLS) and certified Mean-Deflated Gershgorin (MDG*) repair without variance distortion [4]_.
 	
 .. [1] Wold, H., Soft modeling by latent variables: the nonlinear iterative partial least squares approach, Perspectives in probability and statistics, papers in honour of MS Bartlett, 1975, pp. 520--540.
 
 .. [2] Bouhlel, M. A. and Bartoli, N. and  Otsmane, A. and Morlier, J., Improving kriging surrogates of high-dimensional design models by Partial Least Squares dimension reduction, Structural and Multidisciplinary Optimization, Vol. 53, No. 5, 2016, pp. 935--952.
 
 .. [3] Saves, P. and Bartoli, N. and Diouane, Y. and Lefebvre, T. and Morlier, J. and David, C. and Nguyen Van, E. and Defoort, S., Bayesian optimization for mixed variables using an adaptive dimension reduction process: applications to aircraft design, AIAA SCITECH 2022 Forum, pp. 0082. 
+
+.. [4] Saves, P., Partial Least Squares for Correlation Matrices: Theory and Applications, 2026, DOI: 10.13140/RG.2.2.16959.06569. 
 
 
 Usage

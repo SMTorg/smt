@@ -39,6 +39,20 @@ from smt.surrogate_models import (
     MixHrcKernelType,
     MixIntKernelType,
 )
+from smt.surrogate_models.krg_based import (
+    componentwise_distance_PLS,
+    compute_rn_pls_cat_weights,
+    compute_X_cross,
+    cross_distances,
+    cross_levels,
+    cross_levels_homo_space,
+    latent_hypersphere_corr_matrix,
+    reconstruct_and_mdg_repair,
+)
+from smt.surrogate_models.krg_based.mixed_int_corr import (
+    matrix_data_corr_levels_cat_mod,
+    matrix_data_corr_levels_cat_mod_comps,
+)
 
 
 class TestMixedInteger(unittest.TestCase):
@@ -1737,7 +1751,7 @@ class TestMixedInteger(unittest.TestCase):
             theta0=[1e-2],
             n_comp=1,
             categorical_kernel=MixIntKernelType.EXP_HOMO_HSPHERE,
-            cat_kernel_comps=[3],
+            cat_kernel_comps=[4],
             corr="squar_exp",
         )
         sm.set_training_values(xt, yt)
@@ -1818,7 +1832,7 @@ class TestMixedInteger(unittest.TestCase):
                 theta0=[1e-2],
                 n_comp=1,
                 categorical_kernel=MixIntKernelType.HOMO_HSPHERE,
-                cat_kernel_comps=[3],
+                cat_kernel_comps=[4],
                 hyper_opt="Cobyla",
                 corr="squar_exp",
             ),
@@ -1936,7 +1950,7 @@ class TestMixedInteger(unittest.TestCase):
                 theta0=[1e-2],
                 n_comp=1,
                 categorical_kernel=MixIntKernelType.EXP_HOMO_HSPHERE,
-                cat_kernel_comps=[3, 2],
+                cat_kernel_comps=[4, 3],
                 hyper_opt="Cobyla",
                 corr="squar_exp",
             ),
@@ -1959,6 +1973,293 @@ class TestMixedInteger(unittest.TestCase):
         # prediction are correct on known points
         self.assertTrue((np.abs(np.sum(np.array(sm.predict_values(xt) - yt)) < 1e-6)))
         self.assertTrue((np.abs(np.sum(np.array(sm.predict_variances(xt) - 0)) < 1e-6)))
+
+    def test_rn_pls_and_mdg_repair_properties(self):
+        rng = np.random.default_rng(42)
+        n_levels_orig = 15
+        ell = 4
+        d_out = ell * (ell - 1) // 2
+
+        # Include unobserved categories (only sample from 0..11) to test zero-row handling
+        nt = 30
+        X_cont = rng.uniform(-1.0, 1.0, size=(nt, 2))
+        X_icat = rng.integers(0, 12, size=nt)
+        y_data = (
+            np.sin(np.pi * X_cont[:, 0])
+            + np.cos(2.0 * np.pi * X_icat / n_levels_orig)
+            + 0.2 * X_cont[:, 1] * (X_icat / n_levels_orig)
+        ).reshape(-1, 1)
+
+        G_star = compute_rn_pls_cat_weights(X_cont, X_icat, y_data, n_levels_orig, ell)
+        self.assertEqual(
+            G_star.shape, (n_levels_orig * (n_levels_orig - 1) // 2, d_out)
+        )
+        # Exact unit Euclidean row norms across both observed and unobserved pairs
+        np.testing.assert_allclose(np.sum(G_star**2, axis=1), 1.0, atol=1e-14)
+
+        # MDG* eliminates over-shrinkage on positive equicorrelation matrices
+        rho = 0.85
+        T_eq_lat = np.full((ell, ell), rho)
+        np.fill_diagonal(T_eq_lat, 1.0)
+        T_eq_repaired = reconstruct_and_mdg_repair(
+            T_eq_lat, G_star, n_levels_orig, 20.0, is_ehh=False, eps=1e-6
+        )
+        T_eq_expected = np.full((n_levels_orig, n_levels_orig), rho)
+        np.fill_diagonal(T_eq_expected, 1.0)
+        np.testing.assert_allclose(T_eq_repaired, T_eq_expected, atol=1e-14)
+
+        # Exact canonical equivalence (Lemma 14) with legacy Hadamard pipeline when eta == 0:
+        # Choose small positive latent correlations (< 1/(L-1)) so eta == 0 is inactive
+        T_safe_lat = np.array(
+            [
+                [1.0, 0.02, 0.01, 0.03],
+                [0.02, 1.0, 0.04, 0.015],
+                [0.01, 0.04, 1.0, 0.025],
+                [0.03, 0.015, 0.025, 1.0],
+            ]
+        )
+        T_reconstructed = reconstruct_and_mdg_repair(
+            T_safe_lat, G_star, n_levels_orig, 20.0, is_ehh=False, eps=1e-6
+        )
+        ds_cat = DesignSpace(
+            [CategoricalVariable([str(k) for k in range(n_levels_orig)])]
+        )
+        X_train_cat = X_icat.reshape(-1, 1)
+        X_pred_cat = rng.integers(0, n_levels_orig, size=(10, 1))
+        X_full_train = compute_X_cross(X_icat, n_levels_orig)
+
+        # 1) Training pairwise correlations equivalence
+        _, ij_train = cross_distances(X_train_cat.astype(float))
+        Lij_train, _ = cross_levels(X=X_train_cat, ij=ij_train, design_space=ds_cat)
+        dx_cat_train = cross_levels_homo_space(X_full_train, ij_train)
+        d_cat_train = componentwise_distance_PLS(
+            dx_cat_train, "squar_exp", d_out, G_star, power=2.0
+        )
+        r_legacy_train = np.ones((ij_train.shape[0], 1))
+        r_new_train = np.ones((ij_train.shape[0], 1))
+        matrix_data_corr_levels_cat_mod_comps(
+            0, Lij_train, r_legacy_train, np.array([ell]), T_safe_lat, d_cat_train, True
+        )
+        matrix_data_corr_levels_cat_mod(
+            0, Lij_train, r_new_train, T_reconstructed, True
+        )
+        np.testing.assert_allclose(r_new_train, r_legacy_train, atol=1e-14)
+
+        # 2) Prediction cross-correlations equivalence
+        _, ij_pred = cross_distances(
+            X_pred_cat.astype(float), X_train_cat.astype(float)
+        )
+        Lij_pred, _ = cross_levels(
+            X=X_pred_cat, ij=ij_pred, design_space=ds_cat, y=X_train_cat
+        )
+        X_full_pred = compute_X_cross(X_pred_cat[:, 0], n_levels_orig)
+        dx_cat_pred = cross_levels_homo_space(X_full_pred, ij_pred, y=X_full_train)
+        d_cat_pred = componentwise_distance_PLS(
+            dx_cat_pred, "squar_exp", d_out, G_star, power=2.0
+        )
+        r_legacy_pred = np.ones((ij_pred.shape[0], 1))
+        r_new_pred = np.ones((ij_pred.shape[0], 1))
+        matrix_data_corr_levels_cat_mod_comps(
+            0, Lij_pred, r_legacy_pred, np.array([ell]), T_safe_lat, d_cat_pred, True
+        )
+        matrix_data_corr_levels_cat_mod(0, Lij_pred, r_new_pred, T_reconstructed, True)
+        np.testing.assert_allclose(r_new_pred, r_legacy_pred, atol=1e-14)
+
+        # Certified SPD + exact unit diagonal across random spherical angles (HH and EHH over full [0, 2*pi])
+        for _ in range(25):
+            angles_hh = rng.uniform(0.0, 2.0 * np.pi, size=d_out)
+            T_lat_hh = latent_hypersphere_corr_matrix(ell, angles_hh)
+            np.testing.assert_allclose(np.diag(T_lat_hh), 1.0, atol=1e-15)
+
+            T_spd_hh = reconstruct_and_mdg_repair(
+                T_lat_hh, G_star, n_levels_orig, 20.0, is_ehh=False, eps=1e-6
+            )
+            np.testing.assert_allclose(np.diag(T_spd_hh), 1.0, atol=1e-15)
+            self.assertGreater(np.linalg.eigvalsh(T_spd_hh).min(), 0.0)
+
+            # EHH with full [0, 2*pi] spherical angles (including negative correlation regions)
+            angles_ehh = rng.uniform(0.0, 2.0 * np.pi, size=d_out)
+            T_lat_ehh = latent_hypersphere_corr_matrix(ell, angles_ehh)
+            T_spd_ehh = reconstruct_and_mdg_repair(
+                T_lat_ehh, G_star, n_levels_orig, 20.0, is_ehh=True, eps=1e-6
+            )
+            np.testing.assert_allclose(np.diag(T_spd_ehh), 1.0, atol=1e-15)
+            self.assertGreater(np.linalg.eigvalsh(T_spd_ehh).min(), 0.0)
+
+        # Edge case: ell == n_levels_orig (L = 15)
+        d_in = n_levels_orig * (n_levels_orig - 1) // 2
+        G_star_full = compute_rn_pls_cat_weights(
+            X_cont, X_icat, y_data, n_levels_orig, n_levels_orig
+        )
+        np.testing.assert_allclose(G_star_full, np.eye(d_in), atol=1e-15)
+
+        # Edge case: minimal dimension ell = 2 (d_out = 1)
+        G_star_2 = compute_rn_pls_cat_weights(X_cont, X_icat, y_data, n_levels_orig, 2)
+        self.assertEqual(G_star_2.shape, (d_in, 1))
+        np.testing.assert_allclose(np.sum(G_star_2**2, axis=1), 1.0, atol=1e-14)
+        T_lat_2 = latent_hypersphere_corr_matrix(2, np.array([0.4]))
+        self.assertEqual(T_lat_2.shape, (2, 2))
+        np.testing.assert_allclose(np.diag(T_lat_2), 1.0, atol=1e-15)
+
+        # Explicit verification of active eta > 0 closed-form repair branch
+        L_test = 4
+        d_in_test = L_test * (L_test - 1) // 2
+        G_star_test = np.eye(d_in_test)
+        T_raw_lat = np.array(
+            [
+                [1.0, 0.9, -0.8, 0.7],
+                [0.9, 1.0, 0.6, -0.75],
+                [-0.8, 0.6, 1.0, 0.85],
+                [0.7, -0.75, 0.85, 1.0],
+            ]
+        )
+        eps_test = 1e-5
+        T_repaired = reconstruct_and_mdg_repair(
+            T_raw_lat, G_star_test, L_test, 20.0, is_ehh=False, eps=eps_test
+        )
+        off_vals = [0.9, -0.8, 0.7, 0.6, -0.75, 0.85]
+        rho_plus = max(0.0, float(np.mean(off_vals)))
+        max_g = max(np.sum(np.abs(T_raw_lat), axis=1) - 1.0)
+        max_m = max(
+            np.sum(np.abs(T_raw_lat - rho_plus), axis=1) - np.abs(1.0 - rho_plus)
+        )
+        eta_g = max(0.0, max_g - 1.0 + eps_test)
+        eta_m = max(0.0, rho_plus + max_m - 1.0 + eps_test)
+        eta_expected = min(eta_g, eta_m)
+        self.assertGreater(eta_expected, 0.0)
+        T_expected = (T_raw_lat + eta_expected * np.eye(L_test)) / (1.0 + eta_expected)
+        np.fill_diagonal(T_expected, 1.0)
+        np.testing.assert_allclose(T_repaired, T_expected, atol=1e-15)
+        self.assertGreater(np.linalg.eigvalsh(T_repaired).min(), 0.0)
+
+        # Parameter validation checks: types, bounds, kernels, and design spaces
+        ds_val = DesignSpace(
+            [
+                FloatVariable(0.0, 1.0),
+                CategoricalVariable([str(k) for k in range(5)]),
+            ]
+        )
+        xt_val = np.array([[0.1, 0], [0.4, 1], [0.7, 2], [0.9, 3]])
+        yt_val = np.array([[1.0], [2.0], [0.5], [1.5]])
+
+        # 1) Out of bounds or wrong length
+        for bad_comps in [[1], [6], [3, 2]]:
+            sm_bad = KPLS(
+                design_space=ds_val,
+                n_comp=1,
+                categorical_kernel=MixIntKernelType.HOMO_HSPHERE,
+                cat_kernel_comps=bad_comps,
+                print_global=False,
+            )
+            sm_bad.set_training_values(xt_val, yt_val)
+            with self.assertRaises(ValueError):
+                sm_bad.train()
+
+        # 2) Non-integer float element [2.5] raises TypeError on train()
+        sm_bad_float = KPLS(
+            design_space=ds_val,
+            n_comp=1,
+            categorical_kernel=MixIntKernelType.HOMO_HSPHERE,
+            cat_kernel_comps=[2.5],
+            print_global=False,
+        )
+        sm_bad_float.set_training_values(xt_val, yt_val)
+        with self.assertRaises(TypeError):
+            sm_bad_float.train()
+
+        # Non-sequence type (e.g. integer 3) rejected at initialization
+        with self.assertRaises((TypeError, AssertionError)):
+            KPLS(
+                design_space=ds_val,
+                n_comp=1,
+                categorical_kernel=MixIntKernelType.HOMO_HSPHERE,
+                cat_kernel_comps=3,
+                print_global=False,
+            )
+
+        # 3) Non-homoscedastic kernel with cat_kernel_comps
+        sm_bad_kernel = KPLS(
+            design_space=ds_val,
+            n_comp=1,
+            categorical_kernel=MixIntKernelType.CONT_RELAX,
+            cat_kernel_comps=[3],
+            print_global=False,
+        )
+        sm_bad_kernel.set_training_values(xt_val, yt_val)
+        with self.assertRaises(ValueError):
+            sm_bad_kernel.train()
+
+        # 4) Purely continuous design space with cat_kernel_comps
+        ds_cont_only = DesignSpace([FloatVariable(0.0, 1.0), FloatVariable(0.0, 1.0)])
+        sm_bad_ds = KPLS(
+            design_space=ds_cont_only,
+            n_comp=1,
+            cat_kernel_comps=[3],
+            print_global=False,
+        )
+        sm_bad_ds.set_training_values(xt_val, yt_val)
+        with self.assertRaises(ValueError):
+            sm_bad_ds.train()
+
+    def test_high_cardinality_cat_pls_mdg(self):
+        rng = np.random.default_rng(123)
+        n_levels = 12
+        nt = 36
+        design_space = DesignSpace(
+            [
+                FloatVariable(0.0, 1.0),
+                CategoricalVariable([f"cat_{k}" for k in range(n_levels)]),
+                FloatVariable(0.0, 1.0),
+            ]
+        )
+        cats = np.repeat(np.arange(n_levels), nt // n_levels)
+        rng.shuffle(cats)
+        x1 = rng.uniform(0.0, 1.0, size=nt)
+        x2 = rng.uniform(0.0, 1.0, size=nt)
+        xt = np.column_stack([x1, cats, x2])
+        yt = (
+            np.sin(2.0 * np.pi * x1)
+            + np.cos(2.0 * np.pi * cats / n_levels)
+            + 0.15 * x2 * (cats / n_levels)
+        ).reshape(-1, 1)
+
+        x_test = np.column_stack(
+            [
+                rng.uniform(0.0, 1.0, size=20),
+                rng.integers(0, n_levels, size=20),
+                rng.uniform(0.0, 1.0, size=20),
+            ]
+        )
+
+        for kernel_type in [
+            MixIntKernelType.HOMO_HSPHERE,
+            MixIntKernelType.EXP_HOMO_HSPHERE,
+        ]:
+            sm = KPLS(
+                design_space=design_space,
+                theta0=[1e-2],
+                n_comp=2,
+                categorical_kernel=kernel_type,
+                cat_kernel_comps=[4],
+                hyper_opt="Cobyla",
+                corr="squar_exp",
+                print_global=False,
+            )
+            sm.set_training_values(xt, yt)
+            sm.train()
+
+            T_opt = sm._mix_int_corr.theta_spd_cat[0]
+            self.assertEqual(T_opt.shape, (n_levels, n_levels))
+            np.testing.assert_allclose(np.diag(T_opt), 1.0, atol=1e-15)
+            self.assertGreater(np.linalg.eigvalsh(T_opt).min(), 0.0)
+
+            np.testing.assert_allclose(sm.predict_values(xt), yt, atol=1e-4)
+            np.testing.assert_allclose(sm.predict_variances(xt), 0.0, atol=1e-5)
+
+            y_pred = sm.predict_values(x_test)
+            y_var = sm.predict_variances(x_test)
+            self.assertEqual(y_pred.shape, (20, 1))
+            self.assertTrue(np.all(y_var >= 0.0))
 
     def test_mixed_gower_3D(self):
         design_space = DesignSpace(

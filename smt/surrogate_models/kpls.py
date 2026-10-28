@@ -7,6 +7,7 @@ This package is distributed under New BSD license.
 import numpy as np
 from sklearn.cross_decomposition import PLSRegression as pls
 
+from smt.design_space import CategoricalVariable
 from smt.surrogate_models.krg_based import KrgBased, MixIntKernelType
 from smt.surrogate_models.krg_based.distances import componentwise_distance_PLS
 
@@ -108,16 +109,45 @@ class KPLS(KrgBased):
         """
         Validates KPLS-specific parameters before calling base class validation.
         """
-        if (
-            self.options["categorical_kernel"]
-            not in [
+        if self.options["cat_kernel_comps"] is not None:
+            if not isinstance(
+                self.options["cat_kernel_comps"], (list, tuple, np.ndarray)
+            ):
+                raise TypeError(
+                    f"cat_kernel_comps must be a list or tuple of integers, "
+                    f"got {type(self.options['cat_kernel_comps']).__name__}."
+                )
+            if self.options["categorical_kernel"] not in [
                 MixIntKernelType.EXP_HOMO_HSPHERE,
                 MixIntKernelType.HOMO_HSPHERE,
+            ]:
+                raise ValueError(
+                    "cat_kernel_comps option is only supported for HOMO_HSPHERE or EXP_HOMO_HSPHERE kernels."
+                )
+            cat_n_values = [
+                dv.n_values
+                for dv in self.design_space.design_variables
+                if isinstance(dv, CategoricalVariable)
             ]
-            and self._use_pls
-        ):
-            if self.options["cat_kernel_comps"] is not None:
-                raise ValueError("cat_kernel_comps option is for homoscedastic kernel.")
+            if len(cat_n_values) == 0:
+                raise ValueError(
+                    "cat_kernel_comps option specified, but design space contains no categorical variables."
+                )
+            cat_comps = self.options["cat_kernel_comps"]
+            if len(cat_comps) != len(cat_n_values):
+                raise ValueError(
+                    f"cat_kernel_comps length ({len(cat_comps)}) must match the "
+                    f"number of categorical variables ({len(cat_n_values)})."
+                )
+            for idx, (c, n_val) in enumerate(zip(cat_comps, cat_n_values)):
+                if not isinstance(c, (int, np.integer)) or isinstance(c, bool):
+                    raise TypeError(
+                        f"cat_kernel_comps[{idx}]={c} must be an integer, got {type(c).__name__}."
+                    )
+                if c < 2 or c > n_val:
+                    raise ValueError(
+                        f"cat_kernel_comps[{idx}]={c} must be in [2, {n_val}]."
+                    )
 
         if not self.options["eval_n_comp"]:
             if (

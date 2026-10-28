@@ -21,7 +21,9 @@ correct_distances_cat_decreed
     Corrects distances for conditionally-acting categorical variables.
 """
 
+import warnings
 import numpy as np
+from sklearn.cross_decomposition import PLSRegression as pls
 
 from smt.design_space import CategoricalVariable
 from smt.utils.distributional_encoding import DistributionalEncoder
@@ -494,6 +496,203 @@ def matrix_data_corr_levels_cat_mod(i, Lij, r_cat, T, has_cat_kernel):
 
 
 @njit_use()
+def latent_hypersphere_corr_matrix(ell: int, theta_cat: np.ndarray):
+    """Build exact unit-diagonal latent correlation matrix via hypersphere Cholesky.
+
+    Maps ``ell * (ell - 1) // 2`` angular hyperparameters ``theta_cat`` to a
+    symmetric positive semidefinite correlation matrix ``T_lat = L @ L.T`` on the
+    correlation elliptope without ad-hoc nugget distortion (Saves, 2026).
+    """
+    Theta_mat = np.zeros((ell, ell), dtype=np.float64)
+    L = np.zeros((ell, ell), dtype=np.float64)
+    v = 0
+    for j in range(ell):
+        for k in range(ell - j):
+            if k == 0:
+                Theta_mat[j, j] = 1.0
+            else:
+                val = theta_cat[v].item()
+                Theta_mat[j, k + j] = val
+                Theta_mat[k + j, j] = val
+                v += 1
+
+    for j in range(ell):
+        for k in range(ell - j):
+            if k == 0:
+                val_diag = 1.0
+                for ll in range(j):
+                    val_diag *= np.sin(Theta_mat[j, ll])
+                L[j, j] = val_diag
+            else:
+                val_off = np.cos(Theta_mat[k + j, j])
+                for ll in range(j):
+                    val_off *= np.sin(Theta_mat[k + j, ll])
+                L[k + j, j] = val_off
+
+    T_lat = np.dot(L, L.T)
+    for j in range(ell):
+        T_lat[j, j] = 1.0
+    return T_lat
+
+
+def compute_rn_pls_cat_weights(X_cont, X_icat, y_data, n_levels_orig: int, ell: int):
+    """Compute Row-Normalized PLS (RN-PLS) categorical rotation weights ``G_*``.
+
+    Fits PLS regression on the joint continuous-categorical design matrix
+    ``[X_cont, X_cat_cross]`` to prevent balanced purely-categorical Krylov
+    degeneracy, extracts the categorical rotation submatrix, and enforces exact
+    unit Euclidean row norms (Saves, 2026, https://hal.science/hal-05835102).
+    """
+    n_levels_orig = int(n_levels_orig)
+    ell = int(ell)
+    d_in = n_levels_orig * (n_levels_orig - 1) // 2
+    d_out = ell * (ell - 1) // 2
+
+    if ell == n_levels_orig:
+        return np.eye(d_in, dtype=np.float64)
+
+    if d_out <= 1:
+        return np.ones((d_in, max(1, d_out)), dtype=np.float64)
+
+    X_full_space = compute_X_cross(X_icat, n_levels_orig)
+    nt = X_full_space.shape[0]
+
+    if X_cont is not None and X_cont.ndim == 2 and X_cont.shape[1] > 0:
+        d_cont = X_cont.shape[1]
+        X_joint = np.hstack([np.asarray(X_cont, dtype=np.float64), X_full_space])
+    else:
+        d_cont = 0
+        X_joint = X_full_space
+
+    X_mean = np.mean(X_joint, axis=0)
+    X_std = np.std(X_joint, axis=0)
+    X_std[X_std < 1e-12] = 1.0
+    X_scaled = (X_joint - X_mean) / X_std
+    num_rank = int(np.linalg.matrix_rank(X_scaled, tol=1e-9))
+    n_comp_eff = min(d_out, nt - 1, X_joint.shape[1], num_rank)
+    G_raw = np.zeros((d_in, d_out), dtype=np.float64)
+
+    if n_comp_eff >= 1:
+        pls_reg = pls(n_components=n_comp_eff)
+        try:
+            pls_reg.fit(X_joint.copy(), y_data.copy())
+            score_norms = np.linalg.norm(pls_reg.x_scores_, axis=0)
+            k_act = int(np.sum(score_norms > 1e-8))
+            if 0 < k_act < n_comp_eff:
+                pls_reg = pls(n_components=k_act).fit(X_joint.copy(), y_data.copy())
+                n_comp_eff = k_act
+            if k_act > 0:
+                rotations = pls_reg.x_rotations_
+                G_cat_eff = np.asarray(rotations[d_cont:, :], dtype=np.float64)
+                G_cat_eff = np.nan_to_num(G_cat_eff, nan=0.0, posinf=0.0, neginf=0.0)
+                G_raw[:, :n_comp_eff] = G_cat_eff
+        except (ValueError, StopIteration, np.linalg.LinAlgError) as err:
+            warnings.warn(
+                f"PLS regression failed during RN-PLS categorical weight computation ({err}). "
+                "Falling back to uniform categorical subspace weights.",
+                UserWarning,
+                stacklevel=2,
+            )
+
+    if n_comp_eff < d_out:
+        warnings.warn(
+            f"Effective categorical PLS rank ({n_comp_eff}) is smaller than requested latent dimension "
+            f"d_out={d_out} (ell={ell}). Trailing latent components are unconstrained by data.",
+            UserWarning,
+            stacklevel=2,
+        )
+
+    omega = np.sum(G_raw**2, axis=1, keepdims=True)
+    G_star = np.empty_like(G_raw)
+    valid_rows = omega[:, 0] > 1e-24
+    G_star[valid_rows, :] = G_raw[valid_rows, :] / np.sqrt(omega[valid_rows])
+    G_star[~valid_rows, :] = 1.0 / np.sqrt(float(d_out))
+    return G_star
+
+
+@njit_use()
+def reconstruct_and_mdg_repair(
+    T_lat: np.ndarray,
+    G_star: np.ndarray,
+    n_levels_orig: int,
+    theta_upper_bound: float,
+    is_ehh: bool,
+    eps: float = 1e-6,
+):
+    """Reconstruct ``L x L`` correlation matrix via RN-PLS and apply ``O(L^2)`` MDG* repair.
+
+    Implements the convex reconstruction operator ``T_{G_*}(T_lat)``, the
+    Mean-Deflated Gershgorin (MDG*) diagonal shift-and-scaling repair
+    preserving exact unit diagonals and strict positive definiteness, and the
+    Schoenberg Hilbertian chordal exponential kernel for ``EXP_HOMO_HSPHERE``
+    (Saves, 2026, https://hal.science/hal-05835102).
+    """
+    ell = T_lat.shape[0]
+    d_out = ell * (ell - 1) // 2
+    theta_hat_vec = np.zeros(d_out, dtype=np.float64)
+    p = 0
+    for t in range(ell):
+        for tp in range(t + 1, ell):
+            theta_hat_vec[p] = T_lat[t, tp]
+            p += 1
+
+    d_in = n_levels_orig * (n_levels_orig - 1) // 2
+    off_full = np.dot(G_star * G_star, theta_hat_vec)
+
+    Theta = np.eye(n_levels_orig, dtype=np.float64)
+    m = 0
+    sum_off = 0.0
+    for j in range(n_levels_orig):
+        for jp in range(j + 1, n_levels_orig):
+            val = off_full[m]
+            Theta[j, jp] = val
+            Theta[jp, j] = val
+            sum_off += val
+            m += 1
+
+    rho_bar_plus = 0.0
+    if d_in > 0:
+        mean_off = sum_off / float(d_in)
+        if mean_off > 0.0:
+            rho_bar_plus = mean_off
+
+    max_row_gersh = 0.0
+    max_row_mdg = 0.0
+    for j in range(n_levels_orig):
+        row_g = 0.0
+        row_m = 0.0
+        for jp in range(n_levels_orig):
+            if jp != j:
+                v = Theta[j, jp]
+                row_g += np.abs(v)
+                row_m += np.abs(v - rho_bar_plus)
+        if row_g > max_row_gersh:
+            max_row_gersh = row_g
+        if row_m > max_row_mdg:
+            max_row_mdg = row_m
+
+    eta_gersh = max(0.0, max_row_gersh - 1.0 + eps)
+    eta_mdg = max(0.0, rho_bar_plus + max_row_mdg - 1.0 + eps)
+    eta = min(eta_gersh, eta_mdg)
+
+    if eta > 0.0:
+        inv_scale = 1.0 / (1.0 + eta)
+        Theta_spd = Theta * inv_scale
+        for j in range(n_levels_orig):
+            Theta_spd[j, j] = 1.0
+    else:
+        Theta_spd = Theta
+
+    if is_ehh:
+        Theta_ehh = np.exp(theta_upper_bound * (Theta_spd - 1.0))
+        for j in range(n_levels_orig):
+            Theta_ehh[j, j] = 1.0
+        return Theta_ehh
+
+    return Theta_spd
+
+
+@njit_use()
 def matrix_data_corr_levels_cat_mod_comps(
     i, Lij, r_cat, n_levels, T, d_cat_i, has_cat_kernel
 ):
@@ -518,11 +717,6 @@ def matrix_data_corr_levels_cat_mod_comps(
                         Theta_i_red[indijk], d_cat_i[k : k + 1][0][indijk]
                     )
                 r_cat[k] = kval_cat
-
-
-# ======================================================================
-# Original mixed_int_corr.py content
-# ======================================================================
 
 
 def compute_n_param(design_space, cat_kernel, d, n_comp, mat_dim):
@@ -552,7 +746,13 @@ def compute_n_param(design_space, cat_kernel, d, n_comp, mat_dim):
         if cat_kernel == MixIntKernelType.CONT_RELAX:
             return n_param
         if mat_dim is not None:
-            return int(np.sum([i * (i - 1) / 2 for i in mat_dim]) + n_param)
+            n_cont = sum(
+                not isinstance(dv, CategoricalVariable)
+                for dv in design_space.design_variables
+            )
+            return int(
+                np.sum([i * (i - 1) / 2 for i in mat_dim]) + min(n_param, n_cont)
+            )
     if cat_kernel.is_scalar_encoding():
         return n_param
     for i, dv in enumerate(design_space.design_variables):
@@ -702,6 +902,7 @@ class MixedIntegerCorrelation:
         self._corr_params = None
         self.pls_coeff_cont = []
         self.coeff_pls_cat = []
+        self.theta_spd_cat = []
         self.n_levels_origin = None
         self.de_encoder = DistributionalEncoder()
         self.de_dist_matrices = {}
@@ -711,6 +912,7 @@ class MixedIntegerCorrelation:
         self._corr_params = None
         self.pls_coeff_cont = []
         self.coeff_pls_cat = []
+        self.theta_spd_cat = []
         self.n_levels_origin = None
         self.de_encoder = DistributionalEncoder()
         self.de_dist_matrices = {}
@@ -788,7 +990,8 @@ class MixedIntegerCorrelation:
             ``(cat_kernel_comps, ncomp, theta_cat_features,
             theta_cont_features, nx, n_levels)``
         """
-        self.n_levels_origin = n_levels
+        if self.n_levels_origin is None:
+            self.n_levels_origin = np.array(n_levels, copy=True)
         if self._corr_params is not None:
             return self._corr_params
 
@@ -937,13 +1140,13 @@ class MixedIntegerCorrelation:
             X_pls_space, _ = compute_X_cont(X, design_space)
 
         if not kplsk_second_loop and (cat_kernel_comps is not None or ncomp < 1e5):
-            if np.size(self.pls_coeff_cont) == 0:
-                X, y = model._compute_pls(X_pls_space.copy(), y.copy())
-                self.pls_coeff_cont = model.coeff_pls
             if (
                 cat_kernel.is_scalar_encoding()
                 or cat_kernel == MixIntKernelType.CONT_RELAX
             ):
+                if np.size(self.pls_coeff_cont) == 0:
+                    X, y = model._compute_pls(X_pls_space.copy(), y.copy())
+                    self.pls_coeff_cont = model.coeff_pls
                 d = componentwise_distance_PLS(
                     dx,
                     corr,
@@ -956,7 +1159,10 @@ class MixedIntegerCorrelation:
                 model.corr.theta = theta
                 r = model.corr(d)
                 return r
-            else:
+            elif X_pls_space.shape[1] > 0:
+                if np.size(self.pls_coeff_cont) == 0:
+                    X, y = model._compute_pls(X_pls_space.copy(), y.copy())
+                    self.pls_coeff_cont = model.coeff_pls
                 d_cont = componentwise_distance_PLS(
                     dx[:, np.logical_not(cat_features)],
                     corr,
@@ -966,6 +1172,8 @@ class MixedIntegerCorrelation:
                     theta=None,
                     return_derivative=False,
                 )
+            else:
+                d_cont = None
         else:
             d = componentwise_distance(
                 dx,
@@ -995,10 +1203,13 @@ class MixedIntegerCorrelation:
                     np.atleast_2d(np.array([False] * len([design_space.is_cat_mask]))).T
                 )
 
-        theta_cont = theta[theta_cont_features[:, 0]]
-        model.corr.theta = theta_cont
-        r_cont = model.corr(d_cont)
-        r = np.copy(r_cont)
+        if d_cont is not None and d_cont.shape[1] > 0:
+            theta_cont = theta[theta_cont_features[:, 0]]
+            model.corr.theta = theta_cont
+            r_cont = model.corr(d_cont)
+            r = np.copy(r_cont)
+        else:
+            r = np.ones((dx.shape[0], 1), dtype=np.float64)
 
         # Theta_cat_i loop
         theta_cat_kernel = theta
@@ -1017,73 +1228,44 @@ class MixedIntegerCorrelation:
                     1.000000000001 * theta_bounds[1]
                 )
 
+        if cat_kernel_comps is not None and len(self.theta_spd_cat) != len(n_levels):
+            self.theta_spd_cat = [None] * len(n_levels)
+
         for i in range(len(n_levels)):
             theta_cat = theta_cat_kernel[theta_cat_features[0][i]]
             r_cat_feat = np.ones(r.shape)
 
-            if cat_kernel == MixIntKernelType.COMPOUND_SYMMETRY:
-                T = np.zeros((n_levels[i], n_levels[i]))
-                for tij in range(n_levels[i]):
-                    for tji in range(n_levels[i]):
-                        if tij == tji:
-                            T[tij, tji] = 1
-                        else:
-                            T[tij, tji] = max(
-                                theta_cat[0], 1e-10 - 1 / (n_levels[i] - 1)
-                            )
-            else:
-                T = matrix_data_corr_levels_cat_matrix(
-                    i,
-                    n_levels,
-                    theta_cat,
-                    theta_bounds,
+            if cat_kernel_comps is not None:
+                if len(self.coeff_pls_cat) <= i:
+                    X_data, y_data = model._get_fidelity_training_data()
+                    X_cont_data, _ = compute_X_cont(X_data, design_space)
+                    X_icat = X_data[:, cat_features][:, i]
+                    G_star = compute_rn_pls_cat_weights(
+                        X_cont_data,
+                        X_icat,
+                        y_data,
+                        int(self.n_levels_origin[i]),
+                        int(n_levels[i]),
+                    )
+                    self.coeff_pls_cat.append(G_star)
+                else:
+                    G_star = self.coeff_pls_cat[i]
+
+                T_lat = latent_hypersphere_corr_matrix(int(n_levels[i]), theta_cat)
+                T = reconstruct_and_mdg_repair(
+                    T_lat,
+                    G_star,
+                    int(self.n_levels_origin[i]),
+                    float(theta_bounds[1]),
                     is_ehh=cat_kernel == MixIntKernelType.EXP_HOMO_HSPHERE,
                 )
+                self.theta_spd_cat[i] = T
 
-            if cat_kernel_comps is not None:
-                # Sampling points
-                X_data = model.training_points[None][0][0]
-                y_data = model.training_points[None][0][1]
-                X_icat = X_data[:, cat_features]
-                X_icat = X_icat[:, i]
-                old_n_comp = (
-                    model.options["n_comp"] if "n_comp" in model.options else None
-                )
-                model.options["n_comp"] = int(n_levels[i] / 2 * (n_levels[i] - 1))
-                X_full_space = compute_X_cross(X_icat, self.n_levels_origin[i])
-                try:
-                    model.coeff_pls = self.coeff_pls_cat[i]
-                except IndexError:
-                    _, _ = model._compute_pls(X_full_space.copy(), y_data.copy())
-                    self.coeff_pls_cat.append(model.coeff_pls)
-
-                if x is not None:
-                    x_icat = x[:, cat_features]
-                    x_icat = x_icat[:, i]
-                    x_full_space = compute_X_cross(x_icat, self.n_levels_origin[i])
-                    dx_cat_i = cross_levels_homo_space(
-                        x_full_space, model.ij, y=X_full_space
-                    )
-                else:
-                    dx_cat_i = cross_levels_homo_space(X_full_space, model.ij)
-
-                d_cat_i = componentwise_distance_PLS(
-                    dx_cat_i,
-                    "squar_exp",
-                    model.options["n_comp"],
-                    model.coeff_pls,
-                    power=model._pow_exp_power,
-                    theta=None,
-                    return_derivative=False,
-                )
-
-                matrix_data_corr_levels_cat_mod_comps(
+                matrix_data_corr_levels_cat_mod(
                     i,
                     Lij,
                     r_cat_feat,
-                    n_levels,
                     T,
-                    d_cat_i,
                     has_cat_kernel=cat_kernel
                     in [
                         MixIntKernelType.EXP_HOMO_HSPHERE,
@@ -1091,6 +1273,25 @@ class MixedIntegerCorrelation:
                     ],
                 )
             else:
+                if cat_kernel == MixIntKernelType.COMPOUND_SYMMETRY:
+                    T = np.zeros((n_levels[i], n_levels[i]))
+                    for tij in range(n_levels[i]):
+                        for tji in range(n_levels[i]):
+                            if tij == tji:
+                                T[tij, tji] = 1
+                            else:
+                                T[tij, tji] = max(
+                                    theta_cat[0], 1e-10 - 1 / (n_levels[i] - 1)
+                                )
+                else:
+                    T = matrix_data_corr_levels_cat_matrix(
+                        i,
+                        n_levels,
+                        theta_cat,
+                        theta_bounds,
+                        is_ehh=cat_kernel == MixIntKernelType.EXP_HOMO_HSPHERE,
+                    )
+
                 matrix_data_corr_levels_cat_mod(
                     i,
                     Lij,
@@ -1105,9 +1306,4 @@ class MixedIntegerCorrelation:
                 )
 
             r = np.multiply(r, r_cat_feat)
-            if cat_kernel_comps is not None:
-                if old_n_comp is None:
-                    model.options._dict.pop("n_comp", None)
-                else:
-                    model.options["n_comp"] = old_n_comp
         return r
