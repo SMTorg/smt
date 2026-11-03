@@ -16,11 +16,14 @@ from smt.surrogate_models.krg_based.krg_based import (
 )
 from smt.surrogate_models.krg_based.mixed_int_corr import (
     compute_n_param,
+    compute_rn_pls_cat_weights,
     compute_X_cont,
     compute_X_cross,
     cross_levels,
     cross_levels_homo_space,
     gower_componentwise_distances,
+    latent_hypersphere_corr_matrix,
+    reconstruct_and_mdg_repair,
 )
 from smt.surrogate_models.krg_based.distances import (
     componentwise_distance,
@@ -47,6 +50,7 @@ __all__ = [
     "componentwise_distance",
     "componentwise_distance_PLS",
     "compute_n_param",
+    "compute_rn_pls_cat_weights",
     "compute_X_cont",
     "compute_X_cross",
     "constant",
@@ -59,8 +63,10 @@ __all__ = [
     "evaluate_eigen_function",
     "ge_compute_pls",
     "gower_componentwise_distances",
+    "latent_hypersphere_corr_matrix",
     "linear",
     "quadratic",
+    "reconstruct_and_mdg_repair",
     "sample_eigen",
     "sample_trajectory",
 ]
