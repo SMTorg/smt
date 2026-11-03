@@ -506,6 +506,7 @@ def latent_hypersphere_corr_matrix(ell: int, theta_cat: np.ndarray):
     Theta_mat = np.zeros((ell, ell), dtype=np.float64)
     L = np.zeros((ell, ell), dtype=np.float64)
     v = 0
+    # Unpack angular vector theta_cat into a symmetric matrix of spherical angles
     for j in range(ell):
         for k in range(ell - j):
             if k == 0:
@@ -516,6 +517,7 @@ def latent_hypersphere_corr_matrix(ell: int, theta_cat: np.ndarray):
                 Theta_mat[k + j, j] = val
                 v += 1
 
+    # Build lower-triangular Cholesky factor L via spherical trigonometric coordinates
     for j in range(ell):
         for k in range(ell - j):
             if k == 0:
@@ -530,6 +532,7 @@ def latent_hypersphere_corr_matrix(ell: int, theta_cat: np.ndarray):
                 L[k + j, j] = val_off
 
     T_lat = np.dot(L, L.T)
+    # Enforce exact unit diagonal to guard against floating-point trigonometric drift
     for j in range(ell):
         T_lat[j, j] = 1.0
     return T_lat
@@ -548,15 +551,18 @@ def compute_rn_pls_cat_weights(X_cont, X_icat, y_data, n_levels_orig: int, ell: 
     d_in = n_levels_orig * (n_levels_orig - 1) // 2
     d_out = ell * (ell - 1) // 2
 
+    # Full-dimensional boundary case (ell == L): canonical identity operator without compression
     if ell == n_levels_orig:
         return np.eye(d_in, dtype=np.float64)
 
+    # Minimal latent dimension (ell == 2, d_out == 1): unit row-norm constraint forces all ones
     if d_out <= 1:
         return np.ones((d_in, max(1, d_out)), dtype=np.float64)
 
     X_full_space = compute_X_cross(X_icat, n_levels_orig)
     nt = X_full_space.shape[0]
 
+    # Concatenate continuous inputs with cross-level indicators to avoid balanced Krylov degeneracy
     if X_cont is not None and X_cont.ndim == 2 and X_cont.shape[1] > 0:
         d_cont = X_cont.shape[1]
         X_joint = np.hstack([np.asarray(X_cont, dtype=np.float64), X_full_space])
@@ -572,6 +578,7 @@ def compute_rn_pls_cat_weights(X_cont, X_icat, y_data, n_levels_orig: int, ell: 
     n_comp_eff = min(d_out, nt - 1, X_joint.shape[1], num_rank)
     G_raw = np.zeros((d_in, d_out), dtype=np.float64)
 
+    # Fit joint PLS up to effective numerical rank and extract active categorical rotations
     if n_comp_eff >= 1:
         pls_reg = pls(n_components=n_comp_eff)
         try:
@@ -594,6 +601,7 @@ def compute_rn_pls_cat_weights(X_cont, X_icat, y_data, n_levels_orig: int, ell: 
                 stacklevel=2,
             )
 
+    # Emit a warning when Krylov rank saturation leaves trailing latent components unconstrained
     if n_comp_eff < d_out:
         warnings.warn(
             f"Effective categorical PLS rank ({n_comp_eff}) is smaller than requested latent dimension "
@@ -602,6 +610,7 @@ def compute_rn_pls_cat_weights(X_cont, X_icat, y_data, n_levels_orig: int, ell: 
             stacklevel=2,
         )
 
+    # Normalize each row to unit Euclidean norm (uniform fallback for unobserved level pairs)
     omega = np.sum(G_raw**2, axis=1, keepdims=True)
     G_star = np.empty_like(G_raw)
     valid_rows = omega[:, 0] > 1e-24
@@ -631,6 +640,7 @@ def reconstruct_and_mdg_repair(
     d_out = ell * (ell - 1) // 2
     theta_hat_vec = np.zeros(d_out, dtype=np.float64)
     p = 0
+    # Flatten upper-triangular off-diagonal entries of latent correlation matrix T_lat
     for t in range(ell):
         for tp in range(t + 1, ell):
             theta_hat_vec[p] = T_lat[t, tp]
@@ -642,6 +652,7 @@ def reconstruct_and_mdg_repair(
     Theta = np.eye(n_levels_orig, dtype=np.float64)
     m = 0
     sum_off = 0.0
+    # Assemble symmetric L x L correlation matrix from convex-reconstructed off-diagonal entries
     for j in range(n_levels_orig):
         for jp in range(j + 1, n_levels_orig):
             val = off_full[m]
@@ -651,6 +662,7 @@ def reconstruct_and_mdg_repair(
             m += 1
 
     rho_bar_plus = 0.0
+    # Compute non-negative mean off-diagonal correlation rho_bar_plus for rank-one deflation
     if d_in > 0:
         mean_off = sum_off / float(d_in)
         if mean_off > 0.0:
@@ -658,6 +670,7 @@ def reconstruct_and_mdg_repair(
 
     max_row_gersh = 0.0
     max_row_mdg = 0.0
+    # Accumulate classical Gershgorin and mean-deflated (MDG) off-diagonal row radii in O(L^2)
     for j in range(n_levels_orig):
         row_g = 0.0
         row_m = 0.0
@@ -675,6 +688,7 @@ def reconstruct_and_mdg_repair(
     eta_mdg = max(0.0, rho_bar_plus + max_row_mdg - 1.0 + eps)
     eta = min(eta_gersh, eta_mdg)
 
+    # Apply shift-and-scaling repair (Theta + eta * I) / (1 + eta) when diagonal dominance fails
     if eta > 0.0:
         inv_scale = 1.0 / (1.0 + eta)
         Theta_spd = Theta * inv_scale
@@ -683,6 +697,7 @@ def reconstruct_and_mdg_repair(
     else:
         Theta_spd = Theta
 
+    # Map repaired correlation matrix through Schoenberg Hilbertian chordal exponential kernel
     if is_ehh:
         Theta_ehh = np.exp(theta_upper_bound * (Theta_spd - 1.0))
         for j in range(n_levels_orig):
@@ -741,6 +756,7 @@ def compute_n_param(design_space, cat_kernel, d, n_comp, mat_dim):
         Number of hyperparameters.
     """
     n_param = design_space.n_dv
+    # Count continuous PLS components plus reduced categorical parameters when PLS is active
     if n_comp is not None:
         n_param = d
         if cat_kernel == MixIntKernelType.CONT_RELAX:
@@ -753,8 +769,10 @@ def compute_n_param(design_space, cat_kernel, d, n_comp, mat_dim):
             return int(
                 np.sum([i * (i - 1) / 2 for i in mat_dim]) + min(n_param, n_cont)
             )
+    # Scalar categorical encodings use one hyperparameter per design variable
     if cat_kernel.is_scalar_encoding():
         return n_param
+    # Expand hyperparameter count across each categorical variable in the design space
     for i, dv in enumerate(design_space.design_variables):
         if isinstance(dv, CategoricalVariable):
             n_values = dv.n_values
@@ -990,8 +1008,10 @@ class MixedIntegerCorrelation:
             ``(cat_kernel_comps, ncomp, theta_cat_features,
             theta_cont_features, nx, n_levels)``
         """
+        # Preserve original categorical cardinalities before cat_kernel_comps overwrites n_levels
         if self.n_levels_origin is None:
             self.n_levels_origin = np.array(n_levels, copy=True)
+        # Return cached parameter layout if already initialized
         if self._corr_params is not None:
             return self._corr_params
 
@@ -1014,6 +1034,7 @@ class MixedIntegerCorrelation:
 
         theta_cont_features = np.zeros((len(theta), 1), dtype=bool)
         theta_cat_features = np.ones((len(theta), len(n_levels)), dtype=bool)
+        # Matrix-based hypersphere kernels allocate dedicated block slices per categorical variable
         if cat_kernel in [
             MixIntKernelType.EXP_HOMO_HSPHERE,
             MixIntKernelType.HOMO_HSPHERE,
@@ -1022,6 +1043,7 @@ class MixedIntegerCorrelation:
         i = 0
         j = 0
         n_theta_cont = 0
+        # Assign hyperparameter indices across categorical and continuous features
         for feat in cat_features:
             if feat:
                 if cat_kernel in [
@@ -1131,6 +1153,7 @@ class MixedIntegerCorrelation:
         # Sampling points X and y
         X, y = model._get_fidelity_training_data()
 
+        # Build input feature matrix for continuous PLS projection
         if cat_kernel == MixIntKernelType.CONT_RELAX:
             X_pls_space, _, _ = design_space.unfold_x(X)
             nx = len(theta)
@@ -1139,6 +1162,7 @@ class MixedIntegerCorrelation:
         else:
             X_pls_space, _ = compute_X_cont(X, design_space)
 
+        # Compute componentwise distances (projecting onto PLS components when active)
         if not kplsk_second_loop and (cat_kernel_comps is not None or ncomp < 1e5):
             if (
                 cat_kernel.is_scalar_encoding()
@@ -1194,6 +1218,7 @@ class MixedIntegerCorrelation:
             else:
                 d_cont = d[:, np.logical_not(cat_features)]
 
+        # Adjust hyperparameter masks for periodic squared-sine-exponential kernel
         if model.options["corr"] == "squar_sin_exp":
             if model.options["categorical_kernel"] != MixIntKernelType.GOWER:
                 theta_cont_features[-len([design_space.is_cat_mask]) :] = np.atleast_2d(
@@ -1203,6 +1228,7 @@ class MixedIntegerCorrelation:
                     np.atleast_2d(np.array([False] * len([design_space.is_cat_mask]))).T
                 )
 
+        # Evaluate continuous correlation factor (or unit vector when purely categorical)
         if d_cont is not None and d_cont.shape[1] > 0:
             theta_cont = theta[theta_cont_features[:, 0]]
             model.corr.theta = theta_cont
@@ -1211,8 +1237,8 @@ class MixedIntegerCorrelation:
         else:
             r = np.ones((dx.shape[0], 1), dtype=np.float64)
 
-        # Theta_cat_i loop
         theta_cat_kernel = theta
+        # Rescale categorical hyperparameters from optimizer bounds to kernel domains
         if len(n_levels) > 0:
             theta_cat_kernel = theta.copy()
             if cat_kernel == MixIntKernelType.EXP_HOMO_HSPHERE:
@@ -1228,13 +1254,16 @@ class MixedIntegerCorrelation:
                     1.000000000001 * theta_bounds[1]
                 )
 
+        # Allocate cache for repaired SPD categorical correlation matrices
         if cat_kernel_comps is not None and len(self.theta_spd_cat) != len(n_levels):
             self.theta_spd_cat = [None] * len(n_levels)
 
+        # Multiply correlation vector across each categorical variable
         for i in range(len(n_levels)):
             theta_cat = theta_cat_kernel[theta_cat_features[0][i]]
             r_cat_feat = np.ones(r.shape)
 
+            # Reduced categorical space: fit RN-PLS weights once and reconstruct SPD matrix via MDG*
             if cat_kernel_comps is not None:
                 if len(self.coeff_pls_cat) <= i:
                     X_data, y_data = model._get_fidelity_training_data()
@@ -1272,6 +1301,7 @@ class MixedIntegerCorrelation:
                         MixIntKernelType.HOMO_HSPHERE,
                     ],
                 )
+            # Unreduced categorical space: build full compound-symmetry or hypersphere matrix
             else:
                 if cat_kernel == MixIntKernelType.COMPOUND_SYMMETRY:
                     T = np.zeros((n_levels[i], n_levels[i]))

@@ -109,6 +109,7 @@ class KPLS(KrgBased):
         """
         Validates KPLS-specific parameters before calling base class validation.
         """
+        # Validate categorical PLS dimension reduction options (cat_kernel_comps)
         if self.options["cat_kernel_comps"] is not None:
             if not isinstance(
                 self.options["cat_kernel_comps"], (list, tuple, np.ndarray)
@@ -139,6 +140,7 @@ class KPLS(KrgBased):
                     f"cat_kernel_comps length ({len(cat_comps)}) must match the "
                     f"number of categorical variables ({len(cat_n_values)})."
                 )
+            # Ensure each latent categorical dimension is an integer in [2, n_val]
             for idx, (c, n_val) in enumerate(zip(cat_comps, cat_n_values)):
                 if not isinstance(c, (int, np.integer)) or isinstance(c, bool):
                     raise TypeError(
@@ -149,6 +151,7 @@ class KPLS(KrgBased):
                         f"cat_kernel_comps[{idx}]={c} must be in [2, {n_val}]."
                     )
 
+        # Validate fixed n_comp when automatic component selection is disabled
         if not self.options["eval_n_comp"]:
             if (
                 not isinstance(self.options["n_comp"], int)
@@ -158,6 +161,7 @@ class KPLS(KrgBased):
                     "n_comp must be a positive integer when eval_n_comp=False."
                 )
 
+        # Validate search range bounds when exhaustive component selection is enabled
         if (
             self.options["eval_n_comp"]
             and self.options["eval_n_comp_strategy"] == "exhaustive"

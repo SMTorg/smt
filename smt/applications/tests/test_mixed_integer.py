@@ -1974,14 +1974,11 @@ class TestMixedInteger(unittest.TestCase):
         self.assertTrue((np.abs(np.sum(np.array(sm.predict_values(xt) - yt)) < 1e-6)))
         self.assertTrue((np.abs(np.sum(np.array(sm.predict_variances(xt) - 0)) < 1e-6)))
 
-    def test_rn_pls_and_mdg_repair_properties(self):
-        rng = np.random.default_rng(42)
-        n_levels_orig = 15
-        ell = 4
+    def _make_rn_pls_fixture(self, seed=42, n_levels_orig=15, ell=4, nt=30):
+        rng = np.random.default_rng(seed)
         d_out = ell * (ell - 1) // 2
 
         # Include unobserved categories (only sample from 0..11) to test zero-row handling
-        nt = 30
         X_cont = rng.uniform(-1.0, 1.0, size=(nt, 2))
         X_icat = rng.integers(0, 12, size=nt)
         y_data = (
@@ -1991,11 +1988,34 @@ class TestMixedInteger(unittest.TestCase):
         ).reshape(-1, 1)
 
         G_star = compute_rn_pls_cat_weights(X_cont, X_icat, y_data, n_levels_orig, ell)
-        self.assertEqual(
-            G_star.shape, (n_levels_orig * (n_levels_orig - 1) // 2, d_out)
-        )
+        return rng, n_levels_orig, ell, d_out, X_cont, X_icat, y_data, G_star
+
+    def test_rn_pls_weights_and_boundary_dims(self):
+        fixture = self._make_rn_pls_fixture()
+        _, n_levels_orig, _, d_out, X_cont, X_icat, y_data, G_star = fixture
+        d_in = n_levels_orig * (n_levels_orig - 1) // 2
+
+        self.assertEqual(G_star.shape, (d_in, d_out))
         # Exact unit Euclidean row norms across both observed and unobserved pairs
         np.testing.assert_allclose(np.sum(G_star**2, axis=1), 1.0, atol=1e-14)
+
+        # Edge case: ell == n_levels_orig (L = 15) recovers canonical identity operator
+        G_star_full = compute_rn_pls_cat_weights(
+            X_cont, X_icat, y_data, n_levels_orig, n_levels_orig
+        )
+        np.testing.assert_allclose(G_star_full, np.eye(d_in), atol=1e-15)
+
+        # Edge case: minimal dimension ell = 2 (d_out = 1)
+        G_star_2 = compute_rn_pls_cat_weights(X_cont, X_icat, y_data, n_levels_orig, 2)
+        self.assertEqual(G_star_2.shape, (d_in, 1))
+        np.testing.assert_allclose(np.sum(G_star_2**2, axis=1), 1.0, atol=1e-14)
+        T_lat_2 = latent_hypersphere_corr_matrix(2, np.array([0.4]))
+        self.assertEqual(T_lat_2.shape, (2, 2))
+        np.testing.assert_allclose(np.diag(T_lat_2), 1.0, atol=1e-15)
+
+    def test_mdg_repair_equicorrelation_and_closed_form(self):
+        fixture = self._make_rn_pls_fixture()
+        _, n_levels_orig, ell, _, _, _, _, G_star = fixture
 
         # MDG* eliminates over-shrinkage on positive equicorrelation matrices
         rho = 0.85
@@ -2008,7 +2028,41 @@ class TestMixedInteger(unittest.TestCase):
         np.fill_diagonal(T_eq_expected, 1.0)
         np.testing.assert_allclose(T_eq_repaired, T_eq_expected, atol=1e-14)
 
-        # Exact canonical equivalence (Lemma 14) with legacy Hadamard pipeline when eta == 0:
+        # Explicit verification of active eta > 0 closed-form repair branch
+        L_test = 4
+        d_in_test = L_test * (L_test - 1) // 2
+        G_star_test = np.eye(d_in_test)
+        T_raw_lat = np.array(
+            [
+                [1.0, 0.9, -0.8, 0.7],
+                [0.9, 1.0, 0.6, -0.75],
+                [-0.8, 0.6, 1.0, 0.85],
+                [0.7, -0.75, 0.85, 1.0],
+            ]
+        )
+        eps_test = 1e-5
+        T_repaired = reconstruct_and_mdg_repair(
+            T_raw_lat, G_star_test, L_test, 20.0, is_ehh=False, eps=eps_test
+        )
+        off_vals = [0.9, -0.8, 0.7, 0.6, -0.75, 0.85]
+        rho_plus = max(0.0, float(np.mean(off_vals)))
+        max_g = max(np.sum(np.abs(T_raw_lat), axis=1) - 1.0)
+        max_m = max(
+            np.sum(np.abs(T_raw_lat - rho_plus), axis=1) - np.abs(1.0 - rho_plus)
+        )
+        eta_g = max(0.0, max_g - 1.0 + eps_test)
+        eta_m = max(0.0, rho_plus + max_m - 1.0 + eps_test)
+        eta_expected = min(eta_g, eta_m)
+        self.assertGreater(eta_expected, 0.0)
+        T_expected = (T_raw_lat + eta_expected * np.eye(L_test)) / (1.0 + eta_expected)
+        np.fill_diagonal(T_expected, 1.0)
+        np.testing.assert_allclose(T_repaired, T_expected, atol=1e-15)
+        self.assertGreater(np.linalg.eigvalsh(T_repaired).min(), 0.0)
+
+    def test_rn_pls_canonical_equivalence_when_eta_zero(self):
+        fixture = self._make_rn_pls_fixture()
+        rng, n_levels_orig, ell, d_out, _, X_icat, _, G_star = fixture
+
         # Choose small positive latent correlations (< 1/(L-1)) so eta == 0 is inactive
         T_safe_lat = np.array(
             [
@@ -2065,6 +2119,10 @@ class TestMixedInteger(unittest.TestCase):
         matrix_data_corr_levels_cat_mod(0, Lij_pred, r_new_pred, T_reconstructed, True)
         np.testing.assert_allclose(r_new_pred, r_legacy_pred, atol=1e-14)
 
+    def test_mdg_repair_spd_across_spherical_angles(self):
+        fixture = self._make_rn_pls_fixture()
+        rng, n_levels_orig, ell, d_out, _, _, _, G_star = fixture
+
         # Certified SPD + exact unit diagonal across random spherical angles (HH and EHH over full [0, 2*pi])
         for _ in range(25):
             angles_hh = rng.uniform(0.0, 2.0 * np.pi, size=d_out)
@@ -2086,52 +2144,7 @@ class TestMixedInteger(unittest.TestCase):
             np.testing.assert_allclose(np.diag(T_spd_ehh), 1.0, atol=1e-15)
             self.assertGreater(np.linalg.eigvalsh(T_spd_ehh).min(), 0.0)
 
-        # Edge case: ell == n_levels_orig (L = 15)
-        d_in = n_levels_orig * (n_levels_orig - 1) // 2
-        G_star_full = compute_rn_pls_cat_weights(
-            X_cont, X_icat, y_data, n_levels_orig, n_levels_orig
-        )
-        np.testing.assert_allclose(G_star_full, np.eye(d_in), atol=1e-15)
-
-        # Edge case: minimal dimension ell = 2 (d_out = 1)
-        G_star_2 = compute_rn_pls_cat_weights(X_cont, X_icat, y_data, n_levels_orig, 2)
-        self.assertEqual(G_star_2.shape, (d_in, 1))
-        np.testing.assert_allclose(np.sum(G_star_2**2, axis=1), 1.0, atol=1e-14)
-        T_lat_2 = latent_hypersphere_corr_matrix(2, np.array([0.4]))
-        self.assertEqual(T_lat_2.shape, (2, 2))
-        np.testing.assert_allclose(np.diag(T_lat_2), 1.0, atol=1e-15)
-
-        # Explicit verification of active eta > 0 closed-form repair branch
-        L_test = 4
-        d_in_test = L_test * (L_test - 1) // 2
-        G_star_test = np.eye(d_in_test)
-        T_raw_lat = np.array(
-            [
-                [1.0, 0.9, -0.8, 0.7],
-                [0.9, 1.0, 0.6, -0.75],
-                [-0.8, 0.6, 1.0, 0.85],
-                [0.7, -0.75, 0.85, 1.0],
-            ]
-        )
-        eps_test = 1e-5
-        T_repaired = reconstruct_and_mdg_repair(
-            T_raw_lat, G_star_test, L_test, 20.0, is_ehh=False, eps=eps_test
-        )
-        off_vals = [0.9, -0.8, 0.7, 0.6, -0.75, 0.85]
-        rho_plus = max(0.0, float(np.mean(off_vals)))
-        max_g = max(np.sum(np.abs(T_raw_lat), axis=1) - 1.0)
-        max_m = max(
-            np.sum(np.abs(T_raw_lat - rho_plus), axis=1) - np.abs(1.0 - rho_plus)
-        )
-        eta_g = max(0.0, max_g - 1.0 + eps_test)
-        eta_m = max(0.0, rho_plus + max_m - 1.0 + eps_test)
-        eta_expected = min(eta_g, eta_m)
-        self.assertGreater(eta_expected, 0.0)
-        T_expected = (T_raw_lat + eta_expected * np.eye(L_test)) / (1.0 + eta_expected)
-        np.fill_diagonal(T_expected, 1.0)
-        np.testing.assert_allclose(T_repaired, T_expected, atol=1e-15)
-        self.assertGreater(np.linalg.eigvalsh(T_repaired).min(), 0.0)
-
+    def test_cat_kernel_comps_parameter_validation(self):
         # Parameter validation checks: types, bounds, kernels, and design spaces
         ds_val = DesignSpace(
             [
@@ -2231,6 +2244,7 @@ class TestMixedInteger(unittest.TestCase):
             ]
         )
 
+        # Train and validate end-to-end KPLS with both HH and EHH categorical kernels
         for kernel_type in [
             MixIntKernelType.HOMO_HSPHERE,
             MixIntKernelType.EXP_HOMO_HSPHERE,
