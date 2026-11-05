@@ -256,6 +256,92 @@ class TestRMTBUQ(SMTestCase):
         sm = RMTBUQ(print_global=False)
         self.assertEqual(sm.options["approx_order"], 2)
 
+    def test_energy_weight_auto_resolves_to_a_float(self):
+        """energy_weight='auto' must be resolved to a concrete value before
+        the real fit -- RMTB itself never sees the string, and the choice
+        is exposed for introspection via `energy_weight_`."""
+        sm, _, _ = self._fit("random", energy_weight="auto")
+        self.assertIsInstance(sm.energy_weight_, float)
+        self.assertEqual(sm.options["energy_weight"], sm.energy_weight_)
+        self.assertGreater(sm.energy_weight_, 0.0)
+
+    def test_energy_weight_auto_bad_string_raises(self):
+        x, y = _make_dataset("random")
+        sm = RMTBUQ(**dict(RMTB_KW, energy_weight="not-a-real-option"))
+        sm.set_training_values(x, y)
+        with self.assertRaises(ValueError):
+            with Silence():
+                sm.train()
+
+    def test_energy_weight_auto_stays_in_the_safe_region(self):
+        """Same oversized basis as the near-interpolation warning test
+        above (NEAR_INTERPOLATION_KW's num_ctrl_pts/order), but with
+        energy_weight='auto' instead of a hand-picked, too-small value:
+        the search should compensate by picking a larger energy_weight
+        rather than landing in the regime its own warning exists to catch."""
+        x, y = _make_dataset("regular")
+        kw = dict(NEAR_INTERPOLATION_KW, energy_weight="auto")
+        sm = RMTBUQ(**kw)
+        sm.set_training_values(x, y)
+        with warnings.catch_warnings():
+            warnings.simplefilter("error")
+            with Silence():
+                sm.train()  # raises if the near-interpolation warning fires
+        self.assertGreater(len(y) - sm.edf, 0.1 * len(y))
+
+    def test_energy_weight_auto_matches_brute_force_gcv(self):
+        """Cross-check the closed-form (one eigendecomposition, no refits)
+        GCV search against an actual grid of refits -- the real integration
+        test, not just re-deriving the same formula twice."""
+        x, y = _make_dataset("random")
+        sm_auto, _, _ = self._fit("random", energy_weight="auto")
+
+        n = len(y)
+        grid = np.logspace(-6, 0, 40)
+        best_ew, best_gcv = None, np.inf
+        with warnings.catch_warnings():
+            # most of this grid is deliberately in the near-interpolation
+            # region (filtered out below) -- RMTBUQ's own warning about it
+            # is expected here, not a signal of a problem with this test.
+            warnings.simplefilter("ignore")
+            for ew in grid:
+                sm = RMTBUQ(**dict(RMTB_KW, energy_weight=ew))
+                sm.set_training_values(x, y)
+                with Silence():
+                    sm.train()
+                dof = n - sm.edf
+                if dof < 0.1 * n:
+                    continue  # same safe-region constraint the production search applies
+                resid = y.ravel() - sm.predict_values(x).ravel()
+                rss = float(np.sum(resid**2))
+                gcv = (rss / n) / (dof / n) ** 2
+                if gcv < best_gcv:
+                    best_gcv, best_ew = gcv, ew
+
+        # Grid search is coarse (40 points over 6 decades, ~0.15 dex
+        # spacing); agree to within a handful of grid steps in log-space,
+        # not to high precision.
+        self.assertLess(abs(np.log10(sm_auto.energy_weight_) - np.log10(best_ew)), 0.6)
+
+    def test_energy_weight_auto_multioutput_shape(self):
+        rng = np.random.default_rng(4)
+        x = rng.uniform(0, 1, size=(64, 2))
+        y = np.column_stack(
+            [
+                np.sin(3 * x[:, 0]) * np.cos(3 * x[:, 1]),
+                x[:, 0] ** 2 - x[:, 1],
+            ]
+        )
+        sm = RMTBUQ(**dict(RMTB_KW, energy_weight="auto"))
+        sm.set_training_values(x, y)
+        with Silence():
+            sm.train()
+
+        xq = rng.uniform(0, 1, size=(10, 2))
+        s2 = sm.predict_variances(xq)
+        self.assertEqual(s2.shape, (10, 2))
+        self.assertTrue(np.all(s2 >= 0.0))
+
     def test_order_sweep_matches_dual_route(self):
         """B-spline order is a basis/conditioning choice, not a requirement
         of the underlying math (unlike approx_order) -- the weight-space
