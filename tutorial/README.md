@@ -104,6 +104,13 @@ More advanced notebooks or script could be find here: https://github.com/SMTorg/
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/SMTorg/smt/blob/master/tutorial/Misc/SMT_CoopCompKRG.ipynb)
 
 
+## Posterior Variance for Tensor-Product Splines (RMTBUQ)
+
+* ### Uncertainty quantification with RMTBUQ: regular/random sampling, interpolation vs. smoothing, a real scattered dataset, and uncertainty-guided sampling
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/SMTorg/smt/blob/master/tutorial/Misc/SMT_RMTBUQ_tutorial.ipynb)
+
+
 ## Mixed-integer and mixed-hierarchical surrogate models
 
 * ### Warning: [The Design Space usage tutorial has been moved to SMTorg/smt-design-space-ext](https://github.com/SMTorg/smt-design-space-ext)
