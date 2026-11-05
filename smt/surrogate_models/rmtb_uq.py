@@ -23,6 +23,18 @@ _WAHBA_MIN_DOF_FRACTION = 0.1
 # energy_weight="auto".
 _AUTO_ENERGY_WEIGHT_LOG10_HALF_RANGE = 8.0
 
+# Extra slack, as a fraction of n, added on top of safe_dof_fraction when
+# _gcv_select_energy_weight enforces its safe-region constraint. The
+# constrained GCV optimum typically sits right at that boundary, and the
+# search's closed-form edf(energy_weight) (from the one-time generalized
+# eigendecomposition) can disagree with RMTBUQ's own real post-fit edf
+# (from directly factoring mtx(energy_weight) for the chosen value) by a
+# hair -- more on some BLAS/LAPACK backends than others, since the
+# eigendecomposition's conditioning is backend-dependent. Without this
+# margin, that disagreement can flip a value the search found "safe" into
+# one that RMTBUQ's own near-interpolation warning then flags afterward.
+_AUTO_ENERGY_WEIGHT_SEARCH_MARGIN = 0.02
+
 
 def _gcv_select_energy_weight(phi, h_energy, regularization_weight, y_train, n,
                                safe_dof_fraction=_WAHBA_MIN_DOF_FRACTION):
@@ -31,7 +43,11 @@ def _gcv_select_energy_weight(phi, h_energy, regularization_weight, y_train, n,
     Wahba, 1979), restricted to the region where the resulting fit still
     leaves at least `safe_dof_fraction * n` residual degrees of freedom
     (the same line `RMTBUQ`'s own near-interpolation warning already
-    enforces -- here as a search constraint rather than a post-hoc check).
+    enforces -- here as a search constraint rather than a post-hoc check),
+    plus a small extra margin (`_AUTO_ENERGY_WEIGHT_SEARCH_MARGIN`) so
+    that the choice stays safe even after the small, backend-dependent
+    numerical disagreement between this function's closed-form edf and
+    `RMTBUQ`'s own real post-fit edf.
 
     Avoids refitting RMTB at every candidate value: since `mtx(energy_weight)
     = A + energy_weight * B` with `A = phi.T @ phi + regularization_weight * I`
@@ -83,7 +99,7 @@ def _gcv_select_energy_weight(phi, h_energy, regularization_weight, y_train, n,
     def gcv(log10_ew):
         edf, scale = edf_of(log10_ew)
         dof = n - edf
-        if dof < safe_dof_fraction * n:
+        if dof < (safe_dof_fraction + _AUTO_ENERGY_WEIGHT_SEARCH_MARGIN) * n:
             return _unsafe_penalty  # edf(energy_weight) is non-increasing in
             #                         energy_weight (gamma >= 0), so this
             #                         excludes a single contiguous region,
@@ -104,8 +120,30 @@ def _gcv_select_energy_weight(phi, h_energy, regularization_weight, y_train, n,
         log10_center + _AUTO_ENERGY_WEIGHT_LOG10_HALF_RANGE,
     )
 
-    result = minimize_scalar(gcv, bounds=bounds, method="bounded")
-    if result.fun >= _unsafe_penalty:
+    # `gcv` is typically but not provably unimodal in log10(energy_weight)
+    # over this 16-decade range, and a single bounded Brent search can lock
+    # onto the wrong local minimum if numerical noise -- e.g. from a
+    # different BLAS/LAPACK backend's `eigh` -- perturbs it near a shallow
+    # stretch or the safe-region boundary. A coarse scan first makes the
+    # result robust to that: each evaluation here is a cheap closed-form
+    # sum, not a refit, so it anchors the Brent polish to the grid cell
+    # that actually contains the minimum, rather than trusting Brent's own
+    # bracketing alone over the full range.
+    n_grid = 321  # ~0.05 dex spacing over the 16-decade range
+    grid = np.linspace(bounds[0], bounds[1], n_grid)
+    grid_scores = np.array([gcv(g) for g in grid])
+    best_idx = int(np.argmin(grid_scores))
+    step = (bounds[1] - bounds[0]) / (n_grid - 1)
+    polish_bounds = (
+        max(bounds[0], grid[best_idx] - step),
+        min(bounds[1], grid[best_idx] + step),
+    )
+    result = minimize_scalar(gcv, bounds=polish_bounds, method="bounded")
+    best_log10_ew, best_score = result.x, result.fun
+    if grid_scores[best_idx] < best_score:
+        best_log10_ew, best_score = grid[best_idx], grid_scores[best_idx]
+
+    if best_score >= _unsafe_penalty:
         raise RuntimeError(
             "RMTBUQ: energy_weight='auto' found no value in the searched "
             f"range (1e{bounds[0]:.0f} to 1e{bounds[1]:.0f}) that leaves at "
@@ -113,7 +151,7 @@ def _gcv_select_energy_weight(phi, h_energy, regularization_weight, y_train, n,
             "freedom. Try a smaller 'num_ctrl_pts', or pass a known "
             "'energy_weight' directly."
         )
-    return float(10.0 ** result.x)
+    return float(10.0 ** best_log10_ew)
 
 
 class RMTBUQ(RMTB):
