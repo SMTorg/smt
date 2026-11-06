@@ -206,6 +206,48 @@ class TestRMTBUQ(SMTestCase):
         self.assertEqual(s2.shape, (10, 2))
         self.assertTrue(np.all(s2 >= 0.0))
 
+    def test_variance_derivatives_match_finite_differences(self):
+        """The closed-form d(Var)/dx (Kimeldorf-Wahba posterior variance
+        is a quadratic form in the basis row, differentiated analytically)
+        should match a central finite difference of predict_variances
+        itself to high precision -- the real correctness check, not just
+        re-deriving the same formula twice."""
+        sm, _, _ = self._fit("random")
+        rng = np.random.default_rng(5)
+        xq = rng.uniform(0.1, 0.9, size=(20, 2))
+        h = 1e-6
+        for kx in range(2):
+            with self.subTest(kx=kx):
+                analytic = sm.predict_variance_derivatives(xq, kx)
+                xp, xm = xq.copy(), xq.copy()
+                xp[:, kx] += h
+                xm[:, kx] -= h
+                fd = (sm.predict_variances(xp) - sm.predict_variances(xm)) / (2 * h)
+                self.assertEqual(analytic.shape, (20, 1))
+                gap = np.max(np.abs(analytic - fd))
+                self.assertLess(gap / np.ptp(fd), 1e-6)
+
+    def test_variance_derivatives_multioutput_shape(self):
+        rng = np.random.default_rng(4)
+        x = rng.uniform(0, 1, size=(64, 2))
+        y = np.column_stack(
+            [
+                np.sin(3 * x[:, 0]) * np.cos(3 * x[:, 1]),
+                x[:, 0] ** 2 - x[:, 1],
+            ]
+        )
+        sm = RMTBUQ(**RMTB_KW)
+        sm.set_training_values(x, y)
+        with Silence():
+            sm.train()
+
+        xq = rng.uniform(0, 1, size=(10, 2))
+        d0 = sm.predict_variance_derivatives(xq, 0)
+        self.assertEqual(d0.shape, (10, 2))
+
+        grad = sm.predict_variance_gradient(xq[:3])
+        self.assertEqual(grad.shape, (2, 3, 2))
+
     def test_wahba_warns_near_exact_interpolation(self):
         """An energy_weight too small relative to n pushes edf to within a
         hair of n, where the Wahba RSS/(n - edf) estimator is no longer
