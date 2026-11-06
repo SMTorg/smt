@@ -36,8 +36,14 @@ _AUTO_ENERGY_WEIGHT_LOG10_HALF_RANGE = 8.0
 _AUTO_ENERGY_WEIGHT_SEARCH_MARGIN = 0.02
 
 
-def _gcv_select_energy_weight(phi, h_energy, regularization_weight, y_train, n,
-                               safe_dof_fraction=_WAHBA_MIN_DOF_FRACTION):
+def _gcv_select_energy_weight(
+    phi,
+    h_energy,
+    regularization_weight,
+    y_train,
+    n,
+    safe_dof_fraction=_WAHBA_MIN_DOF_FRACTION,
+):
     """
     Select `energy_weight` via Generalized Cross-Validation (GCV; Craven &
     Wahba, 1979), restricted to the region where the resulting fit still
@@ -151,7 +157,7 @@ def _gcv_select_energy_weight(phi, h_energy, regularization_weight, y_train, n,
             "freedom. Try a smaller 'num_ctrl_pts', or pass a known "
             "'energy_weight' directly."
         )
-    return float(10.0 ** best_log10_ew)
+    return float(10.0**best_log10_ew)
 
 
 class RMTBUQ(RMTB):
@@ -174,6 +180,14 @@ class RMTBUQ(RMTB):
     (`predict_values`) is untouched, `mtx` is reused as-is (one extra
     Cholesky factorization of a matrix `RMTB` already builds), and the only
     new per-query cost is one triangular solve against that factor.
+
+    The posterior variance's gradient is also available in closed form,
+    via `predict_variance_derivatives`/`predict_variance_gradient`: since
+    `mtx` is symmetric and independent of `x`,
+    `d(Var)/dx_k = 2 * sigma2 * f(x)^T mtx^-1 (df/dx_k)(x)`, reusing the
+    same cached Cholesky factor and `RMTB`'s own basis-derivative
+    evaluation (the same one `predict_derivatives` already calls) -- one
+    more triangular solve per query, no new factorization.
 
     `approx_order` must be 2. `RMTB`'s data-fit term is an Lp loss,
     `sum((Phi @ sol - y) ** approx_order)`, with `approx_order` as its own
@@ -236,6 +250,7 @@ class RMTBUQ(RMTB):
         )
 
         self.supports["variances"] = True
+        self.supports["variance_derivatives"] = True
 
         self.sigma2 = None
         self.edf = None
@@ -273,8 +288,11 @@ class RMTBUQ(RMTB):
             phi = self._compute_approx_terms()[0][0].toarray()
             h_energy = self._compute_energy_terms().toarray()
             self.energy_weight_ = _gcv_select_energy_weight(
-                phi, h_energy, self.options["regularization_weight"],
-                y_train, len(x_train),
+                phi,
+                h_energy,
+                self.options["regularization_weight"],
+                y_train,
+                len(x_train),
             )
             self.options["energy_weight"] = self.energy_weight_
         else:
@@ -337,3 +355,36 @@ class RMTBUQ(RMTB):
         base_var = np.sum(f * v.T, axis=1)
         var = np.outer(base_var, self.sigma2)
         return np.clip(var, 0.0, None)
+
+    def _predict_variance_derivatives(self, x: np.ndarray, kx: int) -> np.ndarray:
+        """
+        Derivative of the posterior variance with respect to input
+        dimension `kx`: since `mtx` is symmetric and does not depend on
+        `x`, differentiating `sigma2 * f(x)^T mtx^-1 f(x)` gives
+        `2 * sigma2 * f(x)^T mtx^-1 (df/dx_kx)(x)`. Reuses the same
+        Cholesky factor `_predict_variances` already uses, plus `RMTB`'s
+        own basis-derivative evaluation (the same one `_predict_derivatives`
+        calls) -- one more triangular solve per query point, no new
+        `O(m^3)` work.
+
+        Parameters
+        ----------
+        x : np.ndarray[nt, nx]
+            Input values for the prediction points.
+        kx : int
+            The 0-based index of the input variable with respect to which
+            the derivative is desired.
+
+        Returns
+        -------
+        ds2_dx : np.ndarray[nt, ny]
+            Derivatives of the posterior variance.
+        """
+        f = self._compute_prediction_mtx(x, 0)
+        f = f.toarray() if hasattr(f, "toarray") else np.asarray(f)
+        df = self._compute_prediction_mtx(x, kx + 1)
+        df = df.toarray() if hasattr(df, "toarray") else np.asarray(df)
+
+        v = cho_solve(self._mtx_chol, df.T)
+        base_dvar = 2.0 * np.sum(f * v.T, axis=1)
+        return np.outer(base_dvar, self.sigma2)
