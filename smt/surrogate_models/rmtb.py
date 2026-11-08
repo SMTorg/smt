@@ -9,7 +9,7 @@ from numbers import Integral
 import numpy as np
 
 from smt.surrogate_models.rmts import RMTS
-from smt.surrogate_models.rmtsclib import PyRMTB
+from smt.surrogate_models.rmts_backend import PureRMTB
 
 
 class RMTB(RMTS):
@@ -87,43 +87,39 @@ class RMTB(RMTS):
 
         self.num = num
 
-        self.rmtsc = PyRMTB()
-        self.rmtsc.setup(
+        self._backend = PureRMTB()
+        self._backend.setup(
             num["x"],
-            np.array(self.options["xlimits"][:, 0]),
-            np.array(self.options["xlimits"][:, 1]),
+            np.array(self.options["xlimits"][:, 0], dtype=np.float64),
+            np.array(self.options["xlimits"][:, 1], dtype=np.float64),
             np.array(num["order_list"], np.int32),
             np.array(num["ctrl_list"], np.int32),
         )
+        self.knots_list = [
+            np.array(k, dtype=np.float64, copy=True) for k in self._backend.knots_list
+        ]
 
     def __getstate__(self):
-        state = self.__dict__.copy()
-        state["rmtsc"] = None
+        state = super().__getstate__()
+        state["_backend"] = None
         return state
 
     def __setstate__(self, state):
         self.__dict__.update(state)
 
-        self._setup()
+        if None in self.training_points and 0 in self.training_points[None]:
+            self._setup()
 
     def _compute_jac_raw(self, ix1, ix2, x):
         xlimits = self.options["xlimits"]
 
-        t = np.zeros(x.shape)
+        t = np.zeros(x.shape, dtype=np.float64)
         for kx in range(self.num["x"]):
             t[:, kx] = (x[:, kx] - xlimits[kx, 0]) / (xlimits[kx, 1] - xlimits[kx, 0])
         t = np.maximum(t, 0.0 + 1e-15)
         t = np.minimum(t, 1.0 - 1e-15)
 
-        n = x.shape[0]
-        nnz = n * self.num["order"]
-        # data, rows, cols = RMTBlib.compute_jac(ix1, ix2, self.num['x'], n, nnz,
-        #     self.num['order_list'], self.num['ctrl_list'], t)
-
-        data = np.empty(nnz)
-        rows = np.empty(nnz, dtype=np.int32)
-        cols = np.empty(nnz, dtype=np.int32)
-        self.rmtsc.compute_jac(ix1 - 1, ix2 - 1, n, t.flatten(), data, rows, cols)
+        data, rows, cols = self._backend.compute_jac(ix1 - 1, ix2 - 1, t)
 
         if ix1 != 0:
             data /= xlimits[ix1 - 1, 1] - xlimits[ix1 - 1, 0]
@@ -134,3 +130,100 @@ class RMTB(RMTS):
 
     def _compute_dof2coeff(self):
         return None
+
+    def get_bspline(self, output=0, physical=True):
+        """
+        Return the trained tensor-product B-spline representation for one output.
+
+        Parameters
+        ----------
+        output : int, optional
+            0-based output column index (default 0).
+        physical : bool, optional
+            If True (default), rescale knot vectors to physical ``xlimits``;
+            if False, return normalized knot vectors on ``[0, 1]``.
+
+        Returns
+        -------
+        dict
+            Dictionary with keys ``'knots'``, ``'degree'``, ``'coefficients'``,
+            and ``'domain'``.
+        """
+        if not hasattr(self, "sol_coeff") or self.sol_coeff is None:
+            raise RuntimeError(
+                "RMTB model has not been trained yet. Call train() first."
+            )
+        ny = self.num["y"]
+        if (
+            isinstance(output, bool)
+            or not isinstance(output, Integral)
+            or not (0 <= int(output) < ny)
+        ):
+            raise ValueError(f"output must be an integer in [0, {ny}), got {output!r}.")
+
+        xlimits = np.asarray(self.options["xlimits"], dtype=np.float64)
+        if physical:
+            knots = tuple(
+                np.array(
+                    xlimits[kx, 0] + k * (xlimits[kx, 1] - xlimits[kx, 0]),
+                    dtype=np.float64,
+                )
+                for kx, k in enumerate(self.knots_list)
+            )
+            domain = xlimits.copy()
+        else:
+            knots = tuple(
+                np.array(k, dtype=np.float64, copy=True) for k in self.knots_list
+            )
+            domain = np.tile(np.array([0.0, 1.0], dtype=np.float64), (self.num["x"], 1))
+
+        degree = tuple(int(o) - 1 for o in self.num["order_list"])
+        ctrl_shape = tuple(int(c) for c in self.num["ctrl_list"])
+        coefficients = np.array(
+            self.sol_coeff[:, int(output)].reshape(ctrl_shape),
+            dtype=np.float64,
+            copy=True,
+        )
+        return {
+            "knots": knots,
+            "degree": degree,
+            "coefficients": coefficients,
+            "domain": domain,
+        }
+
+    def to_scipy(self, output=0, physical=True, as_1d=False):
+        """
+        Convert the trained RMTB model for one output to a SciPy spline object.
+
+        Parameters
+        ----------
+        output : int, optional
+            0-based output column index (default 0).
+        physical : bool, optional
+            If True (default), construct the spline over physical ``xlimits``;
+            if False, construct it over normalized ``[0, 1]^nx``.
+        as_1d : bool, optional
+            If True and ``nx == 1``, return a ``scipy.interpolate.BSpline`` instance
+            (which accepts 1D array evaluations ``(n,)``) instead of ``NdBSpline``.
+
+        Returns
+        -------
+        scipy.interpolate.NdBSpline or scipy.interpolate.BSpline
+            Equivalent SciPy B-spline object.
+        """
+        bs = self.get_bspline(output=output, physical=physical)
+        if as_1d:
+            if self.num["x"] != 1:
+                raise ValueError("as_1d=True is only supported when nx == 1.")
+            from scipy.interpolate import BSpline
+
+            return BSpline(bs["knots"][0], bs["coefficients"], bs["degree"][0])
+
+        try:
+            from scipy.interpolate import NdBSpline
+        except ImportError as err:
+            raise ImportError(
+                "RMTB.to_scipy() requires SciPy >= 1.12.0 for scipy.interpolate.NdBSpline."
+            ) from err
+
+        return NdBSpline(bs["knots"], bs["coefficients"], bs["degree"])

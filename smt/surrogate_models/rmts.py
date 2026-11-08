@@ -9,6 +9,15 @@ from numbers import Integral
 import numpy as np
 import scipy.sparse
 
+from smt.surrogate_models.rmts_backend import (
+    _opt_func_jax,
+    _opt_grad_jax,
+    _opt_hess_jax,
+    _prepare_jax_opt_cache,
+    _use_jax_opt,
+    compute_ext_dist,
+    compute_quadrature_points,
+)
 from smt.surrogate_models.surrogate_model import SurrogateModel
 from smt.utils import persistence
 from smt.utils.caching import cached_operation
@@ -170,7 +179,7 @@ class RMTS(SurrogateModel):
             if kx == 0:
                 c = 1.0
             else:
-                self.options["grad_weight"] / xlimits.shape[0]
+                c = self.options["grad_weight"] / xlimits.shape[0]
 
             full_jac = self._compute_jac(kx, 0, xt)
             full_jac_dict[kx] = (full_jac, full_jac.T.tocsc(), c)
@@ -198,12 +207,9 @@ class RMTS(SurrogateModel):
             if outputs:
                 sq_mtx = outputs["sq_mtx"]
             else:
-                n = np.prod(2 * num["elem_list"])
-                x = np.empty(n * num["x"])
-                self.rmtsc.compute_quadrature_points(
-                    n, np.array(2 * num["elem_list"], dtype=np.int32), x
+                x = compute_quadrature_points(
+                    2 * num["elem_list"], xlimits[:, 0], xlimits[:, 1]
                 )
-                x = x.reshape((n, num["x"]))
 
                 sq_mtx = [None] * num["x"]
                 for kx in range(num["x"]):
@@ -228,7 +234,28 @@ class RMTS(SurrogateModel):
 
         return full_hess
 
+    def __getstate__(self):
+        state = self.__dict__.copy()
+        state["_jax_opt_cache"] = None
+        return state
+
+    def _get_jax_opt_data(self):
+        cache = getattr(self, "_jax_opt_cache", None)
+        if (
+            cache is None
+            or cache["hess_id"] != id(self.full_hess)
+            or cache["jac_dict_id"] != id(self.full_jac_dict)
+            or cache["hess_nnz"] != self.full_hess.nnz
+        ):
+            cache = _prepare_jax_opt_cache(self.full_hess, self.full_jac_dict)
+            self._jax_opt_cache = cache
+        return cache
+
     def _opt_func(self, sol, p, yt_dict):
+        if _use_jax_opt():
+            cache = self._get_jax_opt_data()
+            return _opt_func_jax(sol, p, yt_dict, cache)
+
         full_hess = self.full_hess
         full_jac_dict = self.full_jac_dict
 
@@ -241,6 +268,10 @@ class RMTS(SurrogateModel):
         return func
 
     def _opt_grad(self, sol, p, yt_dict):
+        if _use_jax_opt():
+            cache = self._get_jax_opt_data()
+            return _opt_grad_jax(sol, p, yt_dict, cache)
+
         full_hess = self.full_hess
         full_jac_dict = self.full_jac_dict
 
@@ -259,13 +290,22 @@ class RMTS(SurrogateModel):
         full_jac, full_jac_T, c = full_jac_dict[kx]
         yt = yt_dict[kx]
 
-        diag_vec = p * (p - 1) * (full_jac * sol - yt) ** (p - 2)
+        if p in (0, 1):
+            diag_vec = np.zeros(full_jac.shape[0], dtype=np.float64)
+        else:
+            diag_vec = p * (p - 1) * (full_jac * sol - yt) ** (p - 2)
         diag_mtx = scipy.sparse.diags(diag_vec, format="csc")
         mtx = 0.5 * c * full_jac_T.dot(diag_mtx)
 
         return -mtx.todense()
 
     def _opt_hess(self, sol, p, yt_dict):
+        if _use_jax_opt():
+            cache = self._get_jax_opt_data()
+            return _opt_hess_jax(
+                sol, p, yt_dict, cache, self.full_hess, self.full_jac_dict
+            )
+
         full_hess = self.full_hess
         full_jac_dict = self.full_jac_dict
 
@@ -274,7 +314,10 @@ class RMTS(SurrogateModel):
             full_jac, full_jac_T, c = full_jac_dict[kx]
             yt = yt_dict[kx]
 
-            diag_vec = p * (p - 1) * (full_jac * sol - yt) ** (p - 2)
+            if p in (0, 1):
+                diag_vec = np.zeros(full_jac.shape[0], dtype=np.float64)
+            else:
+                diag_vec = p * (p - 1) * (full_jac * sol - yt) ** (p - 2)
             diag_mtx = scipy.sparse.diags(diag_vec, format="csc")
             hess += 0.5 * c * full_jac_T * diag_mtx * full_jac
 
@@ -426,13 +469,8 @@ class RMTS(SurrogateModel):
         """
         self._setup()
 
-        tmp = self.rmtsc
-        self.rmtsc = None
-
         inputs = {"self": self}
         with cached_operation(inputs, self.options["data_dir"]) as outputs:
-            self.rmtsc = tmp
-
             if outputs:
                 self.sol_coeff = outputs["sol_coeff"]
                 self.sol = outputs["sol"]
@@ -517,9 +555,8 @@ class RMTS(SurrogateModel):
             # First we evaluate the vector pointing to each evaluation points
             # from the nearest point on the domain, in a matrix called dx.
             # If the ith evaluation point is not external, dx[i, :] = 0.
-            dx = np.empty(n * num["support"] * num["x"])
-            self.rmtsc.compute_ext_dist(n, num["support"], x.flatten(), dx)
-            dx = dx.reshape((n * num["support"], num["x"]))
+            xlimits = self.options["xlimits"]
+            dx = compute_ext_dist(x, xlimits[:, 0], xlimits[:, 1], nterm=num["support"])
 
             isexternal = np.array(np.array(dx, bool), float)
 
