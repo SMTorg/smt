@@ -46,6 +46,7 @@ def _setup_mixed_reference(ref, base_model, X_all, Y_all):
     if base_model.options["categorical_kernel"] == MixIntKernelType.CONT_RELAX:
         _restore_categorical_scaling(ref, base_model, X_all, is_acting)
 
+
 def _restore_categorical_scaling(ref, base_model, X_all, is_acting):
     ref.X2_offset = base_model.X2_offset
     ref.X2_scale = base_model.X2_scale
@@ -76,6 +77,7 @@ def _restore_categorical_scaling(ref, base_model, X_all, is_acting):
     ref.D = D_unfolded
     ref.X2_norma = X2_norma
 
+
 def _setup_continuous_reference(ref, X_all, Y_all):
     ref.X_norma = (X_all - ref.X_offset) / ref.X_scale
     ref.y_norma = (Y_all - ref.y_mean) / ref.y_std
@@ -83,12 +85,14 @@ def _setup_continuous_reference(ref, X_all, Y_all):
     D, ref.ij = dist.cross_distances(ref.X_norma)
     ref.D = ref._componentwise_distance(D)
 
+
 def _compute_reference_optimal_par(ref):
     theta = ref.optimal_theta
     if ref._eval_noise:
         theta = np.append(theta, ref.optimal_noise)
     _, par = ref._reduced_likelihood_function(theta=theta)
     return par
+
 
 def reference_model(base_model, X_all, Y_all):
     """
@@ -236,12 +240,8 @@ class TestModelBlockUpdate(unittest.TestCase):
     def _assert_interpolation(
         self, sm, updated, X_new: np.ndarray, Y_new: np.ndarray, atol: float = 1e-6
     ) -> None:
-        is_noisy = (
-            bool(sm.options["eval_noise"])
-            or (
-                sm.options["noise0"] is not None
-                and sm.options["noise0"][0] > 0
-            )
+        is_noisy = bool(sm.options["eval_noise"]) or (
+            sm.options["noise0"] is not None and sm.options["noise0"][0] > 0
         )
         if not is_noisy:
             X_eval = X_new if X_new.ndim == 2 else X_new[:, None]
@@ -426,7 +426,6 @@ class TestModelBlockUpdate(unittest.TestCase):
         with self.assertRaises(NotImplementedError):
             sm.update_model(X_new, Y_new)
 
-
     def test_mixed_variables_update(self):
         sm = self._trained_mixed_krg()
 
@@ -458,14 +457,18 @@ class TestModelBlockUpdate(unittest.TestCase):
                 Y_new_single = xsinx(X_new_single[:, :1])
                 updated_single = deepcopy(sm)
                 updated_single.update_model(X_new_single, Y_new_single)
-                self.assert_matches_reference(sm, updated_single, X_new_single, Y_new_single)
+                self.assert_matches_reference(
+                    sm, updated_single, X_new_single, Y_new_single
+                )
 
                 # Multi-point update
                 X_new_multi = np.array([[16.0, 1], [23.0, 0]])
                 Y_new_multi = xsinx(X_new_multi[:, :1])
                 updated_multi = deepcopy(sm)
                 updated_multi.update_model(X_new_multi, Y_new_multi)
-                self.assert_matches_reference(sm, updated_multi, X_new_multi, Y_new_multi)
+                self.assert_matches_reference(
+                    sm, updated_multi, X_new_multi, Y_new_multi
+                )
 
     def test_mixed_successive_updates(self):
         for cat_kernel in [
@@ -584,6 +587,7 @@ class TestModelBlockUpdate(unittest.TestCase):
         X_all = np.vstack((X1, X2))
         Y_all = np.vstack((Y1, Y2))
         self.assert_matches_reference(sm, updated, X_all, Y_all, is_hierarchical=True)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -208,17 +208,36 @@ class KRG(KrgBased):
         if reason is not None:
             raise NotImplementedError(reason)
 
-
-    def _correct_categorical_acting_distances(self, D: np.ndarray, is_acting1: np.ndarray, is_acting2: np.ndarray, ij: np.ndarray, mixint_type) -> np.ndarray:
+    def _correct_categorical_acting_distances(
+        self,
+        D: np.ndarray,
+        is_acting1: np.ndarray,
+        is_acting2: np.ndarray,
+        ij: np.ndarray,
+        mixint_type,
+    ) -> np.ndarray:
         listcatdecreed = self.design_space.is_conditionally_acting[self.cat_features]
         if np.any(listcatdecreed):
             D = self._correct_distances_cat_decreed(
-                D, is_acting1, listcatdecreed, ij,
-                is_acting_y=is_acting2, mixint_type=mixint_type
+                D,
+                is_acting1,
+                listcatdecreed,
+                ij,
+                is_acting_y=is_acting2,
+                mixint_type=mixint_type,
             )
         return D
 
-    def _apply_continuous_relaxation(self, D: np.ndarray, D_num: np.ndarray, X1: np.ndarray, is_acting1: np.ndarray, X2: np.ndarray, is_acting2: np.ndarray, ij: np.ndarray) -> np.ndarray:
+    def _apply_continuous_relaxation(
+        self,
+        D: np.ndarray,
+        D_num: np.ndarray,
+        X1: np.ndarray,
+        is_acting1: np.ndarray,
+        X2: np.ndarray,
+        is_acting2: np.ndarray,
+        ij: np.ndarray,
+    ) -> np.ndarray:
         X1_unfolded, _, unfolded_cat = self.design_space.unfold_x(X1)
         X2_unfolded, _, _ = self.design_space.unfold_x(X2)
         X1_norma = (X1_unfolded - self.X2_offset) / self.X2_scale
@@ -229,30 +248,44 @@ class KRG(KrgBased):
             "n_comp" not in self.options._dict.keys()
             and "cat_kernel_comp" not in self.options._dict.keys()
         ):
-            D = self._correct_categorical_acting_distances(D, is_acting1, is_acting2, ij, MixIntKernelType.GOWER)
+            D = self._correct_categorical_acting_distances(
+                D, is_acting1, is_acting2, ij, MixIntKernelType.GOWER
+            )
         if np.any(self.design_space.is_conditionally_acting):
             D[:, np.logical_not(unfolded_cat)] = (
                 D_num / self.X2_scale[np.logical_not(unfolded_cat)]
             )
         return D
 
-    def _apply_distributional_encoding(self, D: np.ndarray, D_num: np.ndarray, X1: np.ndarray, is_acting1: np.ndarray, X2: np.ndarray, is_acting2: np.ndarray, ij: np.ndarray) -> np.ndarray:
+    def _apply_distributional_encoding(
+        self,
+        D: np.ndarray,
+        D_num: np.ndarray,
+        X1: np.ndarray,
+        is_acting1: np.ndarray,
+        X2: np.ndarray,
+        is_acting2: np.ndarray,
+        ij: np.ndarray,
+    ) -> np.ndarray:
         self._mix_int_corr.replace_with_de_distances(
             D, X2, ij, self.options["categorical_kernel_beta"], x_pred=X1
         )
         return D
 
-    def _compute_mixed_distances_between(
-        self, X1, is_acting1, X2, is_acting2
-    ):
+    def _compute_mixed_distances_between(self, X1, is_acting1, X2, is_acting2):
         _, ij = cross_distances(X1, y=X2)
         D, D_num = gower_componentwise_distances(
-            X1, x_is_acting=is_acting1, design_space=self.design_space,
+            X1,
+            x_is_acting=is_acting1,
+            design_space=self.design_space,
             hierarchical_kernel=self.options["hierarchical_kernel"],
-            y=np.copy(X2), y_is_acting=is_acting2,
+            y=np.copy(X2),
+            y_is_acting=is_acting2,
         )
 
-        D = self._correct_categorical_acting_distances(D, is_acting1, is_acting2, ij, MixIntKernelType.GOWER)
+        D = self._correct_categorical_acting_distances(
+            D, is_acting1, is_acting2, ij, MixIntKernelType.GOWER
+        )
 
         kernel_handlers = {
             MixIntKernelType.CONT_RELAX: self._apply_continuous_relaxation,
@@ -263,28 +296,32 @@ class KRG(KrgBased):
         if handler:
             D = handler(D, D_num, X1, is_acting1, X2, is_acting2, ij)
 
-        Lij, _ = cross_levels(
-            X=X1, ij=ij, design_space=self.design_space, y=X2
-        )
+        Lij, _ = cross_levels(X=X1, ij=ij, design_space=self.design_space, y=X2)
         return D, Lij
 
-    def _compute_R12_R22_mixed(self, X_new: np.ndarray, is_acting_new: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
+    def _compute_R12_R22_mixed(
+        self, X_new: np.ndarray, is_acting_new: np.ndarray
+    ) -> Tuple[np.ndarray, np.ndarray]:
         n_new = X_new.shape[0]
 
         _, _, _, _, Lij12, dx12 = self._predict_init(X_new, is_acting_new)
-        R12 = self._matrix_data_corr(
-            corr=self.options["corr"],
-            design_space=self.design_space,
-            power=self._pow_exp_power,
-            theta=self.optimal_theta,
-            theta_bounds=self.options["theta_bounds"],
-            dx=dx12,
-            Lij=Lij12,
-            n_levels=self.n_levels,
-            cat_features=self.cat_features,
-            cat_kernel=self.options["categorical_kernel"],
-            x=X_new,
-        ).reshape(n_new, self.nt).T
+        R12 = (
+            self._matrix_data_corr(
+                corr=self.options["corr"],
+                design_space=self.design_space,
+                power=self._pow_exp_power,
+                theta=self.optimal_theta,
+                theta_bounds=self.options["theta_bounds"],
+                dx=dx12,
+                Lij=Lij12,
+                n_levels=self.n_levels,
+                cat_features=self.cat_features,
+                cat_kernel=self.options["categorical_kernel"],
+                x=X_new,
+            )
+            .reshape(n_new, self.nt)
+            .T
+        )
 
         dx22, Lij22 = self._compute_mixed_distances_between(
             X_new, is_acting_new, X_new, is_acting_new
@@ -304,7 +341,9 @@ class KRG(KrgBased):
         ).reshape(n_new, n_new)
         return R12, R22
 
-    def _compute_R12_R22_cont(self, X_new: np.ndarray, X_new_norma: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
+    def _compute_R12_R22_cont(
+        self, X_new: np.ndarray, X_new_norma: np.ndarray
+    ) -> Tuple[np.ndarray, np.ndarray]:
         n_new = X_new.shape[0]
 
         _, _, _, _, _, dx12 = self._predict_init(X_new, None)
@@ -387,7 +426,9 @@ class KRG(KrgBased):
                 X_new_unfolded_norma = (X_new_unfolded - self.X2_offset) / self.X2_scale
                 self.X2_norma = np.vstack((self.X2_norma, X_new_unfolded_norma))
 
-    def _update_predictive_parameters(self, Ft: np.ndarray, Yt: np.ndarray, L_new: np.ndarray) -> None:
+    def _update_predictive_parameters(
+        self, Ft: np.ndarray, Yt: np.ndarray, L_new: np.ndarray
+    ) -> None:
         Q, G = qr(Ft, mode="economic")
         beta = solve_triangular(G, Q.T @ Yt, check_finite=False)
         rho = Yt - Ft @ beta
