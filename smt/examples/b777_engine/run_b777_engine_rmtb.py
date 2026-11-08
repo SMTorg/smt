@@ -1,9 +1,10 @@
 from smt.examples.b777_engine.b777_engine import get_b777_engine, plot_b777_engine
-from smt.surrogate_models import RMTB
+from smt.surrogate_models import RMTS
 
 xt, yt, dyt_dxt, xlimits = get_b777_engine()
 
-interp = RMTB(
+interp = RMTS(
+    spline_type="B-Spline",
     num_ctrl_pts=15,
     xlimits=xlimits,
     nonlinear_maxiter=20,

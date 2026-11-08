@@ -1,5 +1,5 @@
 """
-Author: Dr. John T. Hwang <hwangjt@umich.edu>
+Author: Dr. John T. Hwang <hwangjt@umich.edu>, Paul Saves <paul.saves@ird.fr>
 
 This package is distributed under New BSD license.
 """
@@ -9,11 +9,33 @@ from numbers import Integral
 import numpy as np
 import scipy.sparse
 
+from smt.surrogate_models.rmts_backend import (
+    PureRMTB,
+    PureRMTC,
+    _opt_func_jax,
+    _opt_grad_jax,
+    _opt_hess_jax,
+    _prepare_jax_opt_cache,
+    _use_jax_opt,
+    compute_ext_dist,
+    compute_quadrature_points,
+)
 from smt.surrogate_models.surrogate_model import SurrogateModel
 from smt.utils import persistence
 from smt.utils.caching import cached_operation
 from smt.utils.line_search import VALID_LINE_SEARCHES, LineSearch, get_line_search_class
 from smt.utils.linear_solvers import VALID_SOLVERS, LinearSolver, get_solver
+
+
+def _normalize_spline_type(spline_type):
+    st = str(spline_type).strip().lower().replace("-", "_").replace(" ", "_")
+    if st in ("b_spline", "b_spine", "bspline", "b"):
+        return "B-Spline"
+    if st in ("cubic_hermite_spline", "cubic_hermite", "hermite", "c"):
+        return "Cubic_Hermite_Spline"
+    raise ValueError(
+        f"Unsupported spline_type: {spline_type!r}. Expected 'B-Spline' or 'Cubic_Hermite_Spline'."
+    )
 
 
 class RMTS(SurrogateModel):
@@ -28,6 +50,39 @@ class RMTS(SurrogateModel):
         declare = self.options.declare
         supports = self.supports
 
+        declare(
+            "spline_type",
+            "B-Spline",
+            values=[
+                "B-Spline",
+                "Cubic_Hermite_Spline",
+                "bspline",
+                "cubic_hermite",
+                "b_spline",
+                "cubic_hermite_spline",
+                "Cubic_Hermite",
+            ],
+            types=str,
+            desc="Spline representation type: 'B-Spline' or 'Cubic_Hermite_Spline'",
+        )
+        declare(
+            "order",
+            3,
+            types=(Integral, tuple, list, np.ndarray),
+            desc="B-spline order in each dimension - length [nx] (for B-Splines)",
+        )
+        declare(
+            "num_ctrl_pts",
+            15,
+            types=(Integral, tuple, list, np.ndarray),
+            desc="# B-spline control points in each dimension - length [nx] (for B-Splines)",
+        )
+        declare(
+            "num_elements",
+            4,
+            types=(Integral, tuple, list, np.ndarray),
+            desc="# elements in each dimension - length [nx] (for Cubic_Hermite_Spline)",
+        )
         declare(
             "xlimits",
             types=np.ndarray,
@@ -131,6 +186,148 @@ class RMTS(SurrogateModel):
         supports["derivatives"] = True
         supports["output_derivatives"] = True
 
+    def _final_initialize(self):
+        super()._final_initialize()
+        _normalize_spline_type(self.options["spline_type"])
+
+    def _check_approx_order(self):
+        # Validated at training time (not at construction) so that subclasses
+        # such as RMTBUQ can apply their own, stricter checks in ``_train``.
+        approx_order = int(self.options["approx_order"])
+        if approx_order < 2 or approx_order % 2 != 0:
+            raise ValueError(
+                f"approx_order must be a positive even integer (>= 2), got {approx_order}."
+            )
+
+    def _setup(self):
+        self._check_approx_order()
+        self._jax_opt_cache = None
+        options = self.options
+        nx = self.training_points[None][0][0].shape[1]
+        st = _normalize_spline_type(options["spline_type"])
+
+        if st == "B-Spline":
+            for name in ["smoothness", "num_ctrl_pts", "order"]:
+                if isinstance(options[name], (int, float)):
+                    options[name] = [options[name]] * nx
+                options[name] = np.atleast_1d(options[name])
+
+            self.printer.max_print_depth = options["max_print_depth"]
+
+            num = {}
+            num["x"] = self.training_points[None][0][0].shape[1]
+            num["y"] = self.training_points[None][0][1].shape[1]
+            num["order_list"] = np.array(options["order"], int)
+            num["order"] = np.prod(num["order_list"])
+            num["ctrl_list"] = np.array(options["num_ctrl_pts"], int)
+            num["ctrl"] = np.prod(num["ctrl_list"])
+            num["elem_list"] = np.array(num["ctrl_list"] - num["order_list"] + 1, int)
+            num["elem"] = np.prod(num["elem_list"])
+            num["knots_list"] = num["order_list"] + num["ctrl_list"]
+            num["knots"] = np.sum(num["knots_list"])
+            num["t"] = 0
+            for kx in self.training_points[None]:
+                num["t"] += self.training_points[None][kx][0].shape[0]
+            num["coeff"] = num["ctrl"]
+            num["support"] = num["order"]
+            num["dof"] = num["ctrl"]
+
+            self.num = num
+
+            self._backend = PureRMTB()
+            self._backend.setup(
+                num["x"],
+                np.array(self.options["xlimits"][:, 0], dtype=np.float64),
+                np.array(self.options["xlimits"][:, 1], dtype=np.float64),
+                np.array(num["order_list"], np.int32),
+                np.array(num["ctrl_list"], np.int32),
+            )
+            self.knots_list = [
+                np.array(k, dtype=np.float64, copy=True)
+                for k in self._backend.knots_list
+            ]
+        else:
+            for name in ["smoothness", "num_elements"]:
+                if isinstance(options[name], (int, float)):
+                    options[name] = [options[name]] * nx
+                options[name] = np.atleast_1d(options[name])
+
+            self.printer.max_print_depth = options["max_print_depth"]
+
+            num = {}
+            num["x"] = self.training_points[None][0][0].shape[1]
+            num["y"] = self.training_points[None][0][1].shape[1]
+            num["elem_list"] = np.array(options["num_elements"], int)
+            num["elem"] = np.prod(num["elem_list"])
+            num["term_list"] = 4 * np.ones(num["x"], int)
+            num["term"] = np.prod(num["term_list"])
+            num["uniq_list"] = num["elem_list"] + 1
+            num["uniq"] = np.prod(num["uniq_list"])
+            num["t"] = 0
+            for kx in self.training_points[None]:
+                num["t"] += self.training_points[None][kx][0].shape[0]
+            num["coeff"] = num["term"] * num["elem"]
+            num["support"] = num["term"]
+            num["dof"] = num["uniq"] * 2 ** num["x"]
+
+            self.num = num
+
+            self._backend = PureRMTC()
+            self._backend.setup(
+                num["x"],
+                np.array(self.options["xlimits"][:, 0], dtype=np.float64),
+                np.array(self.options["xlimits"][:, 1], dtype=np.float64),
+                np.array(num["elem_list"], np.int32),
+                np.array(num["term_list"], np.int32),
+            )
+
+    def _compute_jac_raw(self, ix1, ix2, x):
+        st = _normalize_spline_type(self.options["spline_type"])
+        if st == "B-Spline":
+            xlimits = self.options["xlimits"]
+            t = np.zeros(x.shape, dtype=np.float64)
+            for kx in range(self.num["x"]):
+                t[:, kx] = (x[:, kx] - xlimits[kx, 0]) / (
+                    xlimits[kx, 1] - xlimits[kx, 0]
+                )
+            t = np.maximum(t, 0.0 + 1e-15)
+            t = np.minimum(t, 1.0 - 1e-15)
+
+            data, rows, cols = self._backend.compute_jac(ix1 - 1, ix2 - 1, t)
+
+            if ix1 != 0:
+                data /= xlimits[ix1 - 1, 1] - xlimits[ix1 - 1, 0]
+            if ix2 != 0:
+                data /= xlimits[ix2 - 1, 1] - xlimits[ix2 - 1, 0]
+
+            return data, rows, cols
+        else:
+            return self._backend.compute_jac(ix1 - 1, ix2 - 1, x)
+
+    def _compute_dof2coeff(self):
+        st = _normalize_spline_type(self.options["spline_type"])
+        if st == "B-Spline":
+            return None
+        else:
+            num = self.num
+            elem_coeff2nodal = self._backend.compute_coeff2nodal()
+            elem_nodal2coeff = np.linalg.inv(elem_coeff2nodal)
+
+            data, rows, cols = self._backend.compute_uniq2elem()
+            num_coeff_elem = num["term"] * num["elem"]
+            num_coeff_uniq = num["uniq"] * 2 ** num["x"]
+            full_uniq2elem = scipy.sparse.csc_matrix(
+                (data, (rows, cols)), shape=(num_coeff_elem, num_coeff_uniq)
+            )
+
+            full_nodal2coeff = scipy.sparse.kron(
+                scipy.sparse.eye(num["elem"], format="csc"),
+                scipy.sparse.csc_matrix(elem_nodal2coeff),
+                format="csc",
+            )
+            full_dof2coeff = (full_nodal2coeff * full_uniq2elem).tocsc()
+            return full_dof2coeff
+
     def _setup_hessian(self):
         diag = np.ones(self.num["dof"])
         arange = np.arange(self.num["dof"])
@@ -170,7 +367,7 @@ class RMTS(SurrogateModel):
             if kx == 0:
                 c = 1.0
             else:
-                self.options["grad_weight"] / xlimits.shape[0]
+                c = self.options["grad_weight"] / xlimits.shape[0]
 
             full_jac = self._compute_jac(kx, 0, xt)
             full_jac_dict[kx] = (full_jac, full_jac.T.tocsc(), c)
@@ -186,7 +383,8 @@ class RMTS(SurrogateModel):
         inputs = {}
         inputs["nx"] = xlimits.shape[0]
         inputs["elem_list"] = num["elem_list"]
-        if self.__class__.__name__ == "RMTB":
+        st = _normalize_spline_type(self.options["spline_type"])
+        if st == "B-Spline":
             inputs["num_ctrl_list"] = num["ctrl_list"]
             inputs["order_list"] = num["order_list"]
 
@@ -198,12 +396,9 @@ class RMTS(SurrogateModel):
             if outputs:
                 sq_mtx = outputs["sq_mtx"]
             else:
-                n = np.prod(2 * num["elem_list"])
-                x = np.empty(n * num["x"])
-                self.rmtsc.compute_quadrature_points(
-                    n, np.array(2 * num["elem_list"], dtype=np.int32), x
+                x = compute_quadrature_points(
+                    2 * num["elem_list"], xlimits[:, 0], xlimits[:, 1]
                 )
-                x = x.reshape((n, num["x"]))
 
                 sq_mtx = [None] * num["x"]
                 for kx in range(num["x"]):
@@ -228,7 +423,34 @@ class RMTS(SurrogateModel):
 
         return full_hess
 
+    def __getstate__(self):
+        state = self.__dict__.copy()
+        state["_backend"] = None
+        state["_jax_opt_cache"] = None
+        return state
+
+    def __setstate__(self, state):
+        self.__dict__.update(state)
+        if None in self.training_points and 0 in self.training_points[None]:
+            self._setup()
+
+    def _get_jax_opt_data(self):
+        cache = getattr(self, "_jax_opt_cache", None)
+        if (
+            cache is None
+            or cache["hess_id"] != id(self.full_hess)
+            or cache["jac_dict_id"] != id(self.full_jac_dict)
+            or cache["hess_nnz"] != self.full_hess.nnz
+        ):
+            cache = _prepare_jax_opt_cache(self.full_hess, self.full_jac_dict)
+            self._jax_opt_cache = cache
+        return cache
+
     def _opt_func(self, sol, p, yt_dict):
+        if _use_jax_opt():
+            cache = self._get_jax_opt_data()
+            return _opt_func_jax(sol, p, yt_dict, cache)
+
         full_hess = self.full_hess
         full_jac_dict = self.full_jac_dict
 
@@ -241,6 +463,10 @@ class RMTS(SurrogateModel):
         return func
 
     def _opt_grad(self, sol, p, yt_dict):
+        if _use_jax_opt():
+            cache = self._get_jax_opt_data()
+            return _opt_grad_jax(sol, p, yt_dict, cache)
+
         full_hess = self.full_hess
         full_jac_dict = self.full_jac_dict
 
@@ -253,19 +479,27 @@ class RMTS(SurrogateModel):
         return grad
 
     def _opt_dgrad_dyt(self, sol, p, yt_dict, kx):
-        _full_hess = self.full_hess
         full_jac_dict = self.full_jac_dict
 
         full_jac, full_jac_T, c = full_jac_dict[kx]
         yt = yt_dict[kx]
 
-        diag_vec = p * (p - 1) * (full_jac * sol - yt) ** (p - 2)
+        if p in (0, 1):
+            diag_vec = np.zeros(full_jac.shape[0], dtype=np.float64)
+        else:
+            diag_vec = p * (p - 1) * (full_jac * sol - yt) ** (p - 2)
         diag_mtx = scipy.sparse.diags(diag_vec, format="csc")
         mtx = 0.5 * c * full_jac_T.dot(diag_mtx)
 
-        return -mtx.todense()
+        return -mtx.toarray()
 
     def _opt_hess(self, sol, p, yt_dict):
+        if _use_jax_opt():
+            cache = self._get_jax_opt_data()
+            return _opt_hess_jax(
+                sol, p, yt_dict, cache, self.full_hess, self.full_jac_dict
+            )
+
         full_hess = self.full_hess
         full_jac_dict = self.full_jac_dict
 
@@ -274,16 +508,16 @@ class RMTS(SurrogateModel):
             full_jac, full_jac_T, c = full_jac_dict[kx]
             yt = yt_dict[kx]
 
-            diag_vec = p * (p - 1) * (full_jac * sol - yt) ** (p - 2)
+            if p in (0, 1):
+                diag_vec = np.zeros(full_jac.shape[0], dtype=np.float64)
+            else:
+                diag_vec = p * (p - 1) * (full_jac * sol - yt) ** (p - 2)
             diag_mtx = scipy.sparse.diags(diag_vec, format="csc")
             hess += 0.5 * c * full_jac_T * diag_mtx * full_jac
 
         return hess
 
     def _opt_norm(self, sol, p, yt_dict):
-        _full_hess = self.full_hess
-        _full_jac_dict = self.full_jac_dict
-
         grad = self._opt_grad(sol, p, yt_dict)
         return np.linalg.norm(grad)
 
@@ -331,6 +565,7 @@ class RMTS(SurrogateModel):
                             solver._setup(mtx, self.printer)
 
                         with self.printer._timed_context("Solving linear system"):
+                            d_sol[:, ind_y] = 0.0
                             solver._solve(rhs[:, ind_y], d_sol[:, ind_y], ind_y=ind_y)
 
                         def func(x):
@@ -356,17 +591,14 @@ class RMTS(SurrogateModel):
 
                     iter_count += 1
 
+                self.mtx = self._opt_hess(sol[:, ind_y], p, yt_dict)
+
     def _solve(self):
         num = self.num
         options = self.options
 
-        _solver = get_solver(options["solver"])
-        _ls_class = get_line_search_class(options["line_search"])
-
         total_size = int(num["dof"])
-        _rhs = np.zeros((total_size, num["y"]))
         sol = np.zeros((total_size, num["y"]))
-        _d_sol = np.zeros((total_size, num["y"]))
 
         with self.printer._timed_context(
             "Solving initial startup problem (n=%i)" % total_size
@@ -426,13 +658,8 @@ class RMTS(SurrogateModel):
         """
         self._setup()
 
-        tmp = self.rmtsc
-        self.rmtsc = None
-
         inputs = {"self": self}
         with cached_operation(inputs, self.options["data_dir"]) as outputs:
-            self.rmtsc = tmp
-
             if outputs:
                 self.sol_coeff = outputs["sol_coeff"]
                 self.sol = outputs["sol"]
@@ -501,7 +728,7 @@ class RMTS(SurrogateModel):
         # a_k and b_k are the lower and upper bounds for x_k.
         #
         # A C1 extrapolation can get very tricky, so we implement a simple C0
-        # extrapolation. We basically linarly extrapolate from the nearest
+        # extrapolation. We basically linearly extrapolate from the nearest
         # domain point. For example, if n = 4 and x2 > b2 and x3 > b3:
         #    f(x1,x2,x3,x4) = f(x1,b2,b3,x4) + dfdx2 (x2-b2) + dfdx3 (x3-b3)
         #    where the derivatives are evaluated at x1,b2,b3,x4 (called b) and
@@ -517,9 +744,8 @@ class RMTS(SurrogateModel):
             # First we evaluate the vector pointing to each evaluation points
             # from the nearest point on the domain, in a matrix called dx.
             # If the ith evaluation point is not external, dx[i, :] = 0.
-            dx = np.empty(n * num["support"] * num["x"])
-            self.rmtsc.compute_ext_dist(n, num["support"], x.flatten(), dx)
-            dx = dx.reshape((n * num["support"], num["x"]))
+            xlimits = self.options["xlimits"]
+            dx = compute_ext_dist(x, xlimits[:, 0], xlimits[:, 1], nterm=num["support"])
 
             isexternal = np.array(np.array(dx, bool), float)
 
@@ -535,6 +761,11 @@ class RMTS(SurrogateModel):
                     data_tmp *= 1 - isexternal[:, kx - 1]
 
                 data += data_tmp
+        elif kx != 0:
+            xlimits = self.options["xlimits"]
+            is_outside = np.any((x < xlimits[:, 0]) | (x > xlimits[:, 1]), axis=1)
+            if np.any(is_outside):
+                data = np.where(is_outside[rows], 0.0, data)
 
         mtx = scipy.sparse.csc_matrix((data, (rows, cols)), shape=(n, num["coeff"]))
         return mtx
@@ -542,9 +773,7 @@ class RMTS(SurrogateModel):
     def _predict_output_derivatives(self, x):
         # dy_dyt = dy_dw * (dR_dw)^{-1} * dR_dyt
 
-        _n = x.shape[0]
         nw = self.mtx.shape[0]
-        _nx = x.shape[1]
         ny = self.sol.shape[1]
 
         p = self.options["approx_order"]
@@ -552,7 +781,7 @@ class RMTS(SurrogateModel):
         dy_dw = self._compute_prediction_mtx(x, 0)
         if self.full_dof2coeff is not None:
             dy_dw = dy_dw * self.full_dof2coeff
-        dy_dw = dy_dw.todense()
+        dy_dw = dy_dw.toarray()
 
         dR_dw = self.mtx
 
@@ -591,3 +820,199 @@ class RMTS(SurrogateModel):
     @staticmethod
     def load(filename):
         return persistence.load(filename)
+
+    def get_bspline(self, output=0, physical=True):
+        """
+        Return the trained tensor-product B-spline representation for one output.
+
+        Parameters
+        ----------
+        output : int, optional
+            0-based output column index (default 0).
+        physical : bool, optional
+            If True (default), rescale knot vectors to physical ``xlimits``;
+            if False, return normalized knot vectors on ``[0, 1]``.
+
+        Returns
+        -------
+        dict
+            Dictionary with keys:
+
+            - ``'knots'``: tuple of ``nx`` 1D arrays, the per-dimension knot
+              vectors (open uniform, ``num_ctrl_pts[i] + order[i]`` knots each),
+              in physical units or on ``[0, 1]`` depending on ``physical``.
+            - ``'degree'``: tuple of ``nx`` ints, ``degree[i] = order[i] - 1``.
+            - ``'coefficients'``: array of shape ``tuple(num_ctrl_pts)`` holding
+              the control-point values of the selected output. Indexing is
+              ``coefficients[i_0, ..., i_{nx-1}]`` (C order, last input varying
+              fastest), i.e. the layout expected by ``scipy.interpolate.NdBSpline``.
+            - ``'domain'``: array of shape ``(nx, 2)``, the ``xlimits`` (or
+              ``[0, 1]`` bounds when ``physical=False``).
+
+        Examples
+        --------
+        >>> bs = sm.get_bspline(output=0)
+        >>> from scipy.interpolate import NdBSpline
+        >>> spl = NdBSpline(bs["knots"], bs["coefficients"], bs["degree"])
+        """
+        st = _normalize_spline_type(self.options["spline_type"])
+        if st != "B-Spline":
+            raise ValueError(
+                f"get_bspline() is only supported for 'B-Spline' models, "
+                f"got spline_type={self.options['spline_type']!r}."
+            )
+        if not hasattr(self, "sol_coeff") or self.sol_coeff is None:
+            raise RuntimeError(
+                "RMTS model has not been trained yet. Call train() first."
+            )
+        ny = self.num["y"]
+        if (
+            isinstance(output, bool)
+            or not isinstance(output, Integral)
+            or not (0 <= int(output) < ny)
+        ):
+            raise ValueError(f"output must be an integer in [0, {ny}), got {output!r}.")
+
+        xlimits = np.asarray(self.options["xlimits"], dtype=np.float64)
+        if physical:
+            knots = tuple(
+                np.array(
+                    xlimits[kx, 0] + k * (xlimits[kx, 1] - xlimits[kx, 0]),
+                    dtype=np.float64,
+                )
+                for kx, k in enumerate(self.knots_list)
+            )
+            domain = xlimits.copy()
+        else:
+            knots = tuple(
+                np.array(k, dtype=np.float64, copy=True) for k in self.knots_list
+            )
+            domain = np.tile(np.array([0.0, 1.0], dtype=np.float64), (self.num["x"], 1))
+
+        degree = tuple(int(o) - 1 for o in self.num["order_list"])
+        ctrl_shape = tuple(int(c) for c in self.num["ctrl_list"])
+        coefficients = np.array(
+            self.sol_coeff[:, int(output)].reshape(ctrl_shape),
+            dtype=np.float64,
+            copy=True,
+        )
+        return {
+            "knots": knots,
+            "degree": degree,
+            "coefficients": coefficients,
+            "domain": domain,
+        }
+
+    def to_scipy(self, output=0, physical=True, as_1d=False):
+        """
+        Convert the trained RMTS model for one output to a SciPy spline object.
+
+        Parameters
+        ----------
+        output : int, optional
+            0-based output column index (default 0).
+        physical : bool, optional
+            If True (default), construct the spline over physical ``xlimits``;
+            if False, construct it over normalized ``[0, 1]^nx``.
+        as_1d : bool, optional
+            If True and ``nx == 1``, return a ``scipy.interpolate.BSpline`` instance
+            (which accepts 1D array evaluations ``(n,)``) instead of ``NdBSpline``.
+
+        Returns
+        -------
+        scipy.interpolate.NdBSpline or scipy.interpolate.BSpline
+            Equivalent SciPy B-spline object.
+        """
+        st = _normalize_spline_type(self.options["spline_type"])
+        if st != "B-Spline":
+            raise ValueError(
+                f"to_scipy() is only supported for 'B-Spline' models, "
+                f"got spline_type={self.options['spline_type']!r}."
+            )
+        bs = self.get_bspline(output=output, physical=physical)
+        if as_1d:
+            if self.num["x"] != 1:
+                raise ValueError("as_1d=True is only supported when nx == 1.")
+            from scipy.interpolate import BSpline
+
+            return BSpline(bs["knots"][0], bs["coefficients"], bs["degree"][0])
+
+        try:
+            from scipy.interpolate import NdBSpline
+        except ImportError as err:
+            raise ImportError(
+                "RMTS.to_scipy() requires SciPy >= 1.12.0 for scipy.interpolate.NdBSpline."
+            ) from err
+
+        return NdBSpline(bs["knots"], bs["coefficients"], bs["degree"])
+
+
+class RMTB(RMTS):
+    """
+    Regularized Minimal-energy Tensor-product B-spline (RMTB) interpolant.
+
+    .. deprecated:: 2.x
+       Use ``RMTS(spline_type='B-Spline')`` instead.
+    """
+
+    name = "RMTB"
+
+    def __init__(self, **kwargs):
+        # Only warn on direct use: subclasses (e.g. RMTBUQ) are not deprecated.
+        if type(self) is RMTB:
+            import warnings
+
+            warnings.warn(
+                "RMTB is deprecated, please use RMTS(spline_type='B-Spline') instead.",
+                FutureWarning,
+                stacklevel=2,
+            )
+        super().__init__(**kwargs)
+
+    def _initialize(self):
+        super()._initialize()
+        self.options["spline_type"] = "B-Spline"
+
+    def _final_initialize(self):
+        st = _normalize_spline_type(self.options["spline_type"])
+        if st != "B-Spline":
+            raise ValueError(
+                f"RMTB only supports spline_type='B-Spline', got {self.options['spline_type']!r}."
+            )
+        super()._final_initialize()
+
+
+class RMTC(RMTS):
+    """
+    Regularized Minimal-energy Tensor-product Cubic Hermite spline (RMTC) interpolant.
+
+    .. deprecated:: 2.x
+       Use ``RMTS(spline_type='Cubic_Hermite_Spline')`` instead.
+    """
+
+    name = "RMTC"
+
+    def __init__(self, **kwargs):
+        # Only warn on direct use: subclasses are not deprecated.
+        if type(self) is RMTC:
+            import warnings
+
+            warnings.warn(
+                "RMTC is deprecated, please use RMTS(spline_type='Cubic_Hermite_Spline') instead.",
+                FutureWarning,
+                stacklevel=2,
+            )
+        super().__init__(**kwargs)
+
+    def _initialize(self):
+        super()._initialize()
+        self.options["spline_type"] = "Cubic_Hermite_Spline"
+
+    def _final_initialize(self):
+        st = _normalize_spline_type(self.options["spline_type"])
+        if st != "Cubic_Hermite_Spline":
+            raise ValueError(
+                "RMTC only supports spline_type='Cubic_Hermite_Spline', "
+                f"got {self.options['spline_type']!r}."
+            )
+        super()._final_initialize()

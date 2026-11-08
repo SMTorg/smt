@@ -4,11 +4,22 @@ Author: Dr. Mohamed Amine Bouhlel <mbouhlel@umich.edu>, R. Lafage
 This package is distributed under New BSD license.
 """
 
-from smt.surrogate_models import GEKPLS, KPLS, KPLSK, KRG, LS, MGP, QP
+from smt.surrogate_models import (
+    GEKPLS,
+    KPLS,
+    KPLSK,
+    KRG,
+    LS,
+    MGP,
+    QP,
+    RMTS,
+    RMTB,
+    RMTC,
+)
 from smt.utils.options_dictionary import OptionsDictionary
 
 try:
-    from smt.surrogate_models import IDW, RBF, RMTB, RMTC
+    from smt.surrogate_models import IDW, RBF
 
     COMPILED_AVAILABLE = True
 except ImportError:
@@ -25,6 +36,7 @@ class SurrogateBasedApplication:
             "KPLSK": KPLSK,
             "GEKPLS": GEKPLS,
             "RBF": RBF,
+            "RMTS": RMTS,
             "RMTC": RMTC,
             "RMTB": RMTB,
             "IDW": IDW,
@@ -38,6 +50,9 @@ class SurrogateBasedApplication:
             "KPLS": KPLS,
             "KPLSK": KPLSK,
             "GEKPLS": GEKPLS,
+            "RMTS": RMTS,
+            "RMTC": RMTC,
+            "RMTB": RMTB,
             "MGP": MGP,
         }
 
