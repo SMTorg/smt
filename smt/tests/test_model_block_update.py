@@ -15,6 +15,7 @@ from smt.design_space import (
     FloatVariable,
 )
 from smt.surrogate_models import KRG, SGP
+from smt.surrogate_models.krg_based.kernel_types import MixIntKernelType
 
 
 def xsinx(x: np.ndarray) -> np.ndarray:
@@ -229,6 +230,53 @@ class TestModelBlockUpdate(unittest.TestCase):
         with self.assertRaises(RuntimeError):
             KRG().update_model(np.array([[1.0]]), np.array([[1.0]]))
 
+    def test_supports_block_update_property(self):
+        sm_default = KRG(print_global=False)
+        self.assertTrue(sm_default.supports_block_update)
+        self.assertTrue(sm_default.is_block_updatable)
+        self.assertFalse(sm_default.is_trained)
+
+        sm_default.set_training_values(self.xt, self.yt)
+        sm_default.train()
+        self.assertTrue(sm_default.is_trained)
+        self.assertTrue(sm_default.supports_block_update)
+        self.assertTrue(sm_default.is_block_updatable)
+        self.assertIsNone(sm_default._check_model_compatibility())
+
+        sm_het = KRG(use_het_noise=True, print_global=False)
+        self.assertFalse(sm_het.supports_block_update)
+        self.assertFalse(sm_het.is_block_updatable)
+        with self.assertRaises(NotImplementedError):
+            sm_het._check_model_compatibility()
+
+        sm_ri = KRG(is_ri=True, print_global=False)
+        self.assertFalse(sm_ri.supports_block_update)
+        self.assertFalse(sm_ri.is_block_updatable)
+        with self.assertRaises(NotImplementedError):
+            sm_ri._check_model_compatibility()
+
+        sm_cat_exp = KRG(
+            categorical_kernel=MixIntKernelType.EXP_HOMO_HSPHERE, print_global=False
+        )
+        self.assertFalse(sm_cat_exp.supports_block_update)
+        self.assertFalse(sm_cat_exp.is_block_updatable)
+        with self.assertRaises(NotImplementedError):
+            sm_cat_exp._check_model_compatibility()
+
+        sm_cat_homo = KRG(
+            categorical_kernel=MixIntKernelType.HOMO_HSPHERE, print_global=False
+        )
+        self.assertFalse(sm_cat_homo.supports_block_update)
+        self.assertFalse(sm_cat_homo.is_block_updatable)
+        with self.assertRaises(NotImplementedError):
+            sm_cat_homo._check_model_compatibility()
+
+        sm_sgp = SGP(print_global=False)
+        self.assertFalse(sm_sgp.supports_block_update)
+        self.assertFalse(sm_sgp.is_block_updatable)
+        with self.assertRaises(NotImplementedError):
+            sm_sgp._check_model_compatibility()
+
     def test_unsupported_models(self):
         X_new, Y_new = np.array([[23.0]]), np.array([[1.0]])
 
@@ -238,15 +286,18 @@ class TestModelBlockUpdate(unittest.TestCase):
         sm.set_training_values(xt, xsinx(xt) + noise)
         sm.train()
         self.assertIn("C", sm.optimal_par)
+        self.assertFalse(sm.supports_block_update)
+        self.assertFalse(sm.is_block_updatable)
         with self.assertRaises(NotImplementedError):
             sm.update_model(X_new, Y_new)
-
 
         x = np.linspace(0, 25, 20).reshape(-1, 1)
         sm = SGP(print_global=False, seed=42)
         sm.set_training_values(x, xsinx(x))
         sm.set_inducing_inputs(Z=x[::4].copy())
         sm.train()
+        self.assertFalse(sm.supports_block_update)
+        self.assertFalse(sm.is_block_updatable)
         with self.assertRaises(NotImplementedError):
             sm.update_model(X_new, Y_new)
 

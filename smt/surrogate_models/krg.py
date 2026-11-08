@@ -4,7 +4,7 @@ Author: Dr. Mohamed A. Bouhlel <mbouhlel@umich.edu>
 This package is distributed under New BSD license.
 """
 
-from typing import Tuple
+from typing import Optional, Tuple
 
 import numpy as np
 from scipy.linalg import cholesky, qr, solve_triangular
@@ -153,6 +153,60 @@ class KRG(KrgBased):
 
         return L_new, L21, L22
 
+    @property
+    def _block_update_incompatibility_reason(self) -> Optional[str]:
+        """
+        Return the reason why block update is not supported, or None if supported.
+        """
+        # Subclasses (e.g. SGP) store a different model state in optimal_par
+        if type(self) is not KRG:
+            return f"Block update is not supported for {type(self).__name__} models."
+
+        if self.options["use_het_noise"]:
+            return "Block update is not supported with heteroscedastic noise."
+
+        if self.options["is_ri"]:
+            return "Block update is not supported with reinterpolation (is_ri)."
+
+        try:
+            cat_kernel = self.options["categorical_kernel"]
+            if cat_kernel in [
+                MixIntKernelType.EXP_HOMO_HSPHERE,
+                MixIntKernelType.HOMO_HSPHERE,
+            ]:
+                return (
+                    "Block update is not supported for non distance-based "
+                    "categorical kernels."
+                )
+        except KeyError:
+            pass
+
+        return None
+
+    @property
+    def supports_block_update(self) -> bool:
+        """
+        Check if the surrogate model is compatible with block updates.
+
+        Returns
+        -------
+        bool
+            True if the model supports block update, False otherwise.
+        """
+        return self._block_update_incompatibility_reason is None
+
+    @property
+    def is_block_updatable(self) -> bool:
+        """
+        Alias for supports_block_update.
+
+        Returns
+        -------
+        bool
+            True if the model supports block update, False otherwise.
+        """
+        return self.supports_block_update
+
     def _check_model_compatibility(self) -> None:
         """
         Check if the surrogate model is compatible with block updates.
@@ -163,34 +217,9 @@ class KRG(KrgBased):
             If the model is a subclass of KRG, if heteroscedastic noise or
             reinterpolation is used, or if the categorical kernel is not distance-based.
         """
-        # Subclasses (e.g. SGP) store a different model state in optimal_par
-        if type(self) is not KRG:
-            raise NotImplementedError(
-                f"Block update is not supported for {type(self).__name__} models."
-            )
-
-
-        if self.options["use_het_noise"]:
-            raise NotImplementedError(
-                "Block update is not supported with heteroscedastic noise."
-            )
-
-        if self.options["is_ri"]:
-            raise NotImplementedError(
-                "Block update is not supported with reinterpolation (is_ri)."
-            )
-
-        try:
-            cat_kernel = self.options["categorical_kernel"]
-            if cat_kernel in [
-                MixIntKernelType.EXP_HOMO_HSPHERE,
-                MixIntKernelType.HOMO_HSPHERE,
-            ]:
-                raise NotImplementedError(
-                    "Block update is not supported for non distance-based categorical kernels."
-                )
-        except KeyError:
-            pass
+        reason = self._block_update_incompatibility_reason
+        if reason is not None:
+            raise NotImplementedError(reason)
 
 
     def _correct_categorical_acting_distances(self, D: np.ndarray, is_acting1: np.ndarray, is_acting2: np.ndarray, ij: np.ndarray, mixint_type) -> np.ndarray:
@@ -387,7 +416,7 @@ class KRG(KrgBased):
         self.optimal_par["Q"] = Q
 
     def _check_update_dimensions(self, X_new: np.ndarray, Y_new: np.ndarray) -> None:
-        if not hasattr(self, "optimal_par"):
+        if not self.is_trained:
             raise RuntimeError("update_model requires a trained model.")
 
         self._check_model_compatibility()
