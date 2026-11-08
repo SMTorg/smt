@@ -105,7 +105,7 @@ class TestModelBlockUpdate(unittest.TestCase):
         original_x_test = self.x_test
         if is_hierarchical:
             self.x_test = np.hstack((np.zeros((50, 1)), np.linspace(0, 25, 50).reshape(-1, 1)))
-            self.assert_matches_reference(sm, updated, X_new, Y_new, par_rtol=1e-2, par_atol=1e-2, var_rtol=1e-2, var_atol=1e-2, pred_rtol=5e-2, pred_atol=5e-1)
+            self.assert_matches_reference(sm, updated, X_new, Y_new)
         else:
             self.x_test = np.hstack((np.linspace(0, 25, 50).reshape(-1, 1), np.zeros((50, 1))))
             self.assert_matches_reference(sm, updated, X_new, Y_new)
@@ -129,7 +129,38 @@ class TestModelBlockUpdate(unittest.TestCase):
         sm.train()
         return sm
 
-    def assert_matches_reference(self, sm, updated, X_new, Y_new, par_rtol=1e-6, par_atol=1e-8, var_rtol=1e-6, var_atol=1e-8, pred_rtol=1e-6, pred_atol=1e-8):
+    def _trained_mixed_krg(self, **options):
+        ds = DesignSpace([FloatVariable(0, 25), CategoricalVariable(["A", "B"])])
+        xt = np.array([[3.5, 0], [8.0, 1], [12.0, 0], [17.0, 1]])
+        yt = xsinx(xt[:, :1])
+        sm = KRG(design_space=ds, print_global=False, seed=42, **options)
+        sm.set_training_values(xt, yt)
+        sm.train()
+        return sm
+
+    def _trained_hierarchical_krg(self, **options):
+        ds = DesignSpace(
+            [
+                CategoricalVariable(["A", "B"]),
+                FloatVariable(0, 25),
+            ]
+        )
+        ds.declare_decreed_var(decreed_var=1, meta_var=0, meta_value="A")
+
+        xt = np.array([[0, 3.5], [1, 8.0], [0, 12.0], [0, 17.0]])
+        yt = np.zeros((4, 1))
+        for i in range(4):
+            if xt[i, 0] == 0:
+                yt[i] = xsinx(xt[i : i + 1, 1:2])
+            else:
+                yt[i] = 10.0
+
+        sm = KRG(design_space=ds, print_global=False, seed=42, **options)
+        sm.set_training_values(xt, yt)
+        sm.train()
+        return sm
+
+    def assert_matches_reference(self, sm, updated, X_new, Y_new, par_rtol=1e-4, par_atol=1e-7, var_rtol=1e-4, var_atol=1e-7, pred_rtol=1e-4, pred_atol=1e-7):
         ref = reference_model(
             sm,
             np.vstack((sm.training_points[None][0][0], X_new)),
@@ -303,12 +334,7 @@ class TestModelBlockUpdate(unittest.TestCase):
 
 
     def test_mixed_variables_update(self):
-        ds = DesignSpace([FloatVariable(0, 25), CategoricalVariable(["-1.2277412969136694", "7.914865972987054"])])
-        xt = np.array([[3.5, 0], [8.0, 1], [12.0, 0], [17.0, 1]])
-        yt = xsinx(xt[:, :1])
-        sm = KRG(design_space=ds, print_global=False, seed=42)
-        sm.set_training_values(xt, yt)
-        sm.train()
+        sm = self._trained_mixed_krg()
 
         X_new_single = np.array([[23.0, 0]])
         Y_new_single = xsinx(X_new_single[:, :1])
@@ -324,26 +350,7 @@ class TestModelBlockUpdate(unittest.TestCase):
         self._assert_mixed_matches(sm, updated_multi, X_new_multi, Y_new_multi)
 
     def test_hierarchical_variables_update(self):
-
-        ds = DesignSpace(
-            [
-                CategoricalVariable(["-1.2277412969136694", "7.914865972987054"]),
-                FloatVariable(0, 25),
-            ]
-        )
-        ds.declare_decreed_var(decreed_var=1, meta_var=0, meta_value="-1.2277412969136694")
-
-        xt = np.array([[0, 3.5], [1, 8.0], [0, 12.0], [1, 17.0]])
-        yt = np.zeros((4, 1))
-        for i in range(4):
-            if xt[i, 0] == 0:
-                yt[i] = xsinx(xt[i:i+1, 1:2])
-            else:
-                yt[i] = np.cos(xt[i:i+1, 1:2]) * 10
-
-        sm = KRG(design_space=ds, print_global=False, seed=42)
-        sm.set_training_values(xt, yt)
-        sm.train()
+        sm = self._trained_hierarchical_krg()
 
         X_new = np.array([[0, 23.0]])
         Y_new = xsinx(X_new[:, 1:2])
