@@ -168,19 +168,6 @@ class KRG(KrgBased):
         if self.options["is_ri"]:
             return "Block update is not supported with reinterpolation (is_ri)."
 
-        try:
-            cat_kernel = self.options["categorical_kernel"]
-            if cat_kernel in [
-                MixIntKernelType.EXP_HOMO_HSPHERE,
-                MixIntKernelType.HOMO_HSPHERE,
-            ]:
-                return (
-                    "Block update is not supported for non distance-based "
-                    "categorical kernels."
-                )
-        except KeyError:
-            pass
-
         return None
 
     @property
@@ -214,8 +201,8 @@ class KRG(KrgBased):
         Raises
         ------
         NotImplementedError
-            If the model is a subclass of KRG, if heteroscedastic noise or
-            reinterpolation is used, or if the categorical kernel is not distance-based.
+            If the model is a subclass of KRG, or if heteroscedastic noise or
+            reinterpolation is used.
         """
         reason = self._block_update_incompatibility_reason
         if reason is not None:
