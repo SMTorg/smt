@@ -102,8 +102,8 @@ class TestKRG(unittest.TestCase):
         diff_d_gpx = (y_predicted_gpx[3, 0] - y_predicted_gpx[4, 0]) / (2 * e)
         diff_g_krg = (y_predicted_krg[1, 0] - y_predicted_krg[2, 0]) / (2 * e)
         diff_d_krg = (y_predicted_krg[3, 0] - y_predicted_krg[4, 0]) / (2 * e)
-        diff_gpx = [diff_g_gpx, diff_d_gpx]
-        diff_krg = [diff_g_krg, diff_d_krg]
+        diff_gpx = np.array([[diff_g_gpx, diff_d_gpx]])
+        diff_krg = np.array([[diff_g_krg, diff_d_krg]])
         deriv_gpx = np.array(
             [
                 sm_gpx.predict_variance_derivatives(x, 0)[0],
@@ -118,15 +118,9 @@ class TestKRG(unittest.TestCase):
             ]
         ).T
 
-        self.assertTrue(
-            (
-                np.sum(deriv_gpx - deriv_krg)
-                + np.sum(deriv_gpx - diff_gpx)
-                + np.sum(deriv_krg - diff_krg)
-            )
-            / np.sum(np.abs(deriv_gpx))
-            < 1e-2
-        )
+        np.testing.assert_allclose(diff_krg, deriv_krg, atol=5e-2)
+        np.testing.assert_allclose(diff_gpx, deriv_gpx, atol=5e-2)
+        np.testing.assert_allclose(deriv_krg, deriv_gpx, atol=5e-2)
 
 
 if __name__ == "__main__":
