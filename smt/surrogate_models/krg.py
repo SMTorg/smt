@@ -9,6 +9,11 @@ from typing import Tuple
 import numpy as np
 from scipy.linalg import cholesky, qr, solve_triangular
 
+from typing import Tuple
+
+import numpy as np
+from scipy.linalg import cholesky, qr, solve_triangular
+
 from smt.kernels import Kernel
 from smt.surrogate_models.krg_based import KrgBased
 

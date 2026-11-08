@@ -17,7 +17,6 @@ classifiers = [
     "Programming Language :: C++",
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: Implementation :: CPython",
     "Topic :: Software Development",
     "Topic :: Scientific/Engineering",
@@ -28,14 +27,14 @@ classifiers = [
 dependencies = [
     "packaging",
     "scikit-learn",
-    "pydoe>=1.0.0,<2.0",
+    "pydoe>=1",
     "scipy",
-    "jenn>=2.0.0,<3.0",
+    "jenn>=2",
 ]
 
 [project.optional-dependencies]
-numba = ["numba~=0.64"]
-gpx = ["egobox~=0.38"]
+numba = ["numba>=0.64"]
+gpx = ["egobox>=1"]
 rbfgen = ["torch>=2.4.1"]
 
 [project.urls]
