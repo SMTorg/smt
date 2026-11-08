@@ -293,23 +293,6 @@ class KrgBased(SurrogateModel):
         """
         return True
 
-    @property
-    def supports_block_update(self) -> bool:
-        """Whether this model supports block updates without re-training.
-        Default False. Overridden in KRG.
-        """
-        return False
-
-    @property
-    def is_block_updatable(self) -> bool:
-        """Alias for supports_block_update."""
-        return self.supports_block_update
-
-    @property
-    def is_trained(self) -> bool:
-        """Whether the model has been trained."""
-        return hasattr(self, "optimal_par") and bool(self.optimal_par)
-
     def _get_fidelity_training_data(self):
         """Return (X, y) training data for the current fidelity level.
         Override in MFK to return data for self._lvl.

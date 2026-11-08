@@ -194,6 +194,18 @@ class KRG(KrgBased):
         """
         return self.supports_block_update
 
+    @property
+    def is_trained(self) -> bool:
+        """
+        Whether the model has been trained.
+
+        Returns
+        -------
+        bool
+            True if the model has been trained, False otherwise.
+        """
+        return hasattr(self, "optimal_par") and bool(self.optimal_par)
+
     def _check_model_compatibility(self) -> None:
         """
         Check if the surrogate model is compatible with block updates.
