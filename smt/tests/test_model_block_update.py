@@ -10,6 +10,7 @@ from smt.surrogate_models.krg_based.mixed_int_corr import (
 )
 
 from smt.design_space import (
+    BaseDesignSpace,
     CategoricalVariable,
     DesignSpace,
     FloatVariable,
@@ -112,16 +113,6 @@ def reference_model(base_model, X_all, Y_all):
 
 
 class TestModelBlockUpdate(unittest.TestCase):
-    def _assert_mixed_matches(self, sm, updated, X_new, Y_new, is_hierarchical=False):
-        original_x_test = self.x_test
-        if is_hierarchical:
-            self.x_test = np.hstack((np.zeros((50, 1)), np.linspace(0, 25, 50).reshape(-1, 1)))
-            self.assert_matches_reference(sm, updated, X_new, Y_new)
-        else:
-            self.x_test = np.hstack((np.linspace(0, 25, 50).reshape(-1, 1), np.zeros((50, 1))))
-            self.assert_matches_reference(sm, updated, X_new, Y_new)
-        self.x_test = original_x_test
-
     def setUp(self):
         self.xt = np.array([[3.5], [8.0], [12.0], [17.0]])
         self.yt = xsinx(self.xt)
@@ -141,10 +132,21 @@ class TestModelBlockUpdate(unittest.TestCase):
         return sm
 
     def _trained_mixed_krg(self, **options):
-        ds = DesignSpace([FloatVariable(0, 25), CategoricalVariable(["A", "B"])])
+        ds = options.pop("design_space", None)
+        if ds is None:
+            ds = DesignSpace([FloatVariable(0, 25), CategoricalVariable(["A", "B"])])
         xt = np.array([[3.5, 0], [8.0, 1], [12.0, 0], [17.0, 1]])
         yt = xsinx(xt[:, :1])
-        sm = KRG(design_space=ds, print_global=False, seed=42, **options)
+        opts = dict(print_global=False, seed=42)
+        cat_kernel = options.get("categorical_kernel")
+        if cat_kernel in [
+            MixIntKernelType.HOMO_HSPHERE,
+            MixIntKernelType.EXP_HOMO_HSPHERE,
+        ]:
+            opts.setdefault("theta0", [1.0, 1.0])
+            opts.setdefault("theta_bounds", [1e-2, 1e2])
+        opts.update(options)
+        sm = KRG(design_space=ds, **opts)
         sm.set_training_values(xt, yt)
         sm.train()
         return sm
@@ -166,37 +168,124 @@ class TestModelBlockUpdate(unittest.TestCase):
             else:
                 yt[i] = 10.0
 
-        sm = KRG(design_space=ds, print_global=False, seed=42, **options)
+        opts = dict(print_global=False, seed=42)
+        cat_kernel = options.get("categorical_kernel")
+        if cat_kernel in [
+            MixIntKernelType.HOMO_HSPHERE,
+            MixIntKernelType.EXP_HOMO_HSPHERE,
+        ]:
+            opts.setdefault("theta0", [1.0, 1.0])
+            opts.setdefault("theta_bounds", [1e-2, 1e2])
+        opts.update(options)
+        sm = KRG(design_space=ds, **opts)
         sm.set_training_values(xt, yt)
         sm.train()
         return sm
 
-    def assert_matches_reference(self, sm, updated, X_new, Y_new, par_rtol=1e-4, par_atol=1e-7, var_rtol=1e-4, var_atol=1e-7, pred_rtol=1e-4, pred_atol=1e-7):
+    def _get_default_x_test(self, sm, is_hierarchical: bool = False) -> np.ndarray:
+        nx = sm.training_points[None][0][0].shape[1]
+        if nx == 2:
+            is_hier = is_hierarchical or (
+                isinstance(sm.design_space, BaseDesignSpace)
+                and bool(np.any(sm.design_space.is_conditionally_acting))
+            )
+            col_cat = np.zeros((50, 1))
+            col_float = np.linspace(0, 25, 50).reshape(-1, 1)
+            return (
+                np.hstack((col_cat, col_float))
+                if is_hier
+                else np.hstack((col_float, col_cat))
+            )
+        return self.x_test
+
+    def _assert_optimal_parameters(
+        self, updated, ref, rtol: float = 1e-4, atol: float = 1e-7
+    ) -> None:
+        for key in ["C", "beta", "gamma", "sigma2"]:
+            np.testing.assert_allclose(
+                updated.optimal_par[key],
+                ref.optimal_par[key],
+                rtol=rtol,
+                atol=atol,
+                err_msg=key,
+            )
+
+    def _assert_predictions_and_variances(
+        self,
+        updated,
+        ref,
+        x_test: np.ndarray,
+        pred_rtol: float = 1e-4,
+        pred_atol: float = 1e-7,
+        var_rtol: float = 1e-4,
+        var_atol: float = 1e-7,
+    ) -> None:
+        np.testing.assert_allclose(
+            updated.predict_values(x_test),
+            ref.predict_values(x_test),
+            rtol=pred_rtol,
+            atol=pred_atol,
+        )
+        np.testing.assert_allclose(
+            updated.predict_variances(x_test),
+            ref.predict_variances(x_test),
+            rtol=var_rtol,
+            atol=var_atol,
+        )
+
+    def _assert_interpolation(
+        self, sm, updated, X_new: np.ndarray, Y_new: np.ndarray, atol: float = 1e-6
+    ) -> None:
+        is_noisy = (
+            bool(sm.options["eval_noise"])
+            or (
+                sm.options["noise0"] is not None
+                and sm.options["noise0"][0] > 0
+            )
+        )
+        if not is_noisy:
+            X_eval = X_new if X_new.ndim == 2 else X_new[:, None]
+            np.testing.assert_allclose(
+                updated.predict_values(X_eval),
+                Y_new,
+                atol=atol,
+            )
+
+    def assert_matches_reference(
+        self,
+        sm,
+        updated,
+        X_new,
+        Y_new,
+        x_test=None,
+        is_hierarchical=False,
+        par_rtol=1e-4,
+        par_atol=1e-7,
+        var_rtol=1e-4,
+        var_atol=1e-7,
+        pred_rtol=1e-4,
+        pred_atol=1e-7,
+        interp_atol=1e-6,
+    ):
         ref = reference_model(
             sm,
             np.vstack((sm.training_points[None][0][0], X_new)),
             np.vstack((sm.training_points[None][0][1], Y_new)),
         )
-        for key in ["C", "beta", "gamma", "sigma2"]:
-            np.testing.assert_allclose(
-                updated.optimal_par[key],
-                ref.optimal_par[key],
-                rtol=par_rtol,
-                atol=par_atol,
-                err_msg=key,
-            )
-        np.testing.assert_allclose(
-            updated.predict_values(self.x_test),
-            ref.predict_values(self.x_test),
-            rtol=pred_rtol,
-            atol=pred_atol,
+        if x_test is None:
+            x_test = self._get_default_x_test(sm, is_hierarchical=is_hierarchical)
+
+        self._assert_optimal_parameters(updated, ref, rtol=par_rtol, atol=par_atol)
+        self._assert_predictions_and_variances(
+            updated,
+            ref,
+            x_test,
+            pred_rtol=pred_rtol,
+            pred_atol=pred_atol,
+            var_rtol=var_rtol,
+            var_atol=var_atol,
         )
-        np.testing.assert_allclose(
-            updated.predict_variances(self.x_test),
-            ref.predict_variances(self.x_test),
-            rtol=var_rtol,
-            atol=var_atol,
-        )
+        self._assert_interpolation(sm, updated, X_new, Y_new, atol=interp_atol)
 
     def test_single_point_update(self):
         sm = self._trained_krg()
@@ -206,10 +295,6 @@ class TestModelBlockUpdate(unittest.TestCase):
 
         self.assertEqual(updated.nt, 5)
         self.assert_matches_reference(sm, updated, X_new, xsinx(X_new))
-        # noiseless model interpolates the added point
-        np.testing.assert_allclose(
-            updated.predict_values(X_new), xsinx(X_new), atol=1e-6
-        )
 
     def test_multiple_points_update(self):
         for poly in ["constant", "linear", "quadratic"]:
@@ -300,18 +385,16 @@ class TestModelBlockUpdate(unittest.TestCase):
         sm_cat_exp = KRG(
             categorical_kernel=MixIntKernelType.EXP_HOMO_HSPHERE, print_global=False
         )
-        self.assertFalse(sm_cat_exp.supports_block_update)
-        self.assertFalse(sm_cat_exp.is_block_updatable)
-        with self.assertRaises(NotImplementedError):
-            sm_cat_exp._check_model_compatibility()
+        self.assertTrue(sm_cat_exp.supports_block_update)
+        self.assertTrue(sm_cat_exp.is_block_updatable)
+        self.assertIsNone(sm_cat_exp._check_model_compatibility())
 
         sm_cat_homo = KRG(
             categorical_kernel=MixIntKernelType.HOMO_HSPHERE, print_global=False
         )
-        self.assertFalse(sm_cat_homo.supports_block_update)
-        self.assertFalse(sm_cat_homo.is_block_updatable)
-        with self.assertRaises(NotImplementedError):
-            sm_cat_homo._check_model_compatibility()
+        self.assertTrue(sm_cat_homo.supports_block_update)
+        self.assertTrue(sm_cat_homo.is_block_updatable)
+        self.assertIsNone(sm_cat_homo._check_model_compatibility())
 
         sm_sgp = SGP(print_global=False)
         self.assertFalse(sm_sgp.supports_block_update)
@@ -351,80 +434,92 @@ class TestModelBlockUpdate(unittest.TestCase):
         Y_new_single = xsinx(X_new_single[:, :1])
         updated_single = deepcopy(sm)
         updated_single.update_model(X_new_single, Y_new_single)
-
-        self._assert_mixed_matches(sm, updated_single, X_new_single, Y_new_single)
-        np.testing.assert_allclose(
-            updated_single.predict_values(X_new_single), Y_new_single, atol=1e-6
-        )
+        self.assert_matches_reference(sm, updated_single, X_new_single, Y_new_single)
 
         X_new_multi = np.array([[16.0, 1], [23.0, 0]])
         Y_new_multi = xsinx(X_new_multi[:, :1])
         updated_multi = deepcopy(sm)
         updated_multi.update_model(X_new_multi, Y_new_multi)
-        self._assert_mixed_matches(sm, updated_multi, X_new_multi, Y_new_multi)
-        np.testing.assert_allclose(
-            updated_multi.predict_values(X_new_multi), Y_new_multi, atol=1e-6
-        )
+        self.assert_matches_reference(sm, updated_multi, X_new_multi, Y_new_multi)
 
     def test_mixed_categorical_kernels(self):
-        for cat_kernel in [MixIntKernelType.GOWER, MixIntKernelType.DIST_ENCODING]:
+        for cat_kernel in [
+            MixIntKernelType.CONT_RELAX,
+            MixIntKernelType.GOWER,
+            MixIntKernelType.DIST_ENCODING,
+            MixIntKernelType.HOMO_HSPHERE,
+            MixIntKernelType.EXP_HOMO_HSPHERE,
+        ]:
             with self.subTest(cat_kernel=cat_kernel):
                 sm = self._trained_mixed_krg(categorical_kernel=cat_kernel)
-                X_new = np.array([[23.0, 0]])
-                Y_new = xsinx(X_new[:, :1])
-                updated = deepcopy(sm)
-                updated.update_model(X_new, Y_new)
-                self._assert_mixed_matches(sm, updated, X_new, Y_new)
-                np.testing.assert_allclose(
-                    updated.predict_values(X_new), Y_new, atol=1e-6
-                )
+
+                # Single-point update
+                X_new_single = np.array([[23.0, 0]])
+                Y_new_single = xsinx(X_new_single[:, :1])
+                updated_single = deepcopy(sm)
+                updated_single.update_model(X_new_single, Y_new_single)
+                self.assert_matches_reference(sm, updated_single, X_new_single, Y_new_single)
+
+                # Multi-point update
+                X_new_multi = np.array([[16.0, 1], [23.0, 0]])
+                Y_new_multi = xsinx(X_new_multi[:, :1])
+                updated_multi = deepcopy(sm)
+                updated_multi.update_model(X_new_multi, Y_new_multi)
+                self.assert_matches_reference(sm, updated_multi, X_new_multi, Y_new_multi)
 
     def test_mixed_successive_updates(self):
-        sm = self._trained_mixed_krg()
-        X1 = np.array([[16.0, 1]])
-        Y1 = xsinx(X1[:, :1])
-        X2 = np.array([[23.0, 0]])
-        Y2 = xsinx(X2[:, :1])
+        for cat_kernel in [
+            MixIntKernelType.CONT_RELAX,
+            MixIntKernelType.GOWER,
+            MixIntKernelType.DIST_ENCODING,
+            MixIntKernelType.HOMO_HSPHERE,
+            MixIntKernelType.EXP_HOMO_HSPHERE,
+        ]:
+            with self.subTest(cat_kernel=cat_kernel):
+                sm = self._trained_mixed_krg(categorical_kernel=cat_kernel)
+                X1 = np.array([[16.0, 1]])
+                Y1 = xsinx(X1[:, :1])
+                X2 = np.array([[23.0, 0]])
+                Y2 = xsinx(X2[:, :1])
 
-        updated = deepcopy(sm)
-        updated.update_model(X1, Y1)
-        updated.update_model(X2, Y2)
+                updated = deepcopy(sm)
+                updated.update_model(X1, Y1)
+                updated.update_model(X2, Y2)
 
-        X_all = np.vstack((X1, X2))
-        Y_all = np.vstack((Y1, Y2))
-        self._assert_mixed_matches(sm, updated, X_all, Y_all)
-        np.testing.assert_allclose(updated.predict_values(X_all), Y_all, atol=1e-6)
+                X_all = np.vstack((X1, X2))
+                Y_all = np.vstack((Y1, Y2))
+                self.assert_matches_reference(sm, updated, X_all, Y_all)
 
     def test_hierarchical_variables_update(self):
-        sm = self._trained_hierarchical_krg()
+        for cat_kernel in [
+            MixIntKernelType.CONT_RELAX,
+            MixIntKernelType.GOWER,
+            MixIntKernelType.DIST_ENCODING,
+            MixIntKernelType.HOMO_HSPHERE,
+            MixIntKernelType.EXP_HOMO_HSPHERE,
+        ]:
+            with self.subTest(cat_kernel=cat_kernel):
+                sm = self._trained_hierarchical_krg(categorical_kernel=cat_kernel)
 
-        # Single point in active branch
-        X_new_single = np.array([[0, 23.0]])
-        Y_new_single = xsinx(X_new_single[:, 1:2])
+                # Single point in active branch
+                X_new_single = np.array([[0, 23.0]])
+                Y_new_single = xsinx(X_new_single[:, 1:2])
 
-        updated_single = deepcopy(sm)
-        updated_single.update_model(X_new_single, Y_new_single)
+                updated_single = deepcopy(sm)
+                updated_single.update_model(X_new_single, Y_new_single)
+                self.assert_matches_reference(
+                    sm, updated_single, X_new_single, Y_new_single, is_hierarchical=True
+                )
 
-        self._assert_mixed_matches(
-            sm, updated_single, X_new_single, Y_new_single, is_hierarchical=True
-        )
-        np.testing.assert_allclose(
-            updated_single.predict_values(X_new_single), Y_new_single, atol=1e-6
-        )
+                # Multi-point in active branch
+                X_new_multi = np.array([[0, 21.0], [0, 23.0]])
+                Y_new_multi = xsinx(X_new_multi[:, 1:2])
 
-        # Multi-point in active branch
-        X_new_multi = np.array([[0, 21.0], [0, 23.0]])
-        Y_new_multi = xsinx(X_new_multi[:, 1:2])
-
-        updated_multi = deepcopy(sm)
-        updated_multi.update_model(X_new_multi, Y_new_multi)
-
-        self._assert_mixed_matches(
-            sm, updated_multi, X_new_multi, Y_new_multi, is_hierarchical=True
-        )
-        np.testing.assert_allclose(
-            updated_multi.predict_values(X_new_multi), Y_new_multi, atol=1e-6
-        )
+                updated_multi = deepcopy(sm)
+                updated_multi.update_model(X_new_multi, Y_new_multi)
+                self.assert_matches_reference(
+                    sm, updated_multi, X_new_multi, Y_new_multi, is_hierarchical=True
+                )
 
     def test_hierarchical_arc_kernel(self):
         sm = self._trained_hierarchical_krg(
@@ -435,9 +530,7 @@ class TestModelBlockUpdate(unittest.TestCase):
 
         updated = deepcopy(sm)
         updated.update_model(X_new, Y_new)
-
-        self._assert_mixed_matches(sm, updated, X_new, Y_new, is_hierarchical=True)
-        np.testing.assert_allclose(updated.predict_values(X_new), Y_new, atol=1e-6)
+        self.assert_matches_reference(sm, updated, X_new, Y_new, is_hierarchical=True)
 
     def test_hierarchical_decreed_categorical_variable(self):
         ds = DesignSpace(
@@ -468,17 +561,14 @@ class TestModelBlockUpdate(unittest.TestCase):
         updated = deepcopy(sm)
         updated.update_model(X_new, Y_new)
 
-        original_x_test = self.x_test
-        self.x_test = np.array(
+        x_test = np.array(
             [
                 [0, 0, 5.0],
                 [0, 1, 10.0],
                 [1, 0, 15.0],
             ]
         )
-        self.assert_matches_reference(sm, updated, X_new, Y_new)
-        np.testing.assert_allclose(updated.predict_values(X_new), Y_new, atol=1e-6)
-        self.x_test = original_x_test
+        self.assert_matches_reference(sm, updated, X_new, Y_new, x_test=x_test)
 
     def test_hierarchical_successive_updates(self):
         sm = self._trained_hierarchical_krg()
@@ -493,8 +583,7 @@ class TestModelBlockUpdate(unittest.TestCase):
 
         X_all = np.vstack((X1, X2))
         Y_all = np.vstack((Y1, Y2))
-        self._assert_mixed_matches(sm, updated, X_all, Y_all, is_hierarchical=True)
-        np.testing.assert_allclose(updated.predict_values(X_all), Y_all, atol=1e-6)
+        self.assert_matches_reference(sm, updated, X_all, Y_all, is_hierarchical=True)
 
 if __name__ == "__main__":
     unittest.main()
