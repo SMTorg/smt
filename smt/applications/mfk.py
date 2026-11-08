@@ -19,6 +19,7 @@ from sklearn.cross_decomposition import PLSRegression as pls
 
 from smt.design_space import ensure_design_space
 from smt.sampling_methods import LHS
+from smt.utils.checks import ensure_2d_array
 from smt.surrogate_models.krg_based import (
     KrgBased,
     MixIntKernelType,
@@ -239,8 +240,9 @@ class MFK(KrgBased):
         n_features = np.zeros(nlevel, dtype=int)
         n_samples_y = np.zeros(nlevel, dtype=int)
         for i in range(nlevel):
+            X[i] = ensure_2d_array(X[i], f"X[{i}]")
             n_samples[i], n_features[i] = X[i].shape
-            if i > 1 and n_features[i] != n_features[i - 1]:
+            if i > 0 and n_features[i] != n_features[i - 1]:
                 raise ValueError("All X must have the same number of columns.")
             y[i] = np.asarray(y[i]).ravel()[:, np.newaxis]
             n_samples_y[i] = y[i].shape[0]

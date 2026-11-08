@@ -36,6 +36,7 @@ dependencies = [
 numba = ["numba>=0.64"]
 gpx = ["egobox>=1"]
 rbfgen = ["torch>=2.4.1"]
+jax = ["jax>=0.4.30"]
 
 [project.urls]
 Homepage = "https://github.com/SMTorg/smt"

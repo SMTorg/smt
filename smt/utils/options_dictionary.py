@@ -4,6 +4,18 @@ Author: Dr. John T. Hwang <hwangjt@umich.edu>
 This package is distributed under New BSD license.
 """
 
+import numpy as np
+
+from smt.utils.checks import ensure_float64_array, is_arraylike
+
+
+def _accepts_ndarray(types):
+    if types is np.ndarray:
+        return True
+    if isinstance(types, (tuple, list)):
+        return np.ndarray in types
+    return False
+
 
 class OptionsDictionary(object):
     """
@@ -68,6 +80,9 @@ class OptionsDictionary(object):
             The value to set.
         """
         assert name in self._declared_entries, "Option %s has not been declared" % name
+        types = self._declared_entries[name]["types"]
+        if _accepts_ndarray(types) and is_arraylike(value):
+            value = ensure_float64_array(value)
         self._assert_valid(name, value)
         self._dict[name] = value
 
@@ -81,8 +96,13 @@ class OptionsDictionary(object):
         values = self._declared_entries[name]["values"]
         types = self._declared_entries[name]["types"]
 
+        def _in_values(val, val_list):
+            if isinstance(val, np.ndarray):
+                return any(np.array_equal(val, v) for v in val_list)
+            return val in val_list
+
         if values is not None and types is not None:
-            assert value in values or isinstance(value, types), (
+            assert _in_values(value, values) or isinstance(value, types), (
                 "Option %s: value and type of %s are both invalid - "
                 % (
                     name,
@@ -95,10 +115,13 @@ class OptionsDictionary(object):
                 )
             )
         elif values is not None:
-            assert value in values, "Option %s: value %s is invalid - must be %s" % (
-                name,
-                value,
-                values,
+            assert _in_values(value, values), (
+                "Option %s: value %s is invalid - must be %s"
+                % (
+                    name,
+                    value,
+                    values,
+                )
             )
         elif types is not None:
             assert isinstance(value, types), (
@@ -139,6 +162,9 @@ class OptionsDictionary(object):
         desc : str
             Optional description of the option.
         """
+        if default is not None and _accepts_ndarray(types) and is_arraylike(default):
+            default = ensure_float64_array(default)
+
         self._declared_entries[name] = {
             "values": values,
             "types": types,

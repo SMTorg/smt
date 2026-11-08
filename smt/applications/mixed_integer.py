@@ -170,7 +170,7 @@ class MixedIntegerSurrogateModel(SurrogateModel):
         return self._surrogate.predict_variances_all_levels(x_corr)
 
     def _get_x_for_surrogate_model(self, x):
-        xp = ensure_2d_array(x, "xp")
+        xp = ensure_2d_array(x, "xp", copy=True)
 
         x_corr, is_acting = self.design_space.correct_get_acting(xp)
         if self._input_in_folded_space:
@@ -301,7 +301,7 @@ class MixedIntegerKrigingModel(KrgBased):
         return self._surrogate.predict_variances_all_levels(x_corr, is_acting=is_acting)
 
     def _get_x_for_surrogate_model(self, x):
-        xp = ensure_2d_array(x, "xp")
+        xp = ensure_2d_array(x, "xp", copy=True)
 
         x_corr, is_acting = self.design_space.correct_get_acting(xp)
         if self._input_in_folded_space:
