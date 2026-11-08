@@ -42,7 +42,7 @@ def _setup_mixed_reference(ref, base_model, X_all, Y_all):
     ref.y_mean = base_model.y_mean
     ref.y_std = base_model.y_std
 
-    if getattr(base_model, "X2_offset", None) is not None:
+    if base_model.options["categorical_kernel"] == MixIntKernelType.CONT_RELAX:
         _restore_categorical_scaling(ref, base_model, X_all, is_acting)
 
 def _restore_categorical_scaling(ref, base_model, X_all, is_acting):

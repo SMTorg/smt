@@ -395,7 +395,7 @@ class KRG(KrgBased):
             self.Lij, self.n_levels = cross_levels(
                 X=self.X_train, ij=self.ij, design_space=self.design_space
             )
-            if hasattr(self, "X2_norma"):
+            if self.options["categorical_kernel"] == MixIntKernelType.CONT_RELAX:
                 X_new_unfolded, _, _ = self.design_space.unfold_x(X_new)
                 X_new_unfolded_norma = (X_new_unfolded - self.X2_offset) / self.X2_scale
                 self.X2_norma = np.vstack((self.X2_norma, X_new_unfolded_norma))
