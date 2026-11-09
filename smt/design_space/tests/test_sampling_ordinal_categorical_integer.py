@@ -76,16 +76,26 @@ class TestMixedIntegerSamplingDistribution(unittest.TestCase):
 
     def _test_sampler_distribution(self, sampling_method):
         cases = [
-            ("ordinal", OrdinalVariable(LEVELS), LEVELS, False),
-            ("integer", IntegerVariable(0, 3), INTEGER_VALUES, False),
-            ("categorical", CategoricalVariable(LEVELS), LEVELS, True),
+            ("ordinal", OrdinalVariable(LEVELS), LEVELS),
+            ("integer", IntegerVariable(0, 3), INTEGER_VALUES),
+            ("categorical", CategoricalVariable(LEVELS), LEVELS),
         ]
-        for name, var, expected, folded in cases:
-            with self.subTest(variable_type=name):
-                print(f"\n Executing: {sampling_method.__name__}_{name}_distribution\n")
-                self._test_mixed_integer(
-                    sampling_method, var, expected, output_in_folded_space=folded
-                )
+        for name, var, expected in cases:
+            for output_in_folded_space in [True, False]:
+                with self.subTest(
+                    variable_type=name,
+                    output_in_folded_space=output_in_folded_space,
+                ):
+                    space_desc = "folded" if output_in_folded_space else "unfolded"
+                    print(
+                        f"\n Executing: {sampling_method.__name__}_{name}_{space_desc}_distribution\n"
+                    )
+                    self._test_mixed_integer(
+                        sampling_method,
+                        var,
+                        expected,
+                        output_in_folded_space=output_in_folded_space,
+                    )
 
     def _test_design_space_distribution(self, design_space_class):
         cases = [
