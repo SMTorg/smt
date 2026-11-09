@@ -259,7 +259,9 @@ class BaseDesignSpace:
         indi = 0
         for i in self.design_variables:
             if not (isinstance(i, FloatVariable)):
-                x[:, indi] = self._round_equally_distributed(x[:, indi], i.lower, i.upper)
+                x[:, indi] = self._round_equally_distributed(
+                    x[:, indi], i.lower, i.upper
+                )
             indi += 1
 
         # Correct and get the is_acting matrix
@@ -285,6 +287,7 @@ class BaseDesignSpace:
         If i_dv=None, decoding will be done for all design variables: 1d input is interpreted as a design vector,
         2d input is interpreted as a set of design vectors.
         """
+
         def _decode_dv(x_encoded: np.ndarray, i_dv_decode):
             dv = self.design_variables[i_dv_decode]
             if isinstance(dv, (OrdinalVariable, CategoricalVariable)):
