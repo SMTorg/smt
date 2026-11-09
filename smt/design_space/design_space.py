@@ -4,7 +4,7 @@ Author: Jasper Bussemaker <jasper.bussemaker@dlr.de>
 This package is distributed under New BSD license.
 """
 
-from typing import List, Optional, Sequence, Tuple, Union
+from typing import List, Optional, Tuple, Union
 
 import numpy as np
 
@@ -761,7 +761,12 @@ class DesignSpace(BaseDesignSpace):
             self._meta_vars[meta_var] = {}
 
         meta_var_obj = self.design_variables[meta_var]
-        for value in meta_value if isinstance(meta_value, Sequence) else [meta_value]:
+        # Allow meta_value to be a single value (e.g. str, int) or a collection of values
+        if isinstance(meta_value, (list, tuple, np.ndarray, set)):
+            values = meta_value
+        else:
+            values = [meta_value]
+        for value in values:
             encoded_value = value
             if isinstance(meta_var_obj, (OrdinalVariable, CategoricalVariable)):
                 if value in meta_var_obj.values:
