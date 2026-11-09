@@ -9,6 +9,7 @@ from typing import Optional, Tuple
 import numpy as np
 from scipy.linalg import cholesky, qr, solve_triangular
 
+from smt.design_space import BaseDesignSpace
 from smt.kernels import Kernel
 from smt.surrogate_models.krg_based import KrgBased
 
@@ -59,7 +60,7 @@ class KRG(KrgBased):
         )
         return d
 
-    def update_model(self, X, Y):
+    def update_model(self, X, Y, is_acting=None):
         """
         Add training points to a trained model without re-training it.
 
@@ -83,6 +84,9 @@ class KRG(KrgBased):
             New input points.
         Y : np.ndarray[n_new, ny] or np.ndarray[n_new]
             Output values at the new input points.
+        is_acting : np.ndarray[n_new, nx] or np.ndarray[n_new], optional
+            Activity flags for the new points. If None and the design space
+            is hierarchical, computed automatically via the design space.
 
         Raises
         ------
@@ -91,73 +95,66 @@ class KRG(KrgBased):
         NotImplementedError
             If the model or its options are not supported by the block update.
         """
-        self._update_smt_model(X_new=X, Y_new=Y)
+        self._update_smt_model(X_new=X, Y_new=Y, is_acting_new=is_acting)
 
     @staticmethod
-    def _update_cholesky_block(
-        L_old: np.ndarray, R12: np.ndarray, R22: np.ndarray, nugget: float
-    ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
-        """
-        Compute the Cholesky block update.
-
-        Returns the new Cholesky matrix along with the off-diagonal (L21)
-        and new diagonal (L22) blocks needed to extend the triangular solves.
-
-        Parameters
-        ----------
-        L_old : np.ndarray
-            Previous Cholesky lower triangular matrix.
-        R12 : np.ndarray
-            Cross-correlation matrix between old and new points.
-        R22 : np.ndarray
-            Correlation matrix of new points.
-        nugget : float
-            Value added to the diagonal of the new block (nugget plus
-            homoscedastic noise variance).
-
-        Returns
-        -------
-        L_new : np.ndarray
-            Updated lower triangular Cholesky matrix.
-        L21 : np.ndarray
-            Off-diagonal block of the new Cholesky matrix.
-        L22 : np.ndarray
-            New diagonal block of the Cholesky matrix.
-        """
-        n_old = L_old.shape[0]
-        n_new = R22.shape[0]
-
+    def _compute_l21(
+        L_old: np.ndarray, R12: np.ndarray
+    ) -> Tuple[np.ndarray, np.ndarray]:
         L21_T = solve_triangular(L_old, R12, lower=True, check_finite=False)
-        L21 = L21_T.T
+        return L21_T.T, L21_T
 
-        is_single_point_added = n_new == 1
+    @staticmethod
+    def _compute_l22_single(
+        R22: np.ndarray, L21_T: np.ndarray, nugget: float
+    ) -> np.ndarray:
+        R22_eff = R22[0, 0] - np.sum(L21_T**2) + nugget
+        if R22_eff <= 0.0:
+            raise ValueError("Updated correlation matrix is not positive definite.")
+        return np.array([[np.sqrt(R22_eff)]])
 
-        if is_single_point_added:
-            R22_eff = R22[0, 0] - np.sum(L21_T**2) + nugget
-            is_positive_definite = R22_eff > 0.0
+    @staticmethod
+    def _compute_l22_multi(
+        R22: np.ndarray, L21: np.ndarray, L21_T: np.ndarray, nugget: float
+    ) -> np.ndarray:
+        R22_eff = R22 - (L21 @ L21_T)
+        np.fill_diagonal(R22_eff, R22_eff.diagonal() + nugget)
+        return cholesky(R22_eff, lower=True, check_finite=False)
 
-            if not is_positive_definite:
-                raise ValueError("Updated correlation matrix is not positive definite.")
-            L22 = np.array([[np.sqrt(R22_eff)]])
+    @staticmethod
+    def _compute_l22(
+        R22: np.ndarray, L21: np.ndarray, L21_T: np.ndarray, nugget: float
+    ) -> np.ndarray:
+        if R22.shape[0] == 1:
+            return KRG._compute_l22_single(R22, L21_T, nugget)
+        return KRG._compute_l22_multi(R22, L21, L21_T, nugget)
 
-        else:
-            R22_eff = R22 - (L21 @ L21_T)
-            np.fill_diagonal(R22_eff, R22_eff.diagonal() + nugget)
-            L22 = cholesky(R22_eff, lower=True, check_finite=False)
-
+    @staticmethod
+    def _assemble_block_cholesky(
+        L_old: np.ndarray, L21: np.ndarray, L22: np.ndarray
+    ) -> np.ndarray:
+        n_old = L_old.shape[0]
+        n_new = L22.shape[0]
         L_new = np.empty((n_old + n_new, n_old + n_new))
         L_new[:n_old, :n_old] = L_old
         L_new[:n_old, n_old:] = 0.0
         L_new[n_old:, :n_old] = L21
         L_new[n_old:, n_old:] = L22
+        return L_new
 
+    @staticmethod
+    def _update_cholesky_block(
+        L_old: np.ndarray, R12: np.ndarray, R22: np.ndarray, nugget: float
+    ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+        """Compute the Cholesky block update and return L_new, L21, and L22."""
+        L21, L21_T = KRG._compute_l21(L_old, R12)
+        L22 = KRG._compute_l22(R22, L21, L21_T, nugget)
+        L_new = KRG._assemble_block_cholesky(L_old, L21, L22)
         return L_new, L21, L22
 
     @property
     def _block_update_incompatibility_reason(self) -> Optional[str]:
-        """
-        Return the reason why block update is not supported, or None if supported.
-        """
+        """Return the reason why block update is not supported, or None if supported."""
         # Subclasses (e.g. SGP) store a different model state in optimal_par
         if type(self) is not KRG:
             return f"Block update is not supported for {type(self).__name__} models."
@@ -172,50 +169,44 @@ class KRG(KrgBased):
 
     @property
     def supports_block_update(self) -> bool:
-        """
-        Check if the surrogate model is compatible with block updates.
-
-        Returns
-        -------
-        bool
-            True if the model supports block update, False otherwise.
-        """
+        """Whether the surrogate model is compatible with block updates."""
         return self._block_update_incompatibility_reason is None
 
     @property
     def is_block_updatable(self) -> bool:
-        """
-        Alias for supports_block_update.
-
-        Returns
-        -------
-        bool
-            True if the model supports block update, False otherwise.
-        """
+        """Alias for supports_block_update."""
         return self.supports_block_update
 
     @property
-    def is_trained(self) -> bool:
-        """
-        Whether the model has been trained.
+    def is_continuous(self) -> bool:
+        """Whether the model operates in a purely continuous, non-hierarchical space."""
+        return self.design_space.is_all_cont and not bool(
+            np.any(self.design_space.is_conditionally_acting)
+        )
 
-        Returns
-        -------
-        bool
-            True if the model has been trained, False otherwise.
-        """
+    @property
+    def is_hierarchical(self) -> bool:
+        """Whether the design space contains conditionally acting (decreed) variables."""
+        return isinstance(self.design_space, BaseDesignSpace) and bool(
+            np.any(self.design_space.is_conditionally_acting)
+        )
+
+    @property
+    def is_hierarchical_continuous(self) -> bool:
+        """Whether the design space is purely continuous with decreed variables."""
+        return (
+            isinstance(self.design_space, BaseDesignSpace)
+            and self.design_space.is_all_cont
+            and bool(np.any(self.design_space.is_conditionally_acting))
+        )
+
+    @property
+    def is_trained(self) -> bool:
+        """Whether the model has been trained."""
         return hasattr(self, "optimal_par") and bool(self.optimal_par)
 
     def _check_model_compatibility(self) -> None:
-        """
-        Check if the surrogate model is compatible with block updates.
-
-        Raises
-        ------
-        NotImplementedError
-            If the model is a subclass of KRG, or if heteroscedastic noise or
-            reinterpolation is used.
-        """
+        """Check if the surrogate model is compatible with block updates."""
         reason = self._block_update_incompatibility_reason
         if reason is not None:
             raise NotImplementedError(reason)
@@ -285,6 +276,7 @@ class KRG(KrgBased):
         return D
 
     def _compute_mixed_distances_between(self, X1, is_acting1, X2, is_acting2):
+        """Compute componentwise distances between X1 and X2 for mixed/hierarchical spaces."""
         _, ij = cross_distances(X1, y=X2)
         D, D_num = gower_componentwise_distances(
             X1,
@@ -311,110 +303,102 @@ class KRG(KrgBased):
         Lij, _ = cross_levels(X=X1, ij=ij, design_space=self.design_space, y=X2)
         return D, Lij
 
-    def _compute_R12_R22_mixed(
-        self, X_new: np.ndarray, is_acting_new: np.ndarray
-    ) -> Tuple[np.ndarray, np.ndarray]:
-        n_new = X_new.shape[0]
-
-        _, _, _, _, Lij12, dx12 = self._predict_init(X_new, is_acting_new)
-        R12 = (
-            self._matrix_data_corr(
-                corr=self.options["corr"],
-                design_space=self.design_space,
-                power=self._pow_exp_power,
-                theta=self.optimal_theta,
-                theta_bounds=self.options["theta_bounds"],
-                dx=dx12,
-                Lij=Lij12,
-                n_levels=self.n_levels,
-                cat_features=self.cat_features,
-                cat_kernel=self.options["categorical_kernel"],
-                x=X_new,
-            )
-            .reshape(n_new, self.nt)
-            .T
-        )
-
-        dx22, Lij22 = self._compute_mixed_distances_between(
-            X_new, is_acting_new, X_new, is_acting_new
-        )
-        R22 = self._matrix_data_corr(
+    def _corr_matrix_mixed(
+        self, dx: np.ndarray, Lij: np.ndarray, X: np.ndarray
+    ) -> np.ndarray:
+        return self._matrix_data_corr(
             corr=self.options["corr"],
             design_space=self.design_space,
             power=self._pow_exp_power,
             theta=self.optimal_theta,
             theta_bounds=self.options["theta_bounds"],
-            dx=dx22,
-            Lij=Lij22,
+            dx=dx,
+            Lij=Lij,
             n_levels=self.n_levels,
             cat_features=self.cat_features,
             cat_kernel=self.options["categorical_kernel"],
-            x=X_new,
-        ).reshape(n_new, n_new)
+            x=X,
+        )
+
+    def _compute_R12_mixed(
+        self, X_new: np.ndarray, is_acting_new: np.ndarray
+    ) -> np.ndarray:
+        n_new = X_new.shape[0]
+        _, _, _, _, Lij12, dx12 = self._predict_init(X_new, is_acting_new)
+        return self._corr_matrix_mixed(dx12, Lij12, X_new).reshape(n_new, self.nt).T
+
+    def _compute_R22_mixed(
+        self, X_new: np.ndarray, is_acting_new: np.ndarray
+    ) -> np.ndarray:
+        n_new = X_new.shape[0]
+        dx22, Lij22 = self._compute_mixed_distances_between(
+            X_new, is_acting_new, X_new, is_acting_new
+        )
+        return self._corr_matrix_mixed(dx22, Lij22, X_new).reshape(n_new, n_new)
+
+    def _compute_R12_R22_mixed(
+        self, X_new: np.ndarray, is_acting_new: np.ndarray
+    ) -> Tuple[np.ndarray, np.ndarray]:
+        R12 = self._compute_R12_mixed(X_new, is_acting_new)
+        R22 = self._compute_R22_mixed(X_new, is_acting_new)
         return R12, R22
+
+    def _compute_R12_cont(self, X_new: np.ndarray) -> np.ndarray:
+        n_new = X_new.shape[0]
+        _, _, _, _, _, dx12 = self._predict_init(X_new, None)
+        d12 = self._componentwise_distance(dx12)
+        return self.corr(d12).reshape(n_new, self.nt).T
+
+    def _compute_R22_cont(self, X_new_norma: np.ndarray) -> np.ndarray:
+        n_new = X_new_norma.shape[0]
+        dx22 = differences(X_new_norma, Y=X_new_norma)
+        d22 = self._componentwise_distance(dx22)
+        return self.corr(d22).reshape(n_new, n_new)
 
     def _compute_R12_R22_cont(
         self, X_new: np.ndarray, X_new_norma: np.ndarray
     ) -> Tuple[np.ndarray, np.ndarray]:
-        n_new = X_new.shape[0]
-
-        _, _, _, _, _, dx12 = self._predict_init(X_new, None)
-        d12 = self._componentwise_distance(dx12)
-        R12 = self.corr(d12).reshape(n_new, self.nt).T
-
-        dx22 = differences(X_new_norma, Y=X_new_norma)
-        d22 = self._componentwise_distance(dx22)
-        R22 = self.corr(d22).reshape(n_new, n_new)
+        R12 = self._compute_R12_cont(X_new)
+        R22 = self._compute_R22_cont(X_new_norma)
         return R12, R22
+
+    def _compute_R12_R22_hierarchical_cont(
+        self, X_new: np.ndarray, is_acting_new: np.ndarray
+    ) -> Tuple[np.ndarray, np.ndarray]:
+        """Compute correlation blocks (R12, R22) for continuous hierarchical spaces."""
+        return self._compute_R12_R22_mixed(X_new, is_acting_new)
+
+    def _compute_correlation_blocks(
+        self, X_new: np.ndarray, X_new_norma: np.ndarray, is_acting_new: np.ndarray
+    ) -> Tuple[np.ndarray, np.ndarray]:
+        """Compute cross-correlation (R12) and self-correlation (R22) blocks."""
+        if self.is_continuous:
+            return self._compute_R12_R22_cont(X_new, X_new_norma)
+        if self.is_hierarchical_continuous:
+            return self._compute_R12_R22_hierarchical_cont(X_new, is_acting_new)
+        return self._compute_R12_R22_mixed(X_new, is_acting_new)
+
+    def _get_effective_diagonal_jitter(self) -> float:
+        nugget = 0.0 if self._eval_noise else self.options["nugget"]
+        noise = float(np.atleast_1d(self.optimal_noise)[0])
+        return nugget + noise
 
     def _extend_cholesky(
         self, X_new: np.ndarray, X_new_norma: np.ndarray, is_acting_new: np.ndarray
     ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
-        """
-        Extend the Cholesky factor of the training correlation matrix with
-        new points.
-
-        Parameters
-        ----------
-        X_new : np.ndarray
-            New input points (original).
-        X_new_norma : np.ndarray
-            New input points, normalized with the model scaling factors.
-        is_acting_new : np.ndarray
-            Is acting array for the new points.
-
-        Returns
-        -------
-        L_new : np.ndarray
-            Updated lower triangular Cholesky matrix.
-        L21 : np.ndarray
-            Off-diagonal block of the new Cholesky matrix.
-        L22 : np.ndarray
-            New diagonal block of the Cholesky matrix.
-        """
-        if not self.is_continuous:
-            R12, R22 = self._compute_R12_R22_mixed(X_new, is_acting_new)
-        else:
-            R12, R22 = self._compute_R12_R22_cont(X_new, X_new_norma)
-
+        """Extend the Cholesky factor of the correlation matrix with new points."""
+        R12, R22 = self._compute_correlation_blocks(X_new, X_new_norma, is_acting_new)
         L_old = self.optimal_par["C"]
+        jitter = self._get_effective_diagonal_jitter()
+        return self._update_cholesky_block(L_old, R12, R22, nugget=jitter)
 
-        # Same diagonal term as in the likelihood evaluation: 1 + nugget + noise
-        nugget = 0.0 if self._eval_noise else self.options["nugget"]
-        noise = float(np.atleast_1d(self.optimal_noise)[0])
-
-        return self._update_cholesky_block(L_old, R12, R22, nugget=nugget + noise)
-
-    def _get_is_acting(self, X_new: np.ndarray) -> np.ndarray:
-        if self.is_acting_points.get(None) is not None:
-            _, is_acting_new = self.design_space.correct_get_acting(X_new)
-            return is_acting_new
-        return None
-
-    def _sync_is_acting(self, is_acting_new: np.ndarray) -> None:
-        is_acting = self.is_acting_points.get(None)
-        if is_acting is not None:
-            self.is_acting_points[None] = np.vstack((is_acting, is_acting_new))
+    def _sync_is_acting(self, is_acting_new: Optional[np.ndarray]) -> None:
+        if not self.is_continuous and is_acting_new is not None:
+            is_acting = self.is_acting_points.get(None)
+            if is_acting is not None:
+                self.is_acting_points[None] = np.vstack((is_acting, is_acting_new))
+            else:
+                self.is_acting_points[None] = is_acting_new
             self.is_acting_train = self.is_acting_points[None]
 
     def _get_normalized_inputs(self, X_new: np.ndarray) -> np.ndarray:
@@ -428,6 +412,7 @@ class KRG(KrgBased):
         return (Y_new - self.y_mean) / self.y_std
 
     def _recompute_categorical_metadata(self, X_new: np.ndarray) -> None:
+        """Update cross-levels and unfolded scaling data for mixed/hierarchical models."""
         if not self.is_continuous:
             _, self.ij = cross_distances(self.X_train)
             self.Lij, self.n_levels = cross_levels(
@@ -438,22 +423,44 @@ class KRG(KrgBased):
                 X_new_unfolded_norma = (X_new_unfolded - self.X2_offset) / self.X2_scale
                 self.X2_norma = np.vstack((self.X2_norma, X_new_unfolded_norma))
 
-    def _update_predictive_parameters(
-        self, Ft: np.ndarray, Yt: np.ndarray, L_new: np.ndarray
-    ) -> None:
+    def _estimate_regression_coefficients(
+        self, Ft: np.ndarray, Yt: np.ndarray
+    ) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
         Q, G = qr(Ft, mode="economic")
         beta = solve_triangular(G, Q.T @ Yt, check_finite=False)
         rho = Yt - Ft @ beta
+        return beta, rho, Q, G
+
+    def _estimate_process_variance(self, rho: np.ndarray) -> np.ndarray:
         p, q = self._get_pq()
         sigma2 = (rho**2.0).sum(axis=0) / (self.nt - p - q)
+        return sigma2 * self.y_std**2.0
 
-        self.optimal_par["sigma2"] = sigma2 * self.y_std**2.0
+    def _store_optimal_parameters(
+        self,
+        L_new: np.ndarray,
+        Ft: np.ndarray,
+        G: np.ndarray,
+        Q: np.ndarray,
+        beta: np.ndarray,
+        gamma: np.ndarray,
+        sigma2: np.ndarray,
+    ) -> None:
+        self.optimal_par["sigma2"] = sigma2
         self.optimal_par["beta"] = beta
-        self.optimal_par["gamma"] = solve_triangular(L_new.T, rho, check_finite=False)
+        self.optimal_par["gamma"] = gamma
         self.optimal_par["C"] = L_new
         self.optimal_par["Ft"] = Ft
         self.optimal_par["G"] = G
         self.optimal_par["Q"] = Q
+
+    def _update_predictive_parameters(
+        self, Ft: np.ndarray, Yt: np.ndarray, L_new: np.ndarray
+    ) -> None:
+        beta, rho, Q, G = self._estimate_regression_coefficients(Ft, Yt)
+        sigma2 = self._estimate_process_variance(rho)
+        gamma = solve_triangular(L_new.T, rho, check_finite=False)
+        self._store_optimal_parameters(L_new, Ft, G, Q, beta, gamma, sigma2)
 
     def _check_update_dimensions(self, X_new: np.ndarray, Y_new: np.ndarray) -> None:
         if not self.is_trained:
@@ -473,44 +480,58 @@ class KRG(KrgBased):
                 f"with {self.ny}."
             )
 
-    def _update_smt_model(self, X_new: np.ndarray, Y_new: np.ndarray) -> None:
-        """
-        Perform the Cholesky block update and store the new state in the model
-        (training points, normalized data and optimal_par), in place.
+    def _validate_acting_shape(
+        self, X_new: np.ndarray, is_acting_new: Optional[np.ndarray]
+    ) -> Optional[np.ndarray]:
+        """Validate dimensions of the explicit is_acting matrix."""
+        if is_acting_new is not None:
+            is_acting_new = ensure_2d_array(is_acting_new, "is_acting")
+            if is_acting_new.shape != X_new.shape:
+                raise ValueError(
+                    f"is_acting should have the same dimensions as X: "
+                    f"{is_acting_new.shape} != {X_new.shape}"
+                )
+        return is_acting_new
 
-        Only the rows of the new points are solved against the block factor, so
-        no full factorization or inverse of the correlation matrix is needed.
-        New points are normalized with the existing scaling factors.
+    def _correct_and_impute_inputs(
+        self, X_new: np.ndarray, is_acting_new: Optional[np.ndarray]
+    ) -> Tuple[np.ndarray, Optional[np.ndarray]]:
+        """Correct discrete variables and impute non-acting coordinates in new inputs."""
+        if not self.is_continuous and isinstance(self.design_space, BaseDesignSpace):
+            X_corr, auto_is_acting = self.design_space.correct_get_acting(X_new)
+            if is_acting_new is None:
+                is_acting_new = auto_is_acting
+            else:
+                self.design_space._impute_non_acting(X_corr, is_acting_new)
+            return X_corr, is_acting_new
+        return X_new, is_acting_new
 
-        Parameters
-        ----------
-        X_new : np.ndarray
-            New input points to add to the model.
-        Y_new : np.ndarray
-            Output values at the new input points.
-        """
+    def _validate_and_prepare_inputs(
+        self,
+        X_new: np.ndarray,
+        Y_new: np.ndarray,
+        is_acting_new: Optional[np.ndarray],
+    ) -> Tuple[np.ndarray, np.ndarray, Optional[np.ndarray]]:
         X_new = ensure_2d_array(X_new, "X")
         Y_new = ensure_2d_array(Y_new, "Y")
-
         self._check_update_dimensions(X_new, Y_new)
+        is_acting_new = self._validate_acting_shape(X_new, is_acting_new)
+        X_new, is_acting_new = self._correct_and_impute_inputs(X_new, is_acting_new)
+        return X_new, Y_new, is_acting_new
 
-        is_acting_new = self._get_is_acting(X_new)
-        X_new_norma = self._get_normalized_inputs(X_new)
-        Y_new_norma = self._get_normalized_outputs(Y_new)
-
-        L_old = self.optimal_par["C"]
-        L_new, L21, L22 = self._extend_cholesky(X_new, X_new_norma, is_acting_new)
-
-        # Whitened (L^-1 applied) regression matrix and outputs of the old points.
-        # Ft_old comes from training; Yt_old costs one O(nt^2) triangular solve.
-        Ft_old = self.optimal_par["Ft"]
-        Yt_old = solve_triangular(L_old, self.y_norma, lower=True, check_finite=False)
-
+    def _append_training_data(
+        self,
+        X_new: np.ndarray,
+        Y_new: np.ndarray,
+        X_new_norma: np.ndarray,
+        Y_new_norma: np.ndarray,
+        is_acting_new: Optional[np.ndarray],
+    ) -> None:
         self.X_train = np.vstack((self.X_train, X_new))
         self.training_points[None][0][0] = self.X_train
-
-        Y_train_appended = np.vstack((self.training_points[None][0][1], Y_new))
-        self.training_points[None][0][1] = Y_train_appended
+        self.training_points[None][0][1] = np.vstack(
+            (self.training_points[None][0][1], Y_new)
+        )
 
         self._sync_is_acting(is_acting_new)
         self._recompute_categorical_metadata(X_new)
@@ -518,6 +539,19 @@ class KRG(KrgBased):
         self.X_norma = np.vstack((self.X_norma, X_new_norma))
         self.y_norma = np.vstack((self.y_norma, Y_new_norma))
         self.nt = self.X_norma.shape[0]
+
+    def _extend_whitened_data(
+        self,
+        X_new_norma: np.ndarray,
+        Y_new_norma: np.ndarray,
+        L_old: np.ndarray,
+        L21: np.ndarray,
+        L22: np.ndarray,
+    ) -> Tuple[np.ndarray, np.ndarray]:
+        # Whitened (L^-1 applied) regression matrix and outputs of the old points.
+        # Ft_old comes from training; Yt_old costs one O(nt^2) triangular solve.
+        Ft_old = self.optimal_par["Ft"]
+        Yt_old = solve_triangular(L_old, self.y_norma, lower=True, check_finite=False)
 
         regression_type = self._regression_types[self.options["poly"]]
         F_new = regression_type(X_new_norma)
@@ -531,7 +565,29 @@ class KRG(KrgBased):
         Yt_new = solve_triangular(
             L22, Y_new_norma - L21 @ Yt_old, lower=True, check_finite=False
         )
+
         Ft = np.vstack((Ft_old, Ft_new))
         Yt = np.vstack((Yt_old, Yt_new))
+        return Ft, Yt
 
+    def _update_smt_model(
+        self,
+        X_new: np.ndarray,
+        Y_new: np.ndarray,
+        is_acting_new: Optional[np.ndarray] = None,
+    ) -> None:
+        """Update model state and predictive parameters in-place using block Cholesky."""
+        X_new, Y_new, is_acting_new = self._validate_and_prepare_inputs(
+            X_new, Y_new, is_acting_new
+        )
+        X_new_norma = self._get_normalized_inputs(X_new)
+        Y_new_norma = self._get_normalized_outputs(Y_new)
+
+        L_old = self.optimal_par["C"]
+        L_new, L21, L22 = self._extend_cholesky(X_new, X_new_norma, is_acting_new)
+
+        Ft, Yt = self._extend_whitened_data(X_new_norma, Y_new_norma, L_old, L21, L22)
+        self._append_training_data(
+            X_new, Y_new, X_new_norma, Y_new_norma, is_acting_new
+        )
         self._update_predictive_parameters(Ft, Yt, L_new)
