@@ -11,13 +11,6 @@ from smt.design_space import (
 from smt.sampling_methods.lhs import LHS
 from smt.sampling_methods.random import Random
 
-try:
-    from smt_design_space_ext import AdsgDesignSpaceImpl, ConfigSpaceDesignSpaceImpl
-
-    HAS_DESIGN_SPACE_EXT = True
-except ImportError:
-    HAS_DESIGN_SPACE_EXT = False
-
 LEVELS = ["low", "medium", "high", "very_high"]
 INTEGER_VALUES = [0.0, 1.0, 2.0, 3.0]
 N_SAMPLES = 1200
@@ -118,14 +111,6 @@ class TestMixedIntegerSamplingDistribution(unittest.TestCase):
 
     def test_DesignSpace_sample_valid_x_distribution(self):
         self._test_design_space_distribution(DesignSpace)
-
-    @unittest.skipIf(not HAS_DESIGN_SPACE_EXT, "smt_design_space_ext is not installed")
-    def test_AdsgDesignSpaceImpl_sample_valid_x_distribution(self):
-        self._test_design_space_distribution(AdsgDesignSpaceImpl)
-
-    @unittest.skipIf(not HAS_DESIGN_SPACE_EXT, "smt_design_space_ext is not installed")
-    def test_ConfigSpaceDesignSpaceImpl_sample_valid_x_distribution(self):
-        self._test_design_space_distribution(ConfigSpaceDesignSpaceImpl)
 
 
 if __name__ == "__main__":
