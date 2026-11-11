@@ -501,7 +501,9 @@ def plot_rans_crm_wing_uq(xt, yt, limits, interp):
             alpha_sweep, CL - 2 * CL_std, CL + 2 * CL_std, color=colors[ind], alpha=0.2
         )
 
-    data_proxy = plt.Line2D([], [], color="k", marker="o", linestyle="", label="training data")
+    data_proxy = plt.Line2D(
+        [], [], color="k", marker="o", linestyle="", label="training data"
+    )
     axs[0, 0].set(xlabel="alpha (deg)", ylabel="CD")
     axs[0, 0].legend(handles=[*axs[0, 0].get_legend_handles_labels()[0], data_proxy])
     axs[0, 0].set_title("CD +/- 2 posterior std, by Mach number")
@@ -605,12 +607,8 @@ def plot_rans_crm_wing_uq_combined(xt, yt, limits, interp):
 
     fig = plt.figure(figsize=(20, 9), constrained_layout=True)
     gs = fig.add_gridspec(2, 4)
-    sweep_axs = np.array(
-        [[fig.add_subplot(gs[r, c]) for c in (0, 1)] for r in (0, 1)]
-    )
-    map_axs = np.array(
-        [[fig.add_subplot(gs[r, c]) for c in (2, 3)] for r in (0, 1)]
-    )
+    sweep_axs = np.array([[fig.add_subplot(gs[r, c]) for c in (0, 1)] for r in (0, 1)])
+    map_axs = np.array([[fig.add_subplot(gs[r, c]) for c in (2, 3)] for r in (0, 1)])
 
     # --- left: 1-D sweeps (same data/logic as plot_rans_crm_wing_uq) ---
     num = 500
@@ -639,14 +637,22 @@ def plot_rans_crm_wing_uq_combined(xt, yt, limits, interp):
             alpha_sweep, CL - 2 * CL_std, CL + 2 * CL_std, color=colors[ind], alpha=0.2
         )
 
-    data_proxy = plt.Line2D([], [], color="k", marker="o", linestyle="", label="training data")
-    sweep_axs[0, 0].set(xlabel="alpha (deg)", ylabel="CD", title="CD +/- 2 std, by Mach")
-    sweep_axs[0, 0].legend(
-        handles=[*sweep_axs[0, 0].get_legend_handles_labels()[0], data_proxy], fontsize=8
+    data_proxy = plt.Line2D(
+        [], [], color="k", marker="o", linestyle="", label="training data"
     )
-    sweep_axs[0, 1].set(xlabel="alpha (deg)", ylabel="CL", title="CL +/- 2 std, by Mach")
+    sweep_axs[0, 0].set(
+        xlabel="alpha (deg)", ylabel="CD", title="CD +/- 2 std, by Mach"
+    )
+    sweep_axs[0, 0].legend(
+        handles=[*sweep_axs[0, 0].get_legend_handles_labels()[0], data_proxy],
+        fontsize=8,
+    )
+    sweep_axs[0, 1].set(
+        xlabel="alpha (deg)", ylabel="CL", title="CL +/- 2 std, by Mach"
+    )
     sweep_axs[0, 1].legend(
-        handles=[*sweep_axs[0, 1].get_legend_handles_labels()[0], data_proxy], fontsize=8
+        handles=[*sweep_axs[0, 1].get_legend_handles_labels()[0], data_proxy],
+        fontsize=8,
     )
 
     alphas = [2.0, 4.0, 6.0]
@@ -669,9 +675,13 @@ def plot_rans_crm_wing_uq_combined(xt, yt, limits, interp):
             mach_sweep, CL - 2 * CL_std, CL + 2 * CL_std, color=colors[ind], alpha=0.2
         )
 
-    sweep_axs[1, 0].set(xlabel="Mach number", ylabel="CD", title="CD +/- 2 std, by alpha")
+    sweep_axs[1, 0].set(
+        xlabel="Mach number", ylabel="CD", title="CD +/- 2 std, by alpha"
+    )
     sweep_axs[1, 0].legend(fontsize=8)
-    sweep_axs[1, 1].set(xlabel="Mach number", ylabel="CL", title="CL +/- 2 std, by alpha")
+    sweep_axs[1, 1].set(
+        xlabel="Mach number", ylabel="CL", title="CL +/- 2 std, by alpha"
+    )
     sweep_axs[1, 1].legend(fontsize=8)
 
     # --- right: 2-D maps (same data/logic as plot_rans_crm_wing_uq_maps) ---
@@ -699,10 +709,18 @@ def plot_rans_crm_wing_uq_combined(xt, yt, limits, interp):
     for ax, Z, lbl in zip(map_axs[1], [std_cd, std_cl], ["CD", "CL"]):
         ax.plot(xt[:, 1], xt[:, 0] * rad2deg, "wo", mec="k", ms=4)
         pcm = ax.pcolormesh(
-            gm, ga, Z, cmap="inferno", norm=LogNorm(vmin=Z.min(), vmax=Z.max()),
+            gm,
+            ga,
+            Z,
+            cmap="inferno",
+            norm=LogNorm(vmin=Z.min(), vmax=Z.max()),
             shading="auto",
         )
         fig.colorbar(pcm, ax=ax)
-        ax.set(xlabel="Mach number", ylabel="alpha (deg)", title=f"{lbl}: std-dev (log scale)")
+        ax.set(
+            xlabel="Mach number",
+            ylabel="alpha (deg)",
+            title=f"{lbl}: std-dev (log scale)",
+        )
 
     plt.show()
