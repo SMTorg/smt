@@ -12,7 +12,7 @@ from typing import Optional
 
 import numpy as np
 
-from smt.utils.checks import check_nx, check_support, ensure_2d_array
+from smt.utils.checks import _is_jax_tracer, check_nx, check_support, ensure_2d_array
 from smt.utils.options_dictionary import OptionsDictionary
 from smt.utils.printer import Printer
 
@@ -117,10 +117,16 @@ class SurrogateModel(metaclass=ABCMeta):
             An optional label for the group of training points being set.
             This is only used in special situations (e.g., multi-fidelity applications).
         """
-        if yt.shape == () and yt.item() is None:
+        if (
+            getattr(yt, "shape", None) == ()
+            and getattr(yt, "item", lambda: None)() is None
+        ):
             raise ValueError("y should be a 1d array")
         xt = ensure_2d_array(xt, "xt")
         yt = ensure_2d_array(yt, "yt")
+        # np.array(None) (or any array-like wrapping None) becomes a (1, 1) object array
+        if yt.dtype == object and yt.size == 1 and yt.item() is None:
+            raise ValueError("y should be a 1d array")
 
         if xt.shape[0] != yt.shape[0]:
             raise ValueError(
@@ -274,8 +280,7 @@ class SurrogateModel(metaclass=ABCMeta):
             self._train()
 
     def _pre_predict(self, x):
-        x = np.copy(x)
-        x = ensure_2d_array(x, "x")
+        x = ensure_2d_array(x, "x", copy=True)
         self._check_xdim(x)
         n = x.shape[0]
 
@@ -421,8 +426,15 @@ class SurrogateModel(metaclass=ABCMeta):
             The jacobian of the variance of the kriging model
         """
         check_support(self, "variance_derivatives")
-        if x.shape == (self.nx,):  # allow to pass row vector for convenience
-            x = np.atleast_2d(x.copy())
+        if not _is_jax_tracer(x):
+            try:
+                x_arr = np.asarray(x)
+                if x_arr.shape == (
+                    self.nx,
+                ):  # allow to pass row vector for convenience
+                    x = x_arr.reshape(1, -1)
+            except Exception:
+                pass
         x = self._pre_predict(x)
         # Evaluate the unknown points using the specified model-method
         with self.printer._timed_context("Predicting", key="prediction"):

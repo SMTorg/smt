@@ -202,7 +202,7 @@ def gower_componentwise_distances(
         if y_is_acting is None:
             raise ValueError("Expected y_is_acting because y is given")
 
-    if not isinstance(X, np.ndarray):
+    if hasattr(X, "columns") and hasattr(Y, "columns"):
         if not np.array_equal(X.columns, Y.columns):
             raise TypeError("X and Y must have same columns!")
     else:
