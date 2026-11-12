@@ -49,8 +49,9 @@ try:
     from .rbf import RBF
     from .rmtc import RMTC
     from .rmtb import RMTB
+    from .rmtb_uq import RMTBUQ
 
-    __all__ = __all__ + ["IDW", "RBF", "RMTC", "RMTB"]
+    __all__ = __all__ + ["IDW", "RBF", "RMTC", "RMTB", "RMTBUQ"]
 
 except ImportError:
     pass
