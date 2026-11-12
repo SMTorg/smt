@@ -259,7 +259,9 @@ class BaseDesignSpace:
         indi = 0
         for i in self.design_variables:
             if not (isinstance(i, FloatVariable)):
-                x[:, indi] = np.int64(np.round(x[:, indi], 0))
+                x[:, indi] = self._round_equally_distributed(
+                    x[:, indi], i.lower, i.upper
+                )
             indi += 1
 
         # Correct and get the is_acting matrix
@@ -313,9 +315,12 @@ class BaseDesignSpace:
         is_1d = len(x.shape) == 1
         x_mat = np.atleast_2d(x)
         if x_mat.shape[1] != n_dv:
-            raise ValueError(
-                f"Incorrect number of inputs, expected {n_dv} design variables, received {x_mat.shape[1]}"
-            )
+            if x_mat.shape[1] == self._get_n_dim_unfolded():
+                x_mat, _ = self.fold_x(x_mat)
+            else:
+                raise ValueError(
+                    f"Incorrect number of inputs, expected {n_dv} design variables, received {x_mat.shape[1]}"
+                )
 
         decoded_des_vars = [_decode_dv(x_mat[:, i], i_dv_decode=i) for i in range(n_dv)]
         decoded_des_vectors = [
