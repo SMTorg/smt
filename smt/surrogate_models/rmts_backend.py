@@ -8,7 +8,6 @@ optional JAX with automatic differentiation) for RMTS, RMTB, and RMTC.
 """
 
 import os
-import tempfile
 from functools import lru_cache
 
 import numpy as np
@@ -33,7 +32,6 @@ def _parse_bool_env(name, default=0):
 USE_NUMBA_JIT = int(_parse_bool_env("USE_NUMBA_JIT", 0))
 USE_JAX = int(_parse_bool_env("USE_JAX", 0))
 
-_JAX_CONFIGURED = False
 _NUMBA_KERNELS = None
 prange = range
 
@@ -50,39 +48,20 @@ def _is_numba_enabled():
     return bool(USE_NUMBA_JIT)
 
 
-def _configure_jax(jax):
-    jax.config.update("jax_enable_x64", True)
-    if "JAX_COMPILATION_CACHE_DIR" not in os.environ:
-        cache_base = (
-            os.getenv("LOCALAPPDATA")
-            or os.getenv("XDG_CACHE_HOME")
-            or tempfile.gettempdir()
-        )
-        cache_dir = os.path.join(cache_base, "smt_jax_cache")
-        try:
-            jax.config.update("jax_compilation_cache_dir", cache_dir)
-        except Exception:
-            pass
-    for key, val in (
-        ("jax_persistent_cache_min_compile_time_secs", 0),
-        ("jax_persistent_cache_min_entry_size_bytes", -1),
-    ):
-        try:
-            jax.config.update(key, val)
-        except Exception:
-            pass
+def _enable_x64(jax):
+    """Return a context manager temporarily enabling JAX 64-bit precision."""
+    enable = getattr(jax, "enable_x64", None)
+    if enable is None:
+        enable = jax.experimental.enable_x64
+    return enable(True)
 
 
 def _get_jax():
-    global _JAX_CONFIGURED
     try:
         import jax
         import jax.numpy as jnp
     except ImportError:
         return None, None
-    if not _JAX_CONFIGURED:
-        _configure_jax(jax)
-        _JAX_CONFIGURED = True
     return jax, jnp
 
 
@@ -101,7 +80,7 @@ def has_numba():
 
 
 def has_jax():
-    """Return True if JAX is importable (configuring x64 and cache lazily)."""
+    """Return True if JAX is importable."""
     return _get_jax()[0] is not None
 
 
@@ -504,14 +483,15 @@ def _get_numba_kernels():
 
 
 def _rmtb_basis0_scalar_impl(param, knots, order, ncp, istart, jnp, jax):
+    dt = param.dtype
     if order == 1:
-        return jnp.ones((1,), dtype=jnp.float64)
+        return jnp.ones((1,), dtype=dt)
     local_knots = jax.lax.dynamic_slice(knots, (istart,), (2 * order - 1,))
-    b0 = jnp.zeros((order,), dtype=jnp.float64).at[order - 1].set(1.0)
+    b0 = jnp.zeros((order,), dtype=dt).at[order - 1].set(1.0)
     for i in range(1, order):
         j1 = order - i - 1
         j2 = order - 1
-        b0_next = jnp.zeros((order,), dtype=jnp.float64)
+        b0_next = jnp.zeros((order,), dtype=dt)
         for j in range(j1, j2 + 1):
             kn = local_knots[j]
             kni = local_knots[j + i]
@@ -625,13 +605,13 @@ def _get_predict_rmtb_jax_fn(order_tuple, ncp_tuple, extrapolate):
                 jnp.searchsorted(k_d[o_d - 1 : c_d], t[d], side="right") - 1,
                 0,
                 c_d - o_d,
-            ).astype(jnp.int64)
+            ).astype(jnp.int32)
             ist = jax.lax.stop_gradient(ist)
             istarts.append(ist)
             bases.append(_rmtb_basis0_scalar_impl(t[d], k_d, o_d, c_d, ist, jnp, jax))
         ny = coeff_nd.shape[-1]
         local_c = jax.lax.dynamic_slice(
-            coeff_nd, tuple(istarts) + (jnp.int64(0),), order_tuple + (ny,)
+            coeff_nd, tuple(istarts) + (jnp.int32(0),), order_tuple + (ny,)
         )
         val = local_c
         for b_d in bases:
@@ -668,31 +648,34 @@ def predict_rmtb_jax(
 
     Supports single-point ``(nx,)`` or batched ``(n, nx)`` inputs and
     automatic differentiation with ``jax.grad``, ``jax.jacfwd``, and ``jax.vmap``.
+    Uses active JAX floating precision (``float64`` when ``jax_enable_x64``
+    is enabled, ``float32`` otherwise).
     """
-    _, jnp = _get_jax()
+    jax, jnp = _get_jax()
     if jnp is None:
         raise ImportError("JAX is required for predict_rmtb_jax.")
 
+    dtype = jnp.float64 if jax.config.jax_enable_x64 else jnp.float32
     order_tuple = tuple(int(v) for v in order_list)
     ncp_tuple = tuple(int(v) for v in ncp_list)
     if knots_list is None:
         knots_tuple = tuple(
-            jnp.asarray(compute_knot_vector_uniform(o, c), dtype=jnp.float64)
+            jnp.asarray(compute_knot_vector_uniform(o, c), dtype=dtype)
             for o, c in zip(order_tuple, ncp_tuple)
         )
     else:
-        knots_tuple = tuple(jnp.asarray(k, dtype=jnp.float64) for k in knots_list)
+        knots_tuple = tuple(jnp.asarray(k, dtype=dtype) for k in knots_list)
 
-    lower_j = jnp.asarray(lower, dtype=jnp.float64)
-    upper_j = jnp.asarray(upper, dtype=jnp.float64)
-    coeff_arr = jnp.asarray(sol_coeff, dtype=jnp.float64)
+    lower_j = jnp.asarray(lower, dtype=dtype)
+    upper_j = jnp.asarray(upper, dtype=dtype)
+    coeff_arr = jnp.asarray(sol_coeff, dtype=dtype)
     squeeze_y = coeff_arr.ndim == 1
     if squeeze_y:
         coeff_arr = coeff_arr[:, None]
     ny = coeff_arr.shape[1]
     coeff_nd = coeff_arr.reshape(ncp_tuple + (ny,))
 
-    x_j = jnp.asarray(x, dtype=jnp.float64)
+    x_j = jnp.asarray(x, dtype=dtype)
     squeeze_x = x_j.ndim == 1
     if squeeze_x:
         x_j = x_j[None, :]
@@ -724,7 +707,7 @@ def _get_predict_rmtc_jax_fn(nelem_tuple, nterm_tuple, extrapolate):
         x_b = jnp.where(
             x_pt < lower_j, lower_j, jnp.where(x_pt > upper_j, upper_j, x_pt)
         )
-        ielem = jnp.int64(0)
+        ielem = jnp.int32(0)
         apb_list = []
         bma_list = []
         for d in range(nx):
@@ -732,18 +715,18 @@ def _get_predict_rmtc_jax_fn(nelem_tuple, nterm_tuple, extrapolate):
             b = upper_j[d]
             num = nelem_tuple[d]
             idx_1b = jnp.clip(
-                jnp.ceil((x_b[d] - a) / (b - a) * num).astype(jnp.int64), 1, num
+                jnp.ceil((x_b[d] - a) / (b - a) * num).astype(jnp.int32), 1, num
             )
             idx_1b = jax.lax.stop_gradient(idx_1b)
             a2 = a + (b - a) * (idx_1b - 1) / num
             b2 = a + (b - a) * idx_1b / num
             bma_list.append((b2 - a2) / 2.0)
             apb_list.append((a2 + b2) / 2.0)
-            ielem = ielem + (idx_1b - 1) * jnp.int64(nelem_strides[d])
+            ielem = ielem + (idx_1b - 1) * jnp.int32(nelem_strides[d])
 
         ny = coeff_nd.shape[-1]
         elem_c = jax.lax.dynamic_slice(
-            coeff_nd, (ielem, jnp.int64(0), jnp.int64(0)), (1, nterm, ny)
+            coeff_nd, (ielem, jnp.int32(0), jnp.int32(0)), (1, nterm, ny)
         )[0]
         elem_c = elem_c.reshape(nterm_tuple + (ny,))
 
@@ -753,11 +736,11 @@ def _get_predict_rmtc_jax_fn(nelem_tuple, nterm_tuple, extrapolate):
                 u_d = (x_in[d] - apb_list[d]) / bma_list[d]
                 nt_d = nterm_tuple[d]
                 if nt_d == 4:
-                    p_d = jnp.array([1.0, u_d, u_d**2, u_d**3], dtype=jnp.float64)
+                    p_d = jnp.array([1.0, u_d, u_d**2, u_d**3], dtype=u_d.dtype)
                 else:
                     p_d = jnp.array(
                         [1.0 if p == 0 else u_d**p for p in range(nt_d)],
-                        dtype=jnp.float64,
+                        dtype=u_d.dtype,
                     )
                 val = jnp.tensordot(p_d, val, axes=(0, 0))
             return val
@@ -785,11 +768,14 @@ def predict_rmtc_jax(
 
     Supports single-point ``(nx,)`` or batched ``(n, nx)`` inputs and
     automatic differentiation with ``jax.grad``, ``jax.jacfwd``, and ``jax.vmap``.
+    Uses active JAX floating precision (``float64`` when ``jax_enable_x64``
+    is enabled, ``float32`` otherwise).
     """
-    _, jnp = _get_jax()
+    jax, jnp = _get_jax()
     if jnp is None:
         raise ImportError("JAX is required for predict_rmtc_jax.")
 
+    dtype = jnp.float64 if jax.config.jax_enable_x64 else jnp.float32
     nelem_tuple = tuple(int(v) for v in nelem_list)
     if nterm_list is None:
         nterm_tuple = (4,) * len(nelem_tuple)
@@ -802,16 +788,16 @@ def predict_rmtc_jax(
     for nt in nterm_tuple:
         nterm *= nt
 
-    lower_j = jnp.asarray(lower, dtype=jnp.float64)
-    upper_j = jnp.asarray(upper, dtype=jnp.float64)
-    coeff_arr = jnp.asarray(sol_coeff, dtype=jnp.float64)
+    lower_j = jnp.asarray(lower, dtype=dtype)
+    upper_j = jnp.asarray(upper, dtype=dtype)
+    coeff_arr = jnp.asarray(sol_coeff, dtype=dtype)
     squeeze_y = coeff_arr.ndim == 1
     if squeeze_y:
         coeff_arr = coeff_arr[:, None]
     ny = coeff_arr.shape[1]
     coeff_nd = coeff_arr.reshape((nelem, nterm, ny))
 
-    x_j = jnp.asarray(x, dtype=jnp.float64)
+    x_j = jnp.asarray(x, dtype=dtype)
     squeeze_x = x_j.ndim == 1
     if squeeze_x:
         x_j = x_j[None, :]
@@ -886,30 +872,34 @@ def _normalize_p(p):
 
 def _opt_func_jax(sol, p, yt_dict, cache):
     """Evaluate RMTS objective using SciPy CSR SpMV and JAX residual sum."""
-    _, jnp = _get_jax()
+    jax, jnp = _get_jax()
     loss_sum_jit, _, _ = _get_opt_jit_fns()
     sol_arr = np.asarray(sol, dtype=np.float64)
     p_norm = _normalize_p(p)
     val = 0.5 * float(np.dot(sol_arr, cache["hess_csr"].dot(sol_arr)))
-    for kx, jac_csr, _, c in cache["jacs"]:
-        r = jac_csr.dot(sol_arr) - yt_dict[kx]
-        val += 0.5 * c * float(loss_sum_jit(jnp.asarray(r, dtype=np.float64), p_norm))
+    with _enable_x64(jax):
+        for kx, jac_csr, _, c in cache["jacs"]:
+            r = jac_csr.dot(sol_arr) - yt_dict[kx]
+            val += (
+                0.5 * c * float(loss_sum_jit(jnp.asarray(r, dtype=jnp.float64), p_norm))
+            )
     return val
 
 
 def _opt_grad_jax(sol, p, yt_dict, cache):
     """Evaluate RMTS gradient via JAX AD on residual losses and CSR SpMV."""
-    _, jnp = _get_jax()
+    jax, jnp = _get_jax()
     _, d1_jit, _ = _get_opt_jit_fns()
     sol_arr = np.asarray(sol, dtype=np.float64)
     p_norm = _normalize_p(p)
     grad = cache["hess_csr"].dot(sol_arr)
-    for kx, jac_csr, jac_T_csr, c in cache["jacs"]:
-        r = jac_csr.dot(sol_arr) - yt_dict[kx]
-        d1 = np.asarray(
-            d1_jit(jnp.asarray(r, dtype=np.float64), p_norm), dtype=np.float64
-        )
-        grad = grad + 0.5 * c * jac_T_csr.dot(d1)
+    with _enable_x64(jax):
+        for kx, jac_csr, jac_T_csr, c in cache["jacs"]:
+            r = jac_csr.dot(sol_arr) - yt_dict[kx]
+            d1 = np.asarray(
+                d1_jit(jnp.asarray(r, dtype=jnp.float64), p_norm), dtype=np.float64
+            )
+            grad = grad + 0.5 * c * jac_T_csr.dot(d1)
     return grad
 
 
@@ -918,19 +908,20 @@ def _opt_hess_jax(sol, p, yt_dict, cache, full_hess, full_jac_dict):
     Assemble exact sparse CSC Hessian using JAX AD 2nd derivatives of scalar
     residual losses so all 12 SMT linear solvers and downstream tools work cleanly.
     """
-    _, jnp = _get_jax()
+    jax, jnp = _get_jax()
     _, _, d2_jit = _get_opt_jit_fns()
     sol_arr = np.asarray(sol, dtype=np.float64)
     p_norm = _normalize_p(p)
     hess = scipy.sparse.csc_matrix(full_hess, dtype=np.float64)
-    for kx, jac_csr, _, c in cache["jacs"]:
-        full_jac, full_jac_T, _ = full_jac_dict[kx]
-        r = jac_csr.dot(sol_arr) - yt_dict[kx]
-        diag_vec = np.asarray(
-            d2_jit(jnp.asarray(r, dtype=np.float64), p_norm), dtype=np.float64
-        )
-        diag_mtx = scipy.sparse.diags(diag_vec, format="csc")
-        hess += 0.5 * c * full_jac_T * diag_mtx * full_jac
+    with _enable_x64(jax):
+        for kx, jac_csr, _, c in cache["jacs"]:
+            full_jac, full_jac_T, _ = full_jac_dict[kx]
+            r = jac_csr.dot(sol_arr) - yt_dict[kx]
+            diag_vec = np.asarray(
+                d2_jit(jnp.asarray(r, dtype=jnp.float64), p_norm), dtype=np.float64
+            )
+            diag_mtx = scipy.sparse.diags(diag_vec, format="csc")
+            hess += 0.5 * c * full_jac_T * diag_mtx * full_jac
     return hess
 
 
@@ -1201,25 +1192,26 @@ class PureRMTB:
         return data, rows, cols
 
     def _compute_jac_jax(self, ix1, ix2, params):
-        _, jnp = _get_jax()
+        jax, jnp = _get_jax()
         if jnp is None:
             return self._compute_jac_numpy(ix1, ix2, params)
         n = params.shape[0]
         basis_list = []
         cols_base = np.zeros(n, dtype=np.int64)
-        for ix in range(self.nx):
-            deriv = (1 if ix == ix1 else 0) + (1 if ix == ix2 else 0)
-            order = int(self.order_list[ix])
-            ncp = int(self.ncp_list[ix])
-            fn = _get_rmtb_dim_eval_jax(order, ncp, deriv)
-            istart_j, basis_j = fn(
-                jnp.asarray(params[:, ix], dtype=jnp.float64),
-                jnp.asarray(self.knots_list[ix], dtype=jnp.float64),
-            )
-            istart_np = np.asarray(istart_j, dtype=np.int64)
-            basis_np = np.asarray(basis_j, dtype=np.float64)
-            basis_list.append(basis_np)
-            cols_base += istart_np * int(self.ncp_strides[ix])
+        with _enable_x64(jax):
+            for ix in range(self.nx):
+                deriv = (1 if ix == ix1 else 0) + (1 if ix == ix2 else 0)
+                order = int(self.order_list[ix])
+                ncp = int(self.ncp_list[ix])
+                fn = _get_rmtb_dim_eval_jax(order, ncp, deriv)
+                istart_j, basis_j = fn(
+                    jnp.asarray(params[:, ix], dtype=jnp.float64),
+                    jnp.asarray(self.knots_list[ix], dtype=jnp.float64),
+                )
+                istart_np = np.asarray(istart_j, dtype=np.int64)
+                basis_np = np.asarray(basis_j, dtype=np.float64)
+                basis_list.append(basis_np)
+                cols_base += istart_np * int(self.ncp_strides[ix])
 
         data_2d = basis_list[0]
         for ix in range(1, self.nx):
@@ -1518,25 +1510,28 @@ class PureRMTC:
         return data, rows, cols
 
     def _compute_jac_jax(self, ix1, ix2, x):
-        _, jnp = _get_jax()
+        jax, jnp = _get_jax()
         if jnp is None:
             return self._compute_jac_numpy(ix1, ix2, x)
         n = x.shape[0]
         basis_list = []
         ielem = np.zeros(n, dtype=np.int64)
-        for ix in range(self.nx):
-            deriv = (1 if ix == ix1 else 0) + (1 if ix == ix2 else 0)
-            nt_ix = int(self.nterm_list[ix])
-            fn = _get_rmtc_dim_eval_jax(nt_ix, deriv)
-            ielem_j, basis_j = fn(
-                jnp.asarray(x[:, ix], dtype=jnp.float64),
-                float(self.lower[ix]),
-                float(self.upper[ix]),
-                int(self.nelem_list[ix]),
-                float(self.dxb_dx[ix]),
-            )
-            ielem += np.asarray(ielem_j, dtype=np.int64) * int(self.nelem_strides[ix])
-            basis_list.append(np.asarray(basis_j, dtype=np.float64))
+        with _enable_x64(jax):
+            for ix in range(self.nx):
+                deriv = (1 if ix == ix1 else 0) + (1 if ix == ix2 else 0)
+                nt_ix = int(self.nterm_list[ix])
+                fn = _get_rmtc_dim_eval_jax(nt_ix, deriv)
+                ielem_j, basis_j = fn(
+                    jnp.asarray(x[:, ix], dtype=jnp.float64),
+                    float(self.lower[ix]),
+                    float(self.upper[ix]),
+                    int(self.nelem_list[ix]),
+                    float(self.dxb_dx[ix]),
+                )
+                ielem += np.asarray(ielem_j, dtype=np.int64) * int(
+                    self.nelem_strides[ix]
+                )
+                basis_list.append(np.asarray(basis_j, dtype=np.float64))
 
         data_2d = basis_list[0]
         for ix in range(1, self.nx):

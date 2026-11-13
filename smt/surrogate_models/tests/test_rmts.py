@@ -410,6 +410,226 @@ class TestRMTS(SMTestCase):
                 sm_noext.predict_derivatives(x_out, 0), 0.0, atol=1e-15
             )
 
+    def test_cpp_regression_rmtb_and_rmtc(self):
+        """Regression test against outputs captured from legacy C++ RMTB/RMTC (v2.14.1)."""
+        xt1 = np.array([[0.0], [0.2], [0.45], [0.7], [0.9], [1.0]])
+        yt1 = np.sin(np.pi * xt1) + 0.3 * xt1**2
+        dyt1 = np.pi * np.cos(np.pi * xt1) + 0.6 * xt1
+        xq1 = np.array([[-0.15], [0.0], [0.32], [0.81], [1.0], [1.15]])
+
+        gx, gy = np.meshgrid(
+            np.linspace(-0.9, 1.85, 5), np.linspace(0.1, 2.85, 5), indexing="ij"
+        )
+        xt2 = np.column_stack([gx.ravel(), gy.ravel()])
+        yt2 = np.sin(xt2[:, 0:1]) * np.cos(0.5 * xt2[:, 1:2]) + 0.1 * xt2[:, 0:1] ** 2
+        xq2 = np.array([[-0.5, 0.5], [0.4, 1.7], [1.8, 2.8]])
+        xlimits2 = np.array([[-1.0, 2.0], [0.0, 3.0]])
+        xq5 = np.array([[0.1], [0.32], [0.64], [0.92]])
+
+        # 1. 1D RMTB with linear extrapolation (values + derivatives)
+        m1 = RMTS(
+            spline_type="B-Spline",
+            xlimits=np.array([[0.0, 1.0]]),
+            order=4,
+            num_ctrl_pts=8,
+            solver="lu",
+            extrapolate=True,
+            print_global=False,
+        )
+        m1.set_training_values(xt1, yt1)
+        with Silence():
+            m1.train()
+        np.testing.assert_allclose(
+            m1.predict_values(xq1)[:, 0],
+            [
+                -0.27273781948971215,
+                0.09655845513571548,
+                0.7924673650751136,
+                0.7338276743279101,
+                0.3970248843612719,
+                0.11729560486786994,
+            ],
+            atol=1e-10,
+        )
+        np.testing.assert_allclose(
+            m1.predict_derivatives(xq1, 0)[:, 0],
+            [
+                2.461975164169518,
+                2.461975164169518,
+                1.562036598772621,
+                -1.5506832813359392,
+                -1.8648618632893477,
+                -1.8648618632893477,
+            ],
+            atol=1e-10,
+        )
+
+        # 2. 2D RMTB with heterogeneous order/control points (values + d/dx0 + d/dx1)
+        m2 = RMTS(
+            spline_type="B-Spline",
+            xlimits=xlimits2,
+            order=[3, 4],
+            num_ctrl_pts=[6, 7],
+            solver="lu",
+            extrapolate=False,
+            print_global=False,
+        )
+        m2.set_training_values(xt2, yt2)
+        with Silence():
+            m2.train()
+        np.testing.assert_allclose(
+            m2.predict_values(xq2)[:, 0],
+            [-0.40664063417733537, 0.2633303338825932, 0.4964903790285152],
+            atol=1e-10,
+        )
+        np.testing.assert_allclose(
+            m2.predict_derivatives(xq2, 0)[:, 0],
+            [0.7657427834062432, 0.6843714270416118, 0.31970418861234734],
+            atol=1e-10,
+        )
+        np.testing.assert_allclose(
+            m2.predict_derivatives(xq2, 1)[:, 0],
+            [0.05571878916680414, -0.14267784418981344, -0.473667415972054],
+            atol=1e-10,
+        )
+
+        # 3. 1D RMTC with linear extrapolation (values + derivatives)
+        m3 = RMTS(
+            spline_type="Cubic_Hermite_Spline",
+            xlimits=np.array([[0.0, 1.0]]),
+            num_elements=4,
+            solver="lu",
+            extrapolate=True,
+            print_global=False,
+        )
+        m3.set_training_values(xt1, yt1)
+        with Silence():
+            m3.train()
+        np.testing.assert_allclose(
+            m3.predict_values(xq1)[:, 0],
+            [
+                -0.27005994950814566,
+                0.09626623597348857,
+                0.7890605235628528,
+                0.7346428766152102,
+                0.39687736778180827,
+                0.11919809275140386,
+            ],
+            atol=1e-10,
+        )
+        np.testing.assert_allclose(
+            m3.predict_derivatives(xq1, 0)[:, 0],
+            [
+                2.442174569877561,
+                2.442174569877561,
+                1.5556241437394094,
+                -1.5555962570443358,
+                -1.8511951668693638,
+                -1.8511951668693638,
+            ],
+            atol=1e-10,
+        )
+
+        # 4. 2D RMTC with heterogeneous element grid (values + d/dx0 + d/dx1)
+        m4 = RMTS(
+            spline_type="Cubic_Hermite_Spline",
+            xlimits=xlimits2,
+            num_elements=[3, 4],
+            solver="lu",
+            extrapolate=False,
+            print_global=False,
+        )
+        m4.set_training_values(xt2, yt2)
+        with Silence():
+            m4.train()
+        np.testing.assert_allclose(
+            m4.predict_values(xq2)[:, 0],
+            [-0.4290241712364965, 0.26770311995129303, 0.5648493039197746],
+            atol=1e-10,
+        )
+        np.testing.assert_allclose(
+            m4.predict_derivatives(xq2, 0)[:, 0],
+            [0.835045836162696, 0.6698121636972664, 0.6065540865437227],
+            atol=1e-10,
+        )
+        np.testing.assert_allclose(
+            m4.predict_derivatives(xq2, 1)[:, 0],
+            [-0.15015358233264217, -0.13512685489649076, -1.104460624995153],
+            atol=1e-10,
+        )
+
+        # 5. 1D RMTB & RMTC with training derivatives (values + derivatives)
+        m5 = RMTS(
+            spline_type="B-Spline",
+            xlimits=np.array([[0.0, 1.0]]),
+            order=4,
+            num_ctrl_pts=8,
+            approx_order=2,
+            grad_weight=1.0,
+            solver="lu",
+            extrapolate=False,
+            print_global=False,
+        )
+        m5.set_training_values(xt1, yt1)
+        m5.set_training_derivatives(xt1, dyt1, 0)
+        with Silence():
+            m5.train()
+        np.testing.assert_allclose(
+            m5.predict_values(xq5)[:, 0],
+            [
+                0.31099546625271723,
+                0.8741115868593925,
+                1.0283534718690972,
+                0.5035198693286369,
+            ],
+            atol=1e-10,
+        )
+        np.testing.assert_allclose(
+            m5.predict_derivatives(xq5, 0)[:, 0],
+            [
+                3.0529515312201974,
+                1.8781847728476493,
+                -0.9567897459379866,
+                -2.490048135448547,
+            ],
+            atol=1e-10,
+        )
+
+        m6 = RMTS(
+            spline_type="Cubic_Hermite_Spline",
+            xlimits=np.array([[0.0, 1.0]]),
+            num_elements=4,
+            approx_order=2,
+            grad_weight=1.0,
+            solver="lu",
+            extrapolate=False,
+            print_global=False,
+        )
+        m6.set_training_values(xt1, yt1)
+        m6.set_training_derivatives(xt1, dyt1, 0)
+        with Silence():
+            m6.train()
+        np.testing.assert_allclose(
+            m6.predict_values(xq5)[:, 0],
+            [
+                0.3147092809128741,
+                0.8764240811612661,
+                1.0267538649596586,
+                0.5002392615093597,
+            ],
+            atol=1e-10,
+        )
+        np.testing.assert_allclose(
+            m6.predict_derivatives(xq5, 0)[:, 0],
+            [
+                3.0277795796882003,
+                1.855778329731941,
+                -0.9548454059459718,
+                -2.487951254443737,
+            ],
+            atol=1e-10,
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

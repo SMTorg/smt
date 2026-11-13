@@ -18,6 +18,7 @@ from smt.surrogate_models import RMTS
 from smt.surrogate_models.rmts_backend import (
     PureRMTB,
     PureRMTC,
+    _enable_x64,
     _opt_func_jax,
     _opt_grad_jax,
     _opt_hess_jax,
@@ -337,6 +338,47 @@ class TestRMTSBackend(unittest.TestCase):
         yt = np.column_stack([_smooth_fn(xt)[:, 0], xt[:, 0] ** 2 - xt[:, 1]])
         xq = np.array([[-0.3, 1.2], [0.7, 2.4], [-1.4, -0.5], [2.4, 3.6]])
 
+        # 0. Verify internal JAX usage leaves process-wide JAX config untouched
+        repo_root = os.path.dirname(os.path.dirname(smt.__file__))
+        env = os.environ.copy()
+        env["USE_JAX"] = "1"
+        env["USE_NUMBA_JIT"] = "0"
+        existing_pp = env.get("PYTHONPATH", "")
+        env["PYTHONPATH"] = (
+            f"{repo_root}{os.pathsep}{existing_pp}" if existing_pp else repo_root
+        )
+        probe_code = (
+            "import jax, numpy as np\n"
+            "x64_before = bool(jax.config.jax_enable_x64)\n"
+            "cache_before = jax.config.jax_compilation_cache_dir\n"
+            "min_t_before = jax.config.jax_persistent_cache_min_compile_time_secs\n"
+            "min_s_before = jax.config.jax_persistent_cache_min_entry_size_bytes\n"
+            "from smt.surrogate_models import RMTS\n"
+            "from smt.surrogate_models.rmts_backend import has_jax\n"
+            "assert has_jax()\n"
+            "x = np.linspace(0.0, 1.0, 15).reshape(-1, 1)\n"
+            "y = np.sin(np.pi * x)\n"
+            "for st in ('B-Spline', 'Cubic_Hermite_Spline'):\n"
+            "    m = RMTS(spline_type=st, xlimits=np.array([[0.0, 1.0]]), solver='lu', print_global=False)\n"
+            "    m.set_training_values(x, y)\n"
+            "    m.train()\n"
+            "    assert m.predict_values(x).shape == y.shape\n"
+            "assert bool(jax.config.jax_enable_x64) == x64_before\n"
+            "assert jax.config.jax_compilation_cache_dir == cache_before\n"
+            "assert jax.config.jax_persistent_cache_min_compile_time_secs == min_t_before\n"
+            "assert jax.config.jax_persistent_cache_min_entry_size_bytes == min_s_before\n"
+        )
+        proc = subprocess.run(
+            [sys.executable, "-c", probe_code],
+            env=env,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        self.assertEqual(
+            proc.returncode, 0, msg=f"stderr:\n{proc.stderr}\nstdout:\n{proc.stdout}"
+        )
+
         # 1. Verify _opt_func/grad/hess JAX AD match NumPy for p in (0, 1, 2, 3, 4)
         with _temp_env(USE_JAX="0", USE_NUMBA_JIT="0"):
             sm_opt = RMTS(
@@ -408,41 +450,54 @@ class TestRMTSBackend(unittest.TestCase):
                             extrapolate=is_extrap,
                         )
 
-                    y_jax = np.asarray(pred_fn(jnp.asarray(xq)))
-                    np.testing.assert_allclose(y_jax, sm.predict_values(xq), atol=1e-11)
+                    # Works cleanly under caller's default JAX precision (e.g. float32 + outer jit/jacfwd)
+                    y_default = jax.jit(pred_fn)(jnp.asarray(xq))
+                    j_default = jax.jit(jax.jacfwd(pred_fn))(jnp.asarray(xq[0]))
+                    self.assertEqual(y_default.shape, (xq.shape[0], 2))
+                    self.assertEqual(j_default.shape, (2, 2))
 
-                    # Single-point (nx,) input & AD wrt x for output 0 and 1
-                    pts_check = xq if extrap else xq[:2]
-                    jac_fn = jax.jacfwd(pred_fn)
-                    for i in range(pts_check.shape[0]):
-                        xi = jnp.asarray(pts_check[i])
-                        yi = np.asarray(pred_fn(xi))
+                    # High-precision verification inside caller-scoped x64 context
+                    with _enable_x64(jax):
+                        y_jax = np.asarray(pred_fn(jnp.asarray(xq)))
                         np.testing.assert_allclose(
-                            yi, sm.predict_values(pts_check[i : i + 1])[0], atol=1e-11
+                            y_jax, sm.predict_values(xq), atol=1e-11
                         )
-                        ji = np.asarray(jac_fn(xi))
-                        for kx in range(2):
+
+                        # Single-point (nx,) input & AD wrt x for output 0 and 1
+                        pts_check = xq if extrap else xq[:2]
+                        jac_fn = jax.jacfwd(pred_fn)
+                        for i in range(pts_check.shape[0]):
+                            xi = jnp.asarray(pts_check[i])
+                            yi = np.asarray(pred_fn(xi))
                             np.testing.assert_allclose(
-                                ji[:, kx],
-                                sm.predict_derivatives(pts_check[i : i + 1], kx)[0],
-                                atol=1e-10,
+                                yi,
+                                sm.predict_values(pts_check[i : i + 1])[0],
+                                atol=1e-11,
                             )
+                            ji = np.asarray(jac_fn(xi))
+                            for kx in range(2):
+                                np.testing.assert_allclose(
+                                    ji[:, kx],
+                                    sm.predict_derivatives(pts_check[i : i + 1], kx)[0],
+                                    atol=1e-10,
+                                )
 
                 # Differentiability wrt sol_coeff
-                g_c = np.asarray(
-                    jax.grad(lambda c: pred_fn(jnp.asarray(xq[0]), c)[0])(
-                        jnp.asarray(sm.sol_coeff)
+                with _enable_x64(jax):
+                    g_c = np.asarray(
+                        jax.grad(lambda c: pred_fn(jnp.asarray(xq[0]), c)[0])(
+                            jnp.asarray(sm.sol_coeff)
+                        )
                     )
-                )
-                eps = 1e-6
-                e0 = np.zeros_like(sm.sol_coeff)
-                idx = sm.sol_coeff.shape[0] // 2
-                e0[idx, 0] = eps
-                fd = (
-                    float(pred_fn(jnp.asarray(xq[0]), sm.sol_coeff + e0)[0])
-                    - float(pred_fn(jnp.asarray(xq[0]), sm.sol_coeff - e0)[0])
-                ) / (2.0 * eps)
-                self.assertAlmostEqual(float(g_c[idx, 0]), fd, places=8)
+                    eps = 1e-6
+                    e0 = np.zeros_like(sm.sol_coeff)
+                    idx = sm.sol_coeff.shape[0] // 2
+                    e0[idx, 0] = eps
+                    fd = (
+                        float(pred_fn(jnp.asarray(xq[0]), sm.sol_coeff + e0)[0])
+                        - float(pred_fn(jnp.asarray(xq[0]), sm.sol_coeff - e0)[0])
+                    ) / (2.0 * eps)
+                    self.assertAlmostEqual(float(g_c[idx, 0]), fd, places=8)
 
     def test_issue_846_get_bspline_and_to_scipy(self):
         rng = np.random.default_rng(846)
@@ -893,15 +948,18 @@ class TestRMTSBackend(unittest.TestCase):
                 rb._prepare_jax_opt_cache(None, {})
 
         if rb.has_jax():
-            y_b = rb.predict_rmtb_jax(
-                np.array([0.5]), np.ones(5), [0.0], [2.0], [3], [5]
-            )
-            np.testing.assert_allclose(np.asarray(y_b), 1.0, atol=1e-12)
-            # 1D x, 1D sol_coeff, nterm=3 in RMTC JAX (non-cubic polynomial branch)
-            y_c = rb.predict_rmtc_jax(
-                np.array([1.0]), np.ones(6), [0.0], [2.0], [2], nterm_list=[3]
-            )
-            self.assertEqual(np.asarray(y_c).shape, ())
+            import jax
+
+            with _enable_x64(jax):
+                y_b = rb.predict_rmtb_jax(
+                    np.array([0.5]), np.ones(5), [0.0], [2.0], [3], [5]
+                )
+                np.testing.assert_allclose(np.asarray(y_b), 1.0, atol=1e-12)
+                # 1D x, 1D sol_coeff, nterm=3 in RMTC JAX (non-cubic polynomial branch)
+                y_c = rb.predict_rmtc_jax(
+                    np.array([1.0]), np.ones(6), [0.0], [2.0], [2], nterm_list=[3]
+                )
+                self.assertEqual(np.asarray(y_c).shape, ())
 
 
 if __name__ == "__main__":
