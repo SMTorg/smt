@@ -7,7 +7,7 @@ This package is distributed under New BSD license.
 
 import numpy as np
 
-from smt.surrogate_models.idwclib import PyIDW
+from smt.surrogate_models.rbf_idw_backend import idw_jac
 from smt.surrogate_models.surrogate_model import SurrogateModel
 from smt.utils import persistence
 from smt.utils.caching import cached_operation
@@ -41,22 +41,19 @@ class IDW(SurrogateModel):
         supports["output_derivatives"] = True
 
     def _setup(self):
-        xt = self.training_points[None][0][0]
-        nt = xt.shape[0]
-        nx = xt.shape[1]
-
-        self.idwc = PyIDW()
-        self.idwc.setup(nx, nt, self.options["p"], xt.flatten())
-
-    def __getstate__(self):
-        state = self.__dict__.copy()
-        state["idwc"] = None
-        return state
+        pass
 
     def __setstate__(self, state):
+        # models pickled before the C++ extension was removed carry an
+        # ``idwc`` entry (always None); drop it
+        state.pop("idwc", None)
         self.__dict__.update(state)
 
         self._setup()
+
+    def _jac(self, x, kx=None):
+        xt = self.training_points[None][0][0]
+        return idw_jac(x, xt, self.options["p"], kx)
 
     ############################################################################
     # Model functions
@@ -74,13 +71,8 @@ class IDW(SurrogateModel):
         """
         self._setup()
 
-        tmp = self.idwc
-        self.idwc = None
-
         inputs = {"self": self}
         with cached_operation(inputs, self.options["data_dir"]) as outputs:
-            self.idwc = tmp
-
             if outputs:
                 self.sol = outputs["sol"]
             else:
@@ -91,14 +83,9 @@ class IDW(SurrogateModel):
         """
         This function is used by _predict function. See _predict for more details.
         """
-        n = x.shape[0]
-        nt = self.nt
-
         yt = self.training_points[None][0][1]
 
-        jac = np.empty(n * nt)
-        self.idwc.compute_jac(n, x.flatten(), jac)
-        jac = jac.reshape((n, nt))
+        jac = self._jac(x)
 
         y = jac.dot(yt)
         return y
@@ -119,26 +106,17 @@ class IDW(SurrogateModel):
         dy_dx : np.ndarray
             Derivative values.
         """
-        n = x.shape[0]
-        nt = self.nt
-
         yt = self.training_points[None][0][1]
 
-        jac = np.empty(n * nt)
-        self.idwc.compute_jac_derivs(n, kx, x.flatten(), jac)
-        jac = jac.reshape((n, nt))
+        jac = self._jac(x, kx)
 
         dy_dx = jac.dot(yt)
         return dy_dx
 
     def _predict_output_derivatives(self, x):
-        n = x.shape[0]
-        nt = self.nt
         ny = self.training_points[None][0][1].shape[1]
 
-        jac = np.empty(n * nt)
-        self.idwc.compute_jac(n, x.flatten(), jac)
-        jac = jac.reshape((n, nt))
+        jac = self._jac(x)
         jac = np.einsum("ij,k->ijk", jac, np.ones(ny))
 
         dy_dyt = {None: jac}
