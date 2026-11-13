@@ -23,11 +23,13 @@ from smt.surrogate_models import (
     KRG,
     LS,
     MGP,
+    PCE,
     QP,
     RBF,
     RMTS,
     DesignSpace,
     RBFGen,
+    SparsePCE,
 )
 from smt.surrogate_models.gpx import GPX_AVAILABLE
 from smt.surrogate_models.rbfgen import RBFGEN_AVAILABLE
@@ -78,6 +80,8 @@ class Test(SMTestCase):
         sms["RMTB"] = RMTS(spline_type="B-Spline")
         sms["IDW"] = IDW()
         sms["RBF"] = RBF()
+        sms["PCE"] = PCE(degree=3)
+        sms["SparsePCE"] = SparsePCE()
 
         t_errors = {}
         t_errors["LS"] = 1.0
@@ -94,6 +98,8 @@ class Test(SMTestCase):
         t_errors["RMTB"] = 1e-1
         t_errors["IDW"] = 1e0
         t_errors["RBF"] = 1e-2
+        t_errors["PCE"] = 1.0
+        t_errors["SparsePCE"] = 1.0
         if RBFGEN_AVAILABLE:
             t_errors["RBFGen"] = 1e0
 
@@ -112,6 +118,8 @@ class Test(SMTestCase):
         e_errors["RMTB"] = 3e-1
         e_errors["IDW"] = 1e0
         e_errors["RBF"] = 1e0
+        e_errors["PCE"] = 1.5
+        e_errors["SparsePCE"] = 1.5
         if RBFGEN_AVAILABLE:
             e_errors["RBFGen"] = 3e0
 
@@ -251,6 +259,12 @@ class Test(SMTestCase):
     def test_exp_RMTB(self):
         self.run_test()
 
+    def test_exp_PCE(self):
+        self.run_test()
+
+    def test_exp_SparsePCE(self):
+        self.run_test()
+
     @unittest.skipIf(not RBFGEN_AVAILABLE, "RBFGen not available")
     def test_exp_RBFGen(self):
         # This test will cover the prediction accuracy of RBFGen on the analytical exponential function.
@@ -312,6 +326,12 @@ class Test(SMTestCase):
     def test_tanh_RMTB(self):
         self.run_test()
 
+    def test_tanh_PCE(self):
+        self.run_test()
+
+    def test_tanh_SparsePCE(self):
+        self.run_test()
+
     @unittest.skipIf(not RBFGEN_AVAILABLE, "RBFGen not available")
     def test_tanh_RBFGen(self):
         # This test will cover the prediction accuracy of RBFGen on the analytical tanh function.
@@ -371,6 +391,12 @@ class Test(SMTestCase):
         self.run_test()
 
     def test_cos_RMTB(self):
+        self.run_test()
+
+    def test_cos_PCE(self):
+        self.run_test()
+
+    def test_cos_SparsePCE(self):
         self.run_test()
 
     @unittest.skipIf(not RBFGEN_AVAILABLE, "RBFGen not available")

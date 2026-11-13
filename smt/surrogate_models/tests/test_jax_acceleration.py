@@ -20,10 +20,12 @@ from smt.surrogate_models import (  # noqa: E402
     KRG,
     LS,
     MGP,
+    PCE,
     QP,
     RBF,
     RMTS,
     SGP,
+    SparsePCE,
 )
 from smt.surrogate_models.krg_based.krg_jax import eval_corr_jax, eval_poly_jax  # noqa: E402
 from smt.surrogate_models.surrogate_model import SurrogateModel  # noqa: E402
@@ -296,6 +298,44 @@ class TestJAXAcceleration:
         dy1 = sm.predict_derivatives(self.pt.reshape(1, -1), 1)[0, 0]
         np.testing.assert_allclose(np.asarray(g), [dy0, dy1], atol=1e-10)
 
+    def test_pce_jax_prediction(self):
+        for model_cls, kwargs in [
+            (PCE, {"degree": 3, "method": "ols"}),
+            (SparsePCE, {"degree": [1, 2, 3, 4], "q_norm": 1.0}),
+        ]:
+            sm = model_cls(print_global=False, **kwargs)
+            sm.set_training_values(self.xt, self.yt)
+            sm.train()
+
+            y_np = sm.predict_values(self.x_eval)
+            pred_jax = sm.get_jax_predictor()
+            y_jax = pred_jax(jnp.asarray(self.x_eval))
+            np.testing.assert_allclose(np.asarray(y_jax), y_np, atol=1e-11)
+
+            pred_fp32 = sm.get_jax_predictor(dtype="float32")
+            y_fp32 = pred_fp32(jnp.asarray(self.x_eval, dtype=jnp.float32))
+            assert y_fp32.dtype == jnp.float32
+            np.testing.assert_allclose(np.asarray(y_fp32), y_np, atol=1e-4)
+
+            grad_fn = jax.grad(pred_jax)
+            g = np.asarray(grad_fn(jnp.asarray(self.pt)))
+            dy0 = sm.predict_derivatives(self.pt.reshape(1, -1), 0)[0, 0]
+            dy1 = sm.predict_derivatives(self.pt.reshape(1, -1), 1)[0, 0]
+            np.testing.assert_allclose(g, [dy0, dy1], atol=1e-10)
+
+        # Multi-output JAX evaluation (1D and batch)
+        yt_multi = np.hstack([self.yt, 2.0 * self.yt])
+        sm_m = PCE(degree=3, print_global=False)
+        sm_m.set_training_values(self.xt, yt_multi)
+        sm_m.train()
+        pred_m = sm_m.get_jax_predictor()
+        assert pred_m(jnp.asarray(self.pt)).shape == (2,)
+        np.testing.assert_allclose(
+            np.asarray(pred_m(jnp.asarray(self.x_eval))),
+            sm_m.predict_values(self.x_eval),
+            atol=1e-11,
+        )
+
     def test_idw_and_rbf_jax_acceleration(self):
         # IDW
         sm_idw = IDW(print_global=False, use_jax=True)
@@ -315,7 +355,7 @@ class TestJAXAcceleration:
 
     def test_exceptions_and_edge_cases(self):
         # Untrained models raise RuntimeError
-        for model_cls in [KRG, LS, QP, RMTS, MFK]:
+        for model_cls in [KRG, LS, QP, RMTS, MFK, PCE, SparsePCE]:
             sm = model_cls(print_global=False)
             with pytest.raises(RuntimeError):
                 sm.get_jax_predictor()
@@ -462,6 +502,8 @@ class TestJAXAcceleration:
             (KRG, {"corr": "squar_exp", "poly": "linear"}),
             (IDW, {}),
             (RBF, {"d0": [1.0, 1.0]}),
+            (PCE, {"degree": 3, "method": "ols"}),
+            (SparsePCE, {"degree": [1, 2, 3]}),
             (
                 RMTS,
                 {"spline_type": "B-Spline", "order": 3, "num_ctrl_pts": 6},
