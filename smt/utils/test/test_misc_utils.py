@@ -368,10 +368,7 @@ class TestMisc(unittest.TestCase):
         mi_sm.predict_values(x_np)
         np.testing.assert_array_equal(x_np, np.array([[0.4, 1.6]]))
 
-        try:
-            from smt.surrogate_models import RMTB, RMTC
-        except ImportError:
-            self.skipTest("compiled RMTS extension not available")
+        from smt.surrogate_models import IDW, RBF, RMTB, RMTC
 
         rmtb = RMTB(xlimits=jnp.array([[0.0, 1.0]]), num_ctrl_pts=8, print_global=False)
         rmtb.set_training_values(x, y)
@@ -382,6 +379,16 @@ class TestMisc(unittest.TestCase):
         rmtc.set_training_values(x, y)
         rmtc.train()
         self.assertEqual(rmtc.predict_values(xq).shape, (6, 1))
+
+        idw = IDW(p=2, print_global=False)
+        idw.set_training_values(x, y)
+        idw.train()
+        self.assertEqual(idw.predict_values(xq).shape, (6, 1))
+
+        rbf = RBF(d0=[1.0], print_global=False)
+        rbf.set_training_values(x, y)
+        rbf.train()
+        self.assertEqual(rbf.predict_values(xq).shape, (6, 1))
 
 
 if __name__ == "__main__":

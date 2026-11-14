@@ -18,18 +18,9 @@ except ImportError:
 from smt.surrogate_models.gpx import GPX_AVAILABLE
 from smt.surrogate_models.rbfgen import RBFGEN_AVAILABLE
 
-try:
-    from smt.surrogate_models import IDW, RBF  # noqa: F401
-
-    NO_COMPILED = False
-except ImportError:
-    NO_COMPILED = True
-
 
 class Test(unittest.TestCase):
-    @unittest.skipIf(
-        NO_COMPILED or NO_MATPLOTLIB, "C compilation failed or no matplotlib"
-    )
+    @unittest.skipIf(NO_MATPLOTLIB, "no matplotlib")
     def test_idw(self):
         import matplotlib.pyplot as plt
         import numpy as np
@@ -54,9 +45,7 @@ class Test(unittest.TestCase):
         plt.legend(["Training data", "Prediction"])
         plt.show()
 
-    @unittest.skipIf(
-        NO_COMPILED or NO_MATPLOTLIB, "C compilation failed or no matplotlib"
-    )
+    @unittest.skipIf(NO_MATPLOTLIB, "no matplotlib")
     def test_rbf(self):
         import matplotlib.pyplot as plt
         import numpy as np
@@ -894,7 +883,6 @@ class Test(unittest.TestCase):
         ax.legend(["Predicted", "True", "Test", "Train"])
         plt.show()
 
-    @unittest.skipIf(NO_COMPILED, "C compilation failed")
     def test_idw_derivatives(self):
         import numpy as np
 
@@ -924,7 +912,6 @@ class Test(unittest.TestCase):
             y_from_jac = jac[i, :, 0].dot(yt)
             self.assertAlmostEqual(y_pred[i, 0], y_from_jac[0])
 
-    @unittest.skipIf(NO_COMPILED, "C compilation failed")
     def test_rbf_output_derivatives(self):
         import numpy as np
 
@@ -950,7 +937,6 @@ class Test(unittest.TestCase):
             y_from_jac = jac[i, :, 0].dot(yt)
             self.assertAlmostEqual(y_pred[i, 0], y_from_jac[0], places=7)
 
-    @unittest.skipIf(NO_COMPILED, "C compilation failed")
     def test_rbf_polynomial_trends(self):
         import numpy as np
 

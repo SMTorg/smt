@@ -10,18 +10,10 @@ from collections import OrderedDict
 
 from smt.problems import Sphere, TensorProduct
 from smt.sampling_methods import LHS
-from smt.surrogate_models import KPLS, KRG, LS, QP
+from smt.surrogate_models import IDW, KPLS, KRG, LS, QP, RBF
 from smt.utils.misc import compute_relative_error
 from smt.utils.silence import Silence
 from smt.utils.sm_test_case import SMTestCase
-
-try:
-    from smt.surrogate_models import IDW, RBF
-
-    COMPILED_AVAILABLE = True
-except ImportError:
-    COMPILED_AVAILABLE = False
-
 
 print_output = False
 
@@ -43,10 +35,8 @@ class Test(SMTestCase):
         sms["QP"] = QP()
         sms["KRG"] = KRG(theta0=[4e-1] * ndim)
         sms["KPLS"] = KPLS()
-
-        if COMPILED_AVAILABLE:
-            sms["IDW"] = IDW()
-            sms["RBF"] = RBF()
+        sms["IDW"] = IDW()
+        sms["RBF"] = RBF()
 
         t_errors = {}
         t_errors["LS"] = 1.0
@@ -119,11 +109,9 @@ class Test(SMTestCase):
     def test_sphere_KPLS(self):
         self.run_test()
 
-    @unittest.skipIf(not COMPILED_AVAILABLE, "Compiled Fortran libraries not available")
     def test_sphere_IDW(self):
         self.run_test()
 
-    @unittest.skipIf(not COMPILED_AVAILABLE, "Compiled Fortran libraries not available")
     def test_sphere_RBF(self):
         self.run_test()
 
@@ -139,11 +127,9 @@ class Test(SMTestCase):
     def test_exp_KPLS(self):
         self.run_test()
 
-    @unittest.skipIf(not COMPILED_AVAILABLE, "Compiled Fortran libraries not available")
     def test_exp_IDW(self):
         self.run_test()
 
-    @unittest.skipIf(not COMPILED_AVAILABLE, "Compiled Fortran libraries not available")
     def test_exp_RBF(self):
         self.run_test()
 
@@ -159,11 +145,9 @@ class Test(SMTestCase):
     def test_tanh_KPLS(self):
         self.run_test()
 
-    @unittest.skipIf(not COMPILED_AVAILABLE, "Compiled Fortran libraries not available")
     def test_tanh_IDW(self):
         self.run_test()
 
-    @unittest.skipIf(not COMPILED_AVAILABLE, "Compiled Fortran libraries not available")
     def test_tanh_RBF(self):
         self.run_test()
 
@@ -179,11 +163,9 @@ class Test(SMTestCase):
     def test_cos_KPLS(self):
         self.run_test()
 
-    @unittest.skipIf(not COMPILED_AVAILABLE, "Compiled Fortran libraries not available")
     def test_cos_IDW(self):
         self.run_test()
 
-    @unittest.skipIf(not COMPILED_AVAILABLE, "Compiled Fortran libraries not available")
     def test_cos_RBF(self):
         self.run_test()
 
