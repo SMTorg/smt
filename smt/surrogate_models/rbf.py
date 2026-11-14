@@ -29,7 +29,7 @@ class RBF(SurrogateModel):
         declare(
             "d0",
             1.0,
-            types=(int, float, list, np.ndarray),
+            types=(int, float, np.number, list, tuple, np.ndarray),
             desc="basis function scaling parameter in exp(-d^2 / d0^2)",
         )
         declare(
@@ -60,9 +60,16 @@ class RBF(SurrogateModel):
         options = self.options
 
         nx = self.training_points[None][0][0].shape[1]
-        if isinstance(options["d0"], (int, float)):
-            options["d0"] = [options["d0"]] * nx
-        options["d0"] = np.array(np.atleast_1d(options["d0"]), dtype=float)
+        d0 = np.asarray(options["d0"], dtype=float)
+        if d0.ndim == 0 or d0.size == 1:
+            d0 = np.full(nx, float(d0.reshape(-1)[0]), dtype=float)
+        elif d0.shape != (nx,):
+            raise ValueError(
+                f"Expected scalar or length-{nx} d0, got shape {d0.shape}."
+            )
+        if np.any(d0 <= 0.0) or not np.all(np.isfinite(d0)):
+            raise ValueError(f"Expected strictly positive finite d0, got {d0!r}.")
+        options["d0"] = d0
 
         self.printer.max_print_depth = options["max_print_depth"]
 

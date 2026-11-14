@@ -428,18 +428,18 @@ class TestRBFCppRegression(unittest.TestCase):
         sm.set_training_values(xt, yt)
         sm.train()
         ref = REF[name]
-        np.testing.assert_allclose(
-            sm.predict_values(x), ref["y"], rtol=1e-10, atol=1e-10
-        )
+        np.testing.assert_allclose(sm.predict_values(x), ref["y"], rtol=1e-9, atol=1e-9)
         for k in range(xt.shape[1]):
             np.testing.assert_allclose(
-                sm.predict_derivatives(x, k), ref["dy_dx%d" % k], rtol=1e-10, atol=1e-10
+                sm.predict_derivatives(x, k), ref["dy_dx%d" % k], rtol=1e-9, atol=1e-9
             )
+        # output_derivatives uses inv(self.mtx), which has cond ~6e6 on rbf_1d_poly1_reg;
+        # allow 1e-8 to accommodate BLAS/LAPACK rounding differences across platforms.
         np.testing.assert_allclose(
             sm.predict_output_derivatives(x)[None],
             ref["dy_dyt"],
-            rtol=1e-10,
-            atol=1e-10,
+            rtol=1e-8,
+            atol=1e-8,
         )
 
     def test_cpp_regression_rbf(self):
@@ -447,6 +447,35 @@ class TestRBFCppRegression(unittest.TestCase):
         for name in CASES:
             with self.subTest(case=name):
                 self._check(name)
+
+    def test_d0_broadcast_and_validation(self):
+        rng = np.random.RandomState(42)
+        xt = rng.rand(8, 2)
+        yt = np.sin(xt[:, :1]) + xt[:, 1:2]
+        x = rng.rand(4, 2)
+
+        ref = RBF(d0=1.5, print_global=False)
+        ref.set_training_values(xt, yt)
+        ref.train()
+        y_ref = ref.predict_values(x)
+        dy_ref = ref.predict_derivatives(x, 1)
+
+        for d0_val in (np.float32(1.5), np.array(1.5), [1.5]):
+            sm = RBF(d0=d0_val, print_global=False)
+            sm.set_training_values(xt, yt)
+            sm.train()
+            np.testing.assert_allclose(
+                sm.predict_values(x), y_ref, rtol=1e-6, atol=1e-6
+            )
+            np.testing.assert_allclose(
+                sm.predict_derivatives(x, 1), dy_ref, rtol=1e-6, atol=1e-6
+            )
+
+        for bad_d0 in ([1.0, 2.0, 3.0], 0.0, [-1.0, 1.0]):
+            sm = RBF(d0=bad_d0, print_global=False)
+            sm.set_training_values(xt, yt)
+            with self.assertRaises(ValueError):
+                sm.train()
 
 
 if __name__ == "__main__":

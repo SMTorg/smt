@@ -98,6 +98,15 @@ class TestKernels(unittest.TestCase):
         w = bk.idw_jac(np.array([[0.5]]), xt, 2.0)
         np.testing.assert_array_equal(w, [[0.0, 1.0, 0.0, 0.0]])
 
+    def test_idw_underflow_nearest_neighbor(self):
+        xt = np.array([[0.0, 0.0], [10.0, 10.0]])
+        x = np.array([[1e4, 1e4]])
+        for eng in self._engines():
+            w = bk.idw_jac(x, xt, 100.0, _backend=eng)
+            dw = bk.idw_jac(x, xt, 100.0, kx=0, _backend=eng)
+            np.testing.assert_array_equal(w, [[0.0, 1.0]])
+            np.testing.assert_array_equal(dw, [[0.0, 0.0]])
+
 
 class TestModels(unittest.TestCase):
     def test_pickle_round_trip(self):

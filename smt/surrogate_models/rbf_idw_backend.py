@@ -105,12 +105,13 @@ def _idw_np(x, xt, p, kx):
 
     with np.errstate(divide="ignore", invalid="ignore", over="ignore"):
         w = r2 ** (-p / 2.0)
+        s = w.sum(axis=1, keepdims=True)
+        underflow = (~exact) & (s[:, 0] == 0.0)
         if kx is None:
-            jac = w / w.sum(axis=1, keepdims=True)
+            jac = w / s
         else:
             dr2 = 2.0 * (x[:, kx, None] - xt[None, :, kx])
             dw = -p / 2.0 * r2 ** (-p / 2.0 - 1.0) * dr2
-            s = w.sum(axis=1, keepdims=True)
             ds = dw.sum(axis=1, keepdims=True)
             jac = (dw * s - w * ds) / s**2
 
@@ -121,6 +122,13 @@ def _idw_np(x, xt, p, kx):
             jac[np.flatnonzero(exact), first] = 1.0
         else:
             jac[exact] = 0.0
+    if underflow.any():
+        if kx is None:
+            jac[underflow] = 0.0
+            nearest = r2[underflow].argmin(axis=1)
+            jac[np.flatnonzero(underflow), nearest] = 1.0
+        else:
+            jac[underflow] = 0.0
     return jac
 
 
@@ -158,6 +166,8 @@ def _make_numba_kernels(njit, prange):
         nt = xt.shape[0]
         for i in prange(n):
             min_loc = -1
+            nearest_it = 0
+            min_r2 = np.inf
             s = 0.0
             ds = 0.0
             for it in range(nt):
@@ -165,6 +175,9 @@ def _make_numba_kernels(njit, prange):
                 for ix in range(nx):
                     d = x[i, ix] - xt[it, ix]
                     r2 += d * d
+                if r2 < min_r2:
+                    min_r2 = r2
+                    nearest_it = it
                 if r2 == 0.0:
                     min_loc = it
                     break
@@ -185,6 +198,11 @@ def _make_numba_kernels(njit, prange):
                     jac[i, it] = 0.0
                 if not deriv:
                     jac[i, min_loc] = 1.0
+            elif s == 0.0:
+                for it in range(nt):
+                    jac[i, it] = 0.0
+                if not deriv:
+                    jac[i, nearest_it] = 1.0
             elif deriv:
                 for it in range(nt):
                     r2 = 0.0
