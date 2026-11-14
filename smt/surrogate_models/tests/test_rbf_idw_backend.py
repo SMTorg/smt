@@ -27,12 +27,21 @@ class TestBackendResolution(unittest.TestCase):
     def test_default_is_numpy(self):
         with mock.patch.dict(os.environ, {}, clear=False):
             os.environ.pop("USE_NUMBA_JIT", None)
+            os.environ.pop("USE_JAX", None)
             self.assertEqual(bk._resolve_backend(None), "numpy")
 
     def test_fallback_without_numba(self):
         with mock.patch.object(bk, "has_numba", return_value=False):
             self.assertEqual(bk._resolve_backend("numba"), "numpy")
-            with mock.patch.dict(os.environ, {"USE_NUMBA_JIT": "1"}):
+            with mock.patch.dict(os.environ, {"USE_NUMBA_JIT": "1"}, clear=False):
+                os.environ.pop("USE_JAX", None)
+                self.assertEqual(bk._resolve_backend(None), "numpy")
+
+    def test_fallback_without_jax(self):
+        with mock.patch.object(bk, "has_jax", return_value=False):
+            self.assertEqual(bk._resolve_backend("jax"), "numpy")
+            with mock.patch.dict(os.environ, {"USE_JAX": "1"}, clear=False):
+                os.environ.pop("USE_NUMBA_JIT", None)
                 self.assertEqual(bk._resolve_backend(None), "numpy")
 
     def test_invalid_backend(self):
@@ -47,7 +56,8 @@ class TestKernels(unittest.TestCase):
     def test_engines_agree(self):
         xt, x = _problem()
         d0 = np.array([0.5, 1.0, 2.0])
-        for eng in self._engines():
+        engines = self._engines() + (["jax"] if bk.has_jax() else [])
+        for eng in engines:
             for deg in (-1, 0, 1):
                 for kx in (None, 0, 2):
                     np.testing.assert_allclose(
@@ -101,7 +111,8 @@ class TestKernels(unittest.TestCase):
     def test_idw_underflow_nearest_neighbor(self):
         xt = np.array([[0.0, 0.0], [10.0, 10.0]])
         x = np.array([[1e4, 1e4]])
-        for eng in self._engines():
+        idw_engines = self._engines() + (["jax"] if bk.has_jax() else [])
+        for eng in idw_engines:
             w = bk.idw_jac(x, xt, 100.0, _backend=eng)
             dw = bk.idw_jac(x, xt, 100.0, kx=0, _backend=eng)
             np.testing.assert_array_equal(w, [[0.0, 1.0]])
@@ -128,11 +139,54 @@ class TestModels(unittest.TestCase):
         out = {}
         for flag in ("0", "1"):
             with mock.patch.dict(os.environ, {"USE_NUMBA_JIT": flag}):
+                os.environ.pop("USE_JAX", None)
                 sm = RBF(print_global=False, d0=0.8, poly_degree=1)
                 sm.set_training_values(xt, yt)
                 sm.train()
                 out[flag] = sm.predict_values(x)
         np.testing.assert_allclose(out["0"], out["1"], rtol=1e-10, atol=1e-12)
+
+    @unittest.skipUnless(bk.has_jax(), "jax not installed")
+    def test_jax_env_switch_idw(self):
+        import jax
+
+        prev_x64 = bool(jax.config.jax_enable_x64)
+        xt, x = _problem()
+        yt = np.sin(xt.sum(axis=1, keepdims=True))
+        out = {}
+        dout = {}
+        for flag in ("0", "1"):
+            with mock.patch.dict(os.environ, {"USE_JAX": flag}):
+                os.environ.pop("USE_NUMBA_JIT", None)
+                sm = IDW(print_global=False, p=2.5)
+                sm.set_training_values(xt, yt)
+                sm.train()
+                out[flag] = sm.predict_values(x)
+                dout[flag] = sm.predict_derivatives(x, 1)
+        np.testing.assert_allclose(out["0"], out["1"], rtol=1e-12, atol=1e-12)
+        np.testing.assert_allclose(dout["0"], dout["1"], rtol=1e-12, atol=1e-12)
+        self.assertEqual(bool(jax.config.jax_enable_x64), prev_x64)
+
+    @unittest.skipUnless(bk.has_jax(), "jax not installed")
+    def test_jax_env_switch_rbf(self):
+        import jax
+
+        prev_x64 = bool(jax.config.jax_enable_x64)
+        xt, x = _problem()
+        yt = np.sin(xt.sum(axis=1, keepdims=True))
+        out = {}
+        dout = {}
+        for flag in ("0", "1"):
+            with mock.patch.dict(os.environ, {"USE_JAX": flag}):
+                os.environ.pop("USE_NUMBA_JIT", None)
+                sm = RBF(print_global=False, d0=0.8, poly_degree=1)
+                sm.set_training_values(xt, yt)
+                sm.train()
+                out[flag] = sm.predict_values(x)
+                dout[flag] = sm.predict_derivatives(x, 1)
+        np.testing.assert_allclose(out["0"], out["1"], rtol=1e-12, atol=1e-12)
+        np.testing.assert_allclose(dout["0"], dout["1"], rtol=1e-12, atol=1e-12)
+        self.assertEqual(bool(jax.config.jax_enable_x64), prev_x64)
 
 
 if __name__ == "__main__":

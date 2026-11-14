@@ -7,7 +7,7 @@ This package is distributed under New BSD license.
 
 import numpy as np
 
-from smt.surrogate_models.rbf_idw_backend import idw_jac
+from smt.surrogate_models.rbf_idw_backend import idw_jac, make_idw_jax_predictor
 from smt.surrogate_models.surrogate_model import SurrogateModel
 from smt.utils import persistence
 from smt.utils.caching import cached_operation
@@ -121,6 +121,19 @@ class IDW(SurrogateModel):
 
         dy_dyt = {None: jac}
         return dy_dyt
+
+    def get_jax_predictor(self):
+        """Return a pure JAX differentiable callable ``predict(x)`` for IDW."""
+        if (
+            not self.training_points
+            or None not in self.training_points
+            or 0 not in self.training_points[None]
+        ):
+            raise RuntimeError(
+                "IDW model has not been trained yet. Call set_training_values() and train() first."
+            )
+        xt, yt = self.training_points[None][0]
+        return make_idw_jax_predictor(xt, yt, self.options["p"])
 
     def save(self, filename):
         persistence.save(self, filename)
