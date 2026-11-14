@@ -2,9 +2,9 @@ import unittest
 
 import numpy as np
 
-from smt.sampling_methods import LHS, FullFactorial, Random
+from smt.sampling_methods import LHS, FullFactorial, Halton, Random, Sobol
 
-SCALED_SAMPLINGS = [LHS, FullFactorial, Random]
+SCALED_SAMPLINGS = [LHS, FullFactorial, Random, Sobol, Halton]
 
 
 class TestScaledSamplingMethods(unittest.TestCase):

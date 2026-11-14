@@ -14,12 +14,14 @@ from smt.surrogate_models import (
     KRG,
     LS,
     MGP,
+    PCE,
     QP,
     RBF,
     RMTB,
     RMTC,
     RMTS,
     SGP,
+    SparsePCE,
 )
 
 
@@ -78,6 +80,8 @@ class TestSaveLoad(unittest.TestCase):
             QP,
             GENN,
             LS,
+            PCE,
+            SparsePCE,
             RMTS,
             RMTB,
             RMTC,
