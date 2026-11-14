@@ -9,6 +9,15 @@ import unittest
 import numpy as np
 
 from smt.surrogate_models import RBF
+from smt.surrogate_models import rbf_idw_backend as bk
+
+try:
+    import jax
+    import jax.numpy as jnp
+
+    HAS_JAX = True
+except ImportError:
+    HAS_JAX = False
 
 
 def _data(seed, nt, nx, ny, ne):
@@ -476,6 +485,118 @@ class TestRBFCppRegression(unittest.TestCase):
             sm.set_training_values(xt, yt)
             with self.assertRaises(ValueError):
                 sm.train()
+
+
+class TestRBFJAX(unittest.TestCase):
+    @unittest.skipUnless(HAS_JAX, "JAX not installed")
+    def test_jax_predictor_and_autodiff(self):
+        rng = np.random.RandomState(42)
+        xt = rng.rand(12, 2)
+        yt = np.sin(3.0 * xt[:, :1]) + 0.5 * np.cos(2.0 * xt[:, 1:2])
+        x_eval_np = np.array([[0.23, 0.77], [0.81, 0.19]])
+
+        prev_x64 = bool(jax.config.jax_enable_x64)
+        for poly_degree in (-1, 0, 1):
+            sm = RBF(d0=[1.2, 0.8], poly_degree=poly_degree, print_global=False)
+            sm.set_training_values(xt, yt)
+            sm.train()
+
+            y_np = sm.predict_values(x_eval_np)
+            pred_default = sm.get_jax_predictor()
+            self.assertEqual(bool(jax.config.jax_enable_x64), prev_x64)
+            y_default = np.asarray(jax.jit(pred_default)(jnp.asarray(x_eval_np)))
+            np.testing.assert_allclose(y_default, y_np, atol=1e-4)
+
+            val_1d_default = pred_default(jnp.asarray(x_eval_np[0]))
+            self.assertEqual(val_1d_default.ndim, 0)
+            np.testing.assert_allclose(float(val_1d_default), y_np[0, 0], atol=1e-4)
+
+            with bk._enable_x64(jax):
+                pred_jax = sm.get_jax_predictor()
+                x_eval = jnp.array(x_eval_np, dtype=jnp.float64)
+                np.testing.assert_allclose(
+                    np.asarray(pred_jax(x_eval)), y_np, atol=1e-12
+                )
+
+                vmap_vals = np.asarray(jax.vmap(pred_jax)(x_eval))
+                np.testing.assert_allclose(vmap_vals, y_np[:, 0], atol=1e-12)
+
+                grad_fn = jax.jacobian(pred_jax)
+                hess_fn = jax.hessian(pred_jax)
+                eps = 1e-6
+                for idx in range(x_eval_np.shape[0]):
+                    g = np.asarray(grad_fn(x_eval[idx]))
+                    dy_0 = sm.predict_derivatives(x_eval_np[idx : idx + 1], 0)[0, 0]
+                    dy_1 = sm.predict_derivatives(x_eval_np[idx : idx + 1], 1)[0, 0]
+                    np.testing.assert_allclose(g, [dy_0, dy_1], atol=1e-10)
+
+                    h = np.asarray(hess_fn(x_eval[idx]))
+                    h_fd = np.zeros((2, 2))
+                    for col in range(2):
+                        step = np.zeros((1, 2))
+                        step[0, col] = eps
+                        x_p = x_eval_np[idx : idx + 1] + step
+                        x_m = x_eval_np[idx : idx + 1] - step
+                        for row in range(2):
+                            h_fd[row, col] = (
+                                sm.predict_derivatives(x_p, row)[0, 0]
+                                - sm.predict_derivatives(x_m, row)[0, 0]
+                            ) / (2.0 * eps)
+                    np.testing.assert_allclose(h, h_fd, atol=1e-7)
+
+        self.assertEqual(bool(jax.config.jax_enable_x64), prev_x64)
+
+    @unittest.skipUnless(HAS_JAX, "JAX not installed")
+    def test_jax_predictor_multioutput_and_untrained(self):
+        sm_untrained = RBF(print_global=False)
+        with self.assertRaises(RuntimeError):
+            sm_untrained.get_jax_predictor()
+
+        rng = np.random.RandomState(11)
+        xt = rng.rand(10, 2)
+        yt = np.column_stack([np.sin(xt[:, 0]), np.cos(xt[:, 1])])
+
+        sm = RBF(d0=0.9, poly_degree=1, print_global=False)
+        sm.set_training_values(xt, yt)
+        sm.train()
+
+        with bk._enable_x64(jax):
+            pred = sm.get_jax_predictor()
+            x_pt = np.array([0.4, 0.6])
+            out_1d = np.asarray(pred(jnp.asarray(x_pt)))
+            self.assertEqual(out_1d.shape, (2,))
+            np.testing.assert_allclose(
+                out_1d, sm.predict_values(x_pt.reshape(1, -1))[0], atol=1e-12
+            )
+            with self.assertRaises(ValueError):
+                pred(0.5)
+
+            # 0D scalar input & vmap for 1D model
+            sm_1d = RBF(d0=0.8, poly_degree=1, print_global=False)
+            sm_1d.set_training_values(
+                np.array([[0.0], [0.5], [1.0]]), np.array([[0.0], [1.0], [2.0]])
+            )
+            sm_1d.train()
+            pred_1d = sm_1d.get_jax_predictor()
+            out_0d = pred_1d(0.5)
+            self.assertEqual(out_0d.ndim, 0)
+            np.testing.assert_allclose(float(out_0d), 1.0, atol=1e-10)
+            vmap_1d = np.asarray(jax.vmap(pred_1d)(jnp.array([0.0, 0.5, 1.0])))
+            np.testing.assert_allclose(vmap_1d, [0.0, 1.0, 2.0], atol=1e-10)
+
+            # Single training point (nt = 1, poly_degree = -1) with vmap and Hessian
+            sm_single = RBF(d0=0.8, poly_degree=-1, print_global=False)
+            sm_single.set_training_values(np.array([[0.5]]), np.array([[1.5]]))
+            sm_single.train()
+            pred_single = sm_single.get_jax_predictor()
+            x_single = jnp.array([0.3, 0.5, 0.8])
+            np.testing.assert_allclose(
+                np.asarray(jax.vmap(pred_single)(x_single)),
+                sm_single.predict_values(np.array([[0.3], [0.5], [0.8]]))[:, 0],
+                atol=1e-12,
+            )
+            hess_center = float(jax.hessian(pred_single)(jnp.array(0.5)))
+            np.testing.assert_allclose(hess_center, -2.0 * 1.5 / (0.8**2), atol=1e-12)
 
 
 if __name__ == "__main__":

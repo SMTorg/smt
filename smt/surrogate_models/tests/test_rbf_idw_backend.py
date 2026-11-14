@@ -56,7 +56,8 @@ class TestKernels(unittest.TestCase):
     def test_engines_agree(self):
         xt, x = _problem()
         d0 = np.array([0.5, 1.0, 2.0])
-        for eng in self._engines():
+        engines = self._engines() + (["jax"] if bk.has_jax() else [])
+        for eng in engines:
             for deg in (-1, 0, 1):
                 for kx in (None, 0, 2):
                     np.testing.assert_allclose(
@@ -65,8 +66,6 @@ class TestKernels(unittest.TestCase):
                         rtol=1e-13,
                         atol=1e-13,
                     )
-        idw_engines = self._engines() + (["jax"] if bk.has_jax() else [])
-        for eng in idw_engines:
             for kx in (None, 0, 2):
                 np.testing.assert_allclose(
                     bk.idw_jac(x, xt, 2.5, kx, _backend=eng),
@@ -160,6 +159,27 @@ class TestModels(unittest.TestCase):
             with mock.patch.dict(os.environ, {"USE_JAX": flag}):
                 os.environ.pop("USE_NUMBA_JIT", None)
                 sm = IDW(print_global=False, p=2.5)
+                sm.set_training_values(xt, yt)
+                sm.train()
+                out[flag] = sm.predict_values(x)
+                dout[flag] = sm.predict_derivatives(x, 1)
+        np.testing.assert_allclose(out["0"], out["1"], rtol=1e-12, atol=1e-12)
+        np.testing.assert_allclose(dout["0"], dout["1"], rtol=1e-12, atol=1e-12)
+        self.assertEqual(bool(jax.config.jax_enable_x64), prev_x64)
+
+    @unittest.skipUnless(bk.has_jax(), "jax not installed")
+    def test_jax_env_switch_rbf(self):
+        import jax
+
+        prev_x64 = bool(jax.config.jax_enable_x64)
+        xt, x = _problem()
+        yt = np.sin(xt.sum(axis=1, keepdims=True))
+        out = {}
+        dout = {}
+        for flag in ("0", "1"):
+            with mock.patch.dict(os.environ, {"USE_JAX": flag}):
+                os.environ.pop("USE_NUMBA_JIT", None)
+                sm = RBF(print_global=False, d0=0.8, poly_degree=1)
                 sm.set_training_values(xt, yt)
                 sm.train()
                 out[flag] = sm.predict_values(x)

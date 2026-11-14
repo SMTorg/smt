@@ -10,8 +10,9 @@ Engines
 * Numba (optional): enabled with the environment variable ``USE_NUMBA_JIT=1``
   (same switch as the RMTS backend). The kernels are parallel and cached on
   disk. When Numba is not installed the NumPy engine is used silently.
-* JAX (optional): enabled with ``USE_JAX=1`` (for IDW kernels with scoped fp64)
-  and via ``IDW.get_jax_predictor()`` for differentiable JAX pipelines.
+* JAX (optional): enabled with ``USE_JAX=1`` (for RBF/IDW kernels with scoped fp64)
+  and via ``RBF.get_jax_predictor()`` / ``IDW.get_jax_predictor()`` for
+  differentiable JAX pipelines.
 
 The public model APIs (options, outputs, shapes) are unchanged.
 """
@@ -40,6 +41,7 @@ def _parse_bool_env(name, default=0):
 
 _NUMBA_KERNELS = None
 _JAX_IDW_KERNELS = None
+_JAX_RBF_KERNEL = None
 
 
 def _get_numba():
@@ -375,6 +377,15 @@ def _idw_jax(x, xt, p, kx):
         return np.asarray(res, dtype=float)
 
 
+def _prepare_jax_inputs(jnp, x, nx, dtype):
+    x_in = jnp.asarray(x, dtype=dtype)
+    is_scalar = x_in.ndim <= 1
+    x_arr = jnp.atleast_2d(x_in)
+    if x_arr.shape[-1] != nx:
+        raise ValueError(f"Expected input with {nx} features, got shape {x_in.shape}.")
+    return x_arr, is_scalar
+
+
 def make_idw_jax_predictor(xt, yt, p):
     """Return a pure JAX predictor ``predict(x)`` for a trained IDW model."""
     jax, jnp = _get_jax()
@@ -388,15 +399,87 @@ def make_idw_jax_predictor(xt, yt, p):
     ny = yt_j.shape[1]
 
     def predict_fn(x):
-        x_in = jnp.asarray(x, dtype=dtype)
-        is_scalar = x_in.ndim <= 1
-        x_arr = jnp.atleast_2d(x_in)
-        if x_arr.shape[-1] != nx:
-            raise ValueError(
-                f"Expected input with {nx} features, got shape {x_in.shape}."
-            )
+        x_arr, is_scalar = _prepare_jax_inputs(jnp, x, nx, dtype)
         weights = _idw_weights_jax(jax, jnp, x_arr, xt_j, p_val, dtype)
         y = jnp.matmul(weights, yt_j)
+        if is_scalar:
+            return y[0, 0] if ny == 1 else y[0]
+        return y
+
+    return predict_fn
+
+
+# ======================================================================
+# JAX engine (RBF)
+# ======================================================================
+
+
+def _rbf_jax_matrix(jnp, x_arr, xt_arr, d0_arr, poly_degree, kx, dtype):
+    diff = x_arr[:, None, :] - xt_arr[None, :, :]
+    r2 = jnp.sum((diff / d0_arr[None, None, :]) ** 2, axis=-1)
+    rad = jnp.exp(-r2)
+    n = x_arr.shape[0]
+    if kx is None:
+        parts = [rad]
+        if poly_degree >= 0:
+            parts.append(jnp.ones((n, 1), dtype=dtype))
+        if poly_degree == 1:
+            parts.append(x_arr)
+        return jnp.concatenate(parts, axis=1)
+
+    d_kx = diff[:, :, kx]
+    parts = [-rad * (2.0 * d_kx / (d0_arr[kx] ** 2))]
+    if poly_degree >= 0:
+        parts.append(jnp.zeros((n, 1), dtype=dtype))
+    if poly_degree == 1:
+        col = (jnp.arange(x_arr.shape[1]) == kx).astype(dtype)
+        parts.append(jnp.broadcast_to(col[None, :], x_arr.shape))
+    return jnp.concatenate(parts, axis=1)
+
+
+def _get_jax_rbf_kernel():
+    global _JAX_RBF_KERNEL
+    if _JAX_RBF_KERNEL is None:
+        jax, jnp = _get_jax()
+
+        def rbf_fn(x_j, xt_j, d0_j, poly_degree, kx):
+            return _rbf_jax_matrix(jnp, x_j, xt_j, d0_j, poly_degree, kx, jnp.float64)
+
+        _JAX_RBF_KERNEL = jax.jit(rbf_fn, static_argnums=(3, 4))
+    return _JAX_RBF_KERNEL
+
+
+def _rbf_jax(x, xt, d0, poly_degree, kx):
+    jax, jnp = _get_jax()
+    if jax is None:
+        return _rbf_np(x, xt, d0, poly_degree, kx)
+    rbf_fn = _get_jax_rbf_kernel()
+    kx_arg = None if kx is None else int(kx)
+    with _enable_x64(jax):
+        x_j = jnp.asarray(x, dtype=jnp.float64)
+        xt_j = jnp.asarray(xt, dtype=jnp.float64)
+        d0_j = jnp.asarray(d0, dtype=jnp.float64)
+        res = rbf_fn(x_j, xt_j, d0_j, int(poly_degree), kx_arg)
+        return np.asarray(res, dtype=float)
+
+
+def make_rbf_jax_predictor(xt, d0, sol, poly_degree):
+    """Return a pure JAX predictor ``predict(x)`` for a trained RBF model."""
+    jax, jnp = _get_jax()
+    if jax is None:
+        raise ImportError("JAX is required for RBF.get_jax_predictor().")
+    dtype = jnp.float64 if jax.config.jax_enable_x64 else jnp.float32
+    xt_j = jnp.asarray(xt, dtype=dtype)
+    d0_j = jnp.asarray(d0, dtype=dtype)
+    sol_j = jnp.asarray(sol, dtype=dtype)
+    deg = int(poly_degree)
+    nx = xt_j.shape[1]
+    ny = sol_j.shape[1]
+
+    def predict_fn(x):
+        x_arr, is_scalar = _prepare_jax_inputs(jnp, x, nx, dtype)
+        jac = _rbf_jax_matrix(jnp, x_arr, xt_j, d0_j, deg, None, dtype)
+        y = jnp.matmul(jac, sol_j)
         if is_scalar:
             return y[0, 0] if ny == 1 else y[0]
         return y
@@ -423,7 +506,10 @@ def rbf_jac(x, xt, d0, poly_degree, kx=None, _backend=None):
     x = _as2d(x)
     xt = _as2d(xt)
     d0 = np.ascontiguousarray(d0, dtype=float)
-    if _resolve_backend(_backend) == "numba":
+    backend = _resolve_backend(_backend)
+    if backend == "jax":
+        return _rbf_jax(x, xt, d0, int(poly_degree), kx)
+    if backend == "numba":
         n, nx = x.shape
         num_poly = {-1: 0, 0: 1}.get(poly_degree, 1 + nx)
         jac = np.empty((n, xt.shape[0] + num_poly))

@@ -7,7 +7,7 @@ This package is distributed under New BSD license.
 import numpy as np
 from scipy.sparse import csc_matrix
 
-from smt.surrogate_models.rbf_idw_backend import rbf_jac
+from smt.surrogate_models.rbf_idw_backend import make_rbf_jax_predictor, rbf_jac
 from smt.surrogate_models.surrogate_model import SurrogateModel
 from smt.utils import persistence
 from smt.utils.caching import cached_operation
@@ -200,6 +200,17 @@ class RBF(SurrogateModel):
         dy_dyt = (dytl_dyt.T.dot(dstates_dytl.T).dot(dy_dstates.T)).T
         dy_dyt = np.einsum("ij,k->ijk", dy_dyt, np.ones(ny))
         return {None: dy_dyt}
+
+    def get_jax_predictor(self):
+        """Return a pure JAX differentiable callable ``predict(x)`` for RBF."""
+        if not hasattr(self, "sol") or self.sol is None:
+            raise RuntimeError(
+                "RBF model has not been trained yet. Call train() first."
+            )
+        xt = self.training_points[None][0][0]
+        return make_rbf_jax_predictor(
+            xt, self.options["d0"], self.sol, self.options["poly_degree"]
+        )
 
     def save(self, filename):
         persistence.save(self, filename)
