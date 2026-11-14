@@ -8,11 +8,21 @@ Paul Saves : Mixed Integer
 
 from abc import ABCMeta, abstractmethod
 from collections import defaultdict
+from contextlib import nullcontext
+import inspect
+from numbers import Integral
 from typing import Optional
+import warnings
 
 import numpy as np
 
-from smt.utils.checks import _is_jax_tracer, check_nx, check_support, ensure_2d_array
+from smt.utils.checks import (
+    _enable_jax_x64,
+    _is_jax_tracer,
+    check_nx,
+    check_support,
+    ensure_2d_array,
+)
 from smt.utils.options_dictionary import OptionsDictionary
 from smt.utils.printer import Printer
 
@@ -62,6 +72,7 @@ class SurrogateModel(metaclass=ABCMeta):
         supports["variances"] = False
         supports["variance_derivatives"] = False
         supports["x_hierarchy"] = False
+        supports["jax"] = False
 
         declare = self.options.declare
 
@@ -88,6 +99,12 @@ class SurrogateModel(metaclass=ABCMeta):
             True,
             types=bool,
             desc="Whether to print problem information",
+        )
+        declare(
+            "use_jax",
+            False,
+            types=bool,
+            desc="Whether to accelerate operations using JAX when installed",
         )
         declare(
             "print_solver", True, types=bool, desc="Whether to print solver information"
@@ -256,6 +273,8 @@ class SurrogateModel(metaclass=ABCMeta):
         """
         Train the model
         """
+        self._jax_jit_predict = None
+        self._jax_jit_deriv = None
 
         n_exact = self.training_points[None][0][0].shape[0]
 
@@ -301,6 +320,77 @@ class SurrogateModel(metaclass=ABCMeta):
         self.printer()
         return y
 
+    def __getstate__(self):
+        state = self.__dict__.copy()
+        state["_jax_jit_predict"] = None
+        state["_jax_jit_predict_key"] = None
+        state["_jax_jit_deriv"] = None
+        if "_jax_opt_cache" in state:
+            state["_jax_opt_cache"] = None
+        return state
+
+    def _can_use_jax(self) -> bool:
+        return bool(self.supports["jax"])
+
+    def _import_jax_optional(self):
+        try:
+            import jax
+            import jax.numpy as jnp
+
+            return jax, jnp
+        except ImportError:
+            if not getattr(self, "_warned_missing_jax", False):
+                warnings.warn(
+                    "use_jax=True requested, but JAX is not installed. "
+                    "Falling back to NumPy/SciPy.",
+                    UserWarning,
+                    stacklevel=3,
+                )
+                self._warned_missing_jax = True
+            return None, None
+
+    def _resolve_jax_dtype_name(self) -> str:
+        if "jax_dtype" in self.options:
+            return str(self.options["jax_dtype"])
+        return "float64"
+
+    def _get_jax_cache_key(self):
+        extrapolate = (
+            bool(self.options["extrapolate"]) if "extrapolate" in self.options else None
+        )
+        return (self._resolve_jax_dtype_name(), extrapolate)
+
+    def _build_jax_predictor(self, dtype_name: str):
+        if "dtype" in inspect.signature(self.get_jax_predictor).parameters:
+            return self.get_jax_predictor(dtype=dtype_name)
+        return self.get_jax_predictor()
+
+    def _get_jax_context(self, jax, jnp):
+        dtype_name = self._resolve_jax_dtype_name()
+        use_x64 = "32" not in dtype_name
+        x64_ctx = _enable_jax_x64(jax) if use_x64 else nullcontext()
+        target_dtype = jnp.float64 if use_x64 else jnp.float32
+        return x64_ctx, dtype_name, target_dtype
+
+    def _predict_values_with_jax(self, x: np.ndarray, fallback_fn) -> np.ndarray:
+        if self.options["use_jax"] and self._can_use_jax():
+            jax, jnp = self._import_jax_optional()
+            if jax is not None:
+                x64_ctx, dtype_name, target_dtype = self._get_jax_context(jax, jnp)
+                cache_key = self._get_jax_cache_key()
+                with x64_ctx:
+                    if (
+                        not hasattr(self, "_jax_jit_predict")
+                        or self._jax_jit_predict is None
+                        or getattr(self, "_jax_jit_predict_key", None) != cache_key
+                    ):
+                        pred_fn = self._build_jax_predictor(dtype_name)
+                        self._jax_jit_predict = jax.jit(pred_fn)
+                        self._jax_jit_predict_key = cache_key
+                    y_jax = self._jax_jit_predict(jnp.asarray(x, dtype=target_dtype))
+                    return np.asarray(y_jax).reshape((x.shape[0], self.ny))
+        return fallback_fn()
+
     def predict_values(self, x: np.ndarray) -> np.ndarray:
         """
         Predict the output values at a set of points.
@@ -318,7 +408,7 @@ class SurrogateModel(metaclass=ABCMeta):
         x = self._pre_predict(x)
         # Evaluate the unknown points using the specified model-method
         with self.printer._timed_context("Predicting", key="prediction"):
-            y = self._predict_values(x)
+            y = self._predict_values_with_jax(x, lambda: self._predict_values(x))
         return self._post_predict(x, y)
 
     def predict_derivatives(self, x: np.ndarray, kx: int) -> np.ndarray:
@@ -339,9 +429,47 @@ class SurrogateModel(metaclass=ABCMeta):
         """
         check_support(self, "derivatives")
         x = self._pre_predict(x)
+        if not isinstance(kx, Integral) or isinstance(kx, bool):
+            raise ValueError(f"kx must be an integer index, got {kx!r}.")
+        kx = int(kx)
+        if kx < 0 or kx >= self.nx:
+            raise ValueError(f"kx={kx} is out of bounds for nx={self.nx}.")
         # Evaluate the unknown points using the specified model-method
         with self.printer._timed_context("Predicting", key="prediction"):
-            y = self._predict_derivatives(x, kx)
+            if self.options["use_jax"] and self._can_use_jax():
+                jax, jnp = self._import_jax_optional()
+                if jax is not None:
+                    x64_ctx, dtype_name, target_dtype = self._get_jax_context(jax, jnp)
+                    cache_key = (kx, self._get_jax_cache_key())
+                    with x64_ctx:
+                        if (
+                            not hasattr(self, "_jax_jit_deriv")
+                            or self._jax_jit_deriv is None
+                        ):
+                            self._jax_jit_deriv = {}
+                        if cache_key not in self._jax_jit_deriv:
+                            pred_fn = self._build_jax_predictor(dtype_name)
+                            e_k = np.zeros(self.nx, dtype=np.float64)
+                            e_k[kx] = 1.0
+                            e_k_j = jnp.asarray(e_k, dtype=target_dtype)
+
+                            def single_deriv(x_i):
+                                _, jvp_val = jax.jvp(pred_fn, (x_i,), (e_k_j,))
+                                return jvp_val
+
+                            self._jax_jit_deriv[cache_key] = jax.jit(
+                                jax.vmap(single_deriv)
+                            )
+
+                        x_j = jnp.asarray(x, dtype=target_dtype)
+                        if x_j.ndim == 1:
+                            x_j = x_j[None, :]
+                        y_jax = self._jax_jit_deriv[cache_key](x_j)
+                        y = np.asarray(y_jax).reshape((x.shape[0], self.ny))
+                else:
+                    y = self._predict_derivatives(x, kx)
+            else:
+                y = self._predict_derivatives(x, kx)
         return self._post_predict(x, y)
 
     def predict_output_derivatives(self, x: np.ndarray) -> dict:
@@ -440,6 +568,23 @@ class SurrogateModel(metaclass=ABCMeta):
         with self.printer._timed_context("Predicting", key="prediction"):
             y = self._predict_variance_gradient(x)
         return self._post_predict(x, y)
+
+    def get_jax_predictor(self):
+        """
+        Return a pure JAX differentiable callable f(x) -> y for this trained surrogate.
+
+        The returned callable accepts JAX arrays and supports JAX transformations
+        including ``jax.jit``, ``jax.grad``, ``jax.jacobian``, and ``jax.vmap``.
+
+        Raises
+        ------
+        NotImplementedError
+            If this surrogate model does not implement a dedicated JAX predictor.
+        """
+        check_support(self, "jax")
+        raise NotImplementedError(
+            f"{self.__class__.__name__} does not implement get_jax_predictor."
+        )
 
     def _initialize(self):
         """

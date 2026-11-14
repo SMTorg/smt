@@ -681,6 +681,19 @@ class MFK(KrgBased):
 
         return self._predict_intermediate_values(X, self.nlvl)
 
+    def get_jax_predictor(self):
+        """
+        Return a pure JAX function predict(x) that is end-to-end differentiable.
+
+        Returns
+        -------
+        predict_fn : Callable
+            Differentiable JAX prediction function.
+        """
+        from smt.surrogate_models.krg_based.krg_jax import make_mfk_jax_predictor
+
+        return make_mfk_jax_predictor(self)
+
     def _predict_variances(
         self, X: np.ndarray, is_acting=None, is_ri=False
     ) -> np.ndarray:

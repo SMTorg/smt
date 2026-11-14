@@ -182,9 +182,18 @@ class RMTS(SurrogateModel):
             desc="Maximum depth (level of nesting) to print operation descriptions and times",
         )
 
+        declare(
+            "jax_dtype",
+            "float64",
+            values=["float64", "float32"],
+            types=str,
+            desc="Computation precision for JAX acceleration ('float64' or 'float32')",
+        )
+
         supports["training_derivatives"] = True
         supports["derivatives"] = True
         supports["output_derivatives"] = True
+        supports["jax"] = True
 
     def _final_initialize(self):
         super()._final_initialize()
@@ -424,7 +433,7 @@ class RMTS(SurrogateModel):
         return full_hess
 
     def __getstate__(self):
-        state = self.__dict__.copy()
+        state = super().__getstate__()
         state["_backend"] = None
         state["_jax_opt_cache"] = None
         return state
@@ -945,6 +954,111 @@ class RMTS(SurrogateModel):
             ) from err
 
         return NdBSpline(bs["knots"], bs["coefficients"], bs["degree"])
+
+    def get_jax_predictor(self, dtype=None):
+        """
+        Return a pure JAX function predict(x) that is end-to-end differentiable.
+
+        Parameters
+        ----------
+        dtype : DTypeLike or str, optional
+            Computation precision, e.g. jnp.float64 (default) or jnp.float32 for
+            maximum GPU throughput on consumer Tensor Cores. If None, checks
+            self.options["jax_dtype"].
+
+        Returns
+        -------
+        predict_fn : Callable
+            Differentiable JAX prediction function with weights cached in device VRAM.
+        """
+        if not hasattr(self, "sol_coeff") or self.sol_coeff is None:
+            raise RuntimeError(
+                f"{self.__class__.__name__} model has not been trained yet. Call train() first."
+            )
+        import jax
+        import jax.numpy as jnp
+
+        opt_dtype = (
+            self.options["jax_dtype"] if "jax_dtype" in self.options else "float64"
+        )
+        raw_dtype = dtype if dtype is not None else opt_dtype
+        if isinstance(raw_dtype, str):
+            want_64 = "32" not in raw_dtype
+        else:
+            want_64 = jnp.dtype(raw_dtype) == jnp.float64
+        if dtype is None and want_64 and not jax.config.jax_enable_x64:
+            use_dtype = jnp.float32
+        else:
+            use_dtype = jnp.float64 if want_64 else jnp.float32
+
+        spline_type = _normalize_spline_type(self.options["spline_type"])
+        extrapolate = bool(self.options["extrapolate"])
+
+        lower_j = jnp.asarray(self.options["xlimits"][:, 0], dtype=use_dtype)
+        upper_j = jnp.asarray(self.options["xlimits"][:, 1], dtype=use_dtype)
+        coeff_arr = jnp.asarray(self.sol_coeff, dtype=use_dtype)
+        if coeff_arr.ndim == 1:
+            coeff_arr = coeff_arr[:, None]
+        ny = coeff_arr.shape[1]
+        squeeze_y = ny == 1
+
+        if spline_type == "B-Spline":
+            from smt.surrogate_models.rmts_backend import _get_predict_rmtb_jax_fn
+
+            order_tuple = tuple(int(v) for v in self.num["order_list"])
+            ncp_tuple = tuple(int(v) for v in self.num["ctrl_list"])
+            knots_tuple = tuple(
+                jnp.asarray(k, dtype=use_dtype) for k in self.knots_list
+            )
+            coeff_nd = coeff_arr.reshape(ncp_tuple + (ny,))
+
+            fn = _get_predict_rmtb_jax_fn(order_tuple, ncp_tuple, extrapolate)
+
+            def predict_fn(x):
+                x_j = jnp.asarray(x, dtype=use_dtype)
+                squeeze_x = x_j.ndim == 1
+                if squeeze_x:
+                    x_j = x_j[None, :]
+                y = fn(x_j, coeff_nd, lower_j, upper_j, knots_tuple)
+                if squeeze_x:
+                    return y[0, 0] if squeeze_y else y[0]
+                return y
+
+            return predict_fn
+
+        elif spline_type == "Cubic_Hermite_Spline":
+            from smt.surrogate_models.rmts_backend import _get_predict_rmtc_jax_fn
+
+            nelem_tuple = tuple(int(v) for v in self.num["elem_list"])
+            nterm_tuple = (
+                tuple(int(v) for v in self.num["term_list"])
+                if "term_list" in self.num
+                else (4,) * len(nelem_tuple)
+            )
+            nelem = 1
+            for m in nelem_tuple:
+                nelem *= m
+            nterm = 1
+            for nt in nterm_tuple:
+                nterm *= nt
+            coeff_nd = coeff_arr.reshape((nelem, nterm, ny))
+
+            fn = _get_predict_rmtc_jax_fn(nelem_tuple, nterm_tuple, extrapolate)
+
+            def predict_fn(x):
+                x_j = jnp.asarray(x, dtype=use_dtype)
+                squeeze_x = x_j.ndim == 1
+                if squeeze_x:
+                    x_j = x_j[None, :]
+                y = fn(x_j, coeff_nd, lower_j, upper_j)
+                if squeeze_x:
+                    return y[0, 0] if squeeze_y else y[0]
+                return y
+
+            return predict_fn
+
+        else:
+            raise ValueError(f"Unknown spline_type: {spline_type}")
 
 
 class RMTB(RMTS):

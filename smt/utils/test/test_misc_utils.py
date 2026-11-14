@@ -11,6 +11,7 @@ import numpy as np
 from smt.problems import Sphere
 from smt.sampling_methods import LHS
 from smt.surrogate_models import KRG
+from smt.surrogate_models.surrogate_model import SurrogateModel
 from smt.utils.misc import (
     compute_pva,
     compute_q2,
@@ -339,6 +340,26 @@ class TestMisc(unittest.TestCase):
         with self.assertRaisesRegex(TypeError, "Cannot pass a JAX Tracer"):
             tracer_test(jnp.array([[0.2]]))
 
+        # Dedicated JAX predictor is functional and returns callable
+        pred_jax = model.get_jax_predictor()
+        self.assertTrue(callable(pred_jax))
+
+        # Models without a dedicated JAX predictor raise NotImplementedError
+        class UnsupportedModel(SurrogateModel):
+            name = "Unsupported"
+
+            def _initialize(self):
+                pass
+
+            def _train(self):
+                pass
+
+            def _predict_values(self, x):
+                return x
+
+        with self.assertRaises(NotImplementedError):
+            UnsupportedModel().get_jax_predictor()
+
         # JAX arrays in OptionsDictionary
         from smt.utils.options_dictionary import OptionsDictionary
 
@@ -368,14 +389,24 @@ class TestMisc(unittest.TestCase):
         mi_sm.predict_values(x_np)
         np.testing.assert_array_equal(x_np, np.array([[0.4, 1.6]]))
 
-        from smt.surrogate_models import IDW, RBF, RMTB, RMTC
+        from smt.surrogate_models import IDW, RBF, RMTS
 
-        rmtb = RMTB(xlimits=jnp.array([[0.0, 1.0]]), num_ctrl_pts=8, print_global=False)
+        rmtb = RMTS(
+            spline_type="B-Spline",
+            xlimits=jnp.array([[0.0, 1.0]]),
+            num_ctrl_pts=8,
+            print_global=False,
+        )
         rmtb.set_training_values(x, y)
         rmtb.train()
         self.assertEqual(rmtb.predict_values(xq).shape, (6, 1))
 
-        rmtc = RMTC(xlimits=jnp.array([[0.0, 1.0]]), num_elements=4, print_global=False)
+        rmtc = RMTS(
+            spline_type="Cubic_Hermite_Spline",
+            xlimits=jnp.array([[0.0, 1.0]]),
+            num_elements=4,
+            print_global=False,
+        )
         rmtc.set_training_values(x, y)
         rmtc.train()
         self.assertEqual(rmtc.predict_values(xq).shape, (6, 1))

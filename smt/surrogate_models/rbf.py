@@ -55,6 +55,7 @@ class RBF(SurrogateModel):
 
         supports["derivatives"] = True
         supports["output_derivatives"] = True
+        supports["jax"] = True
 
     def _setup(self):
         options = self.options
