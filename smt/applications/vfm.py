@@ -82,9 +82,6 @@ class VFM(SurrogateBasedApplication):
         x: np.ndarray[n, nx] or np.ndarray[n]
            Input values for the prediction result analysis.
 
-        kx : int
-           The 0-based index of the input variable with respect to which derivatives are desired.
-
         return
         ------
         y: np.ndarray
