@@ -73,6 +73,7 @@ class Callback(object):
             self.norm0 = norm
 
         if self.counter % self.interval == 0:
+            rel_norm = norm / self.norm0 if self.norm0 != 0.0 else 0.0
             self.printer(
                 "%s (%i x %i mtx), output %-3i : %3i  %15.9e  %15.9e"
                 % (
@@ -82,7 +83,7 @@ class Callback(object):
                     self.ind_y,
                     self.counter,
                     norm,
-                    norm / self.norm0,
+                    rel_norm,
                 )
             )
         self.counter += 1
@@ -277,6 +278,7 @@ class KrylovSolver(LinearSolver):
                 self.solver = scipy.sparse.linalg.bicgstab
                 self.callback_func = self.callback._print_sol
                 self.solver_kwargs = {
+                    "atol": 0.0,
                     "rtol": self.options["rtol"],
                     "maxiter": self.options["ilimit"],
                 }
@@ -284,9 +286,11 @@ class KrylovSolver(LinearSolver):
                 self.solver = scipy.sparse.linalg.gmres
                 self.callback_func = self.callback._print_res
                 self.solver_kwargs = {
+                    "atol": 0.0,
                     "rtol": self.options["rtol"],
                     "maxiter": self.options["ilimit"],
                     "restart": min(self.options["ilimit"], mtx.shape[0]),
+                    "callback_type": "pr_norm",
                 }
             self._patch_when_scipy_lessthan_v111()
 

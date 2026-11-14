@@ -1,6 +1,7 @@
 """
 Author: Dr. Mohamed A. Bouhlel <mbouhlel@umich>
         Dr. John T. Hwang <hwangjt@umich.edu>
+        Paul Saves <paul.saves@ird.fr>
 
 This package is distributed under New BSD license.
 """
@@ -9,11 +10,20 @@ import numpy as np
 
 from smt.problems import NdimRobotArm, Sphere
 from smt.sampling_methods import LHS
-from smt.surrogate_models import GEKPLS, KPLS, KPLSK, KRG, LS, QP, DesignSpace
+from smt.surrogate_models import (
+    GEKPLS,
+    KPLS,
+    KPLSK,
+    KRG,
+    LS,
+    QP,
+    RMTS,
+    DesignSpace,
+)
 from smt.utils.misc import compute_relative_error
 
 try:
-    from smt.surrogate_models import IDW, RBF, RMTB, RMTC
+    from smt.surrogate_models import IDW, RBF
 
     COMPILED_AVAILABLE = True
 except ImportError:
@@ -544,152 +554,159 @@ if COMPILED_AVAILABLE:
     if plot_status:
         plt.show()
 
-    ########### The RMTB and RMTC models are suitable for low-dimensional problems
+########### The RMTS models (B-Splines and Cubic Hermite Splines) are suitable for low-dimensional problems
 
-    # Initialization of the problem
-    ndim = 3
-    ndoe = int(250 * ndim)
-    # Define the function
-    fun = NdimRobotArm(ndim=ndim)
+# Initialization of the problem
+ndim = 3
+ndoe = int(250 * ndim)
+# Define the function
+fun = NdimRobotArm(ndim=ndim)
 
-    # Construction of the DOE
-    sampling = LHS(xlimits=fun.xlimits)
-    xt = sampling(ndoe)
+# Construction of the DOE
+sampling = LHS(xlimits=fun.xlimits)
+xt = sampling(ndoe)
 
-    # Compute the output
-    yt = fun(xt)
-    # Compute the gradient
-    for i in range(ndim):
-        yd = fun(xt, kx=i)
-        yt = np.concatenate((yt, yd), axis=1)
+# Compute the output
+yt = fun(xt)
+# Compute the gradient
+for i in range(ndim):
+    yd = fun(xt, kx=i)
+    yt = np.concatenate((yt, yd), axis=1)
 
-    # Construction of the validation points
-    ntest = 500
-    sampling = LHS(xlimits=fun.xlimits)
-    xtest = sampling(ntest)
-    ytest = fun(xtest)
+# Construction of the validation points
+ntest = 500
+sampling = LHS(xlimits=fun.xlimits)
+xtest = sampling(ntest)
+ytest = fun(xtest)
+ydtest = np.zeros((ntest, ndim))
+for i in range(ndim):
+    ydtest[:, i] = fun(xtest, kx=i).T
 
-    ########### The RMTB model
+########### The RMTS model (B-Spline)
 
-    t = RMTB(
-        xlimits=fun.xlimits,
-        min_energy=True,
-        nonlinear_maxiter=20,
-        print_prediction=False,
+t = RMTS(
+    xlimits=fun.xlimits,
+    spline_type="B-Spline",
+    min_energy=True,
+    nonlinear_maxiter=20,
+    print_prediction=False,
+)
+t.set_training_values(xt, yt[:, 0])
+# Add the gradient information
+for i in range(ndim):
+    t.set_training_derivatives(xt, yt[:, 1 + i].reshape((yt.shape[0], 1)), i)
+t.train()
+
+# Prediction of the validation points
+y = t.predict_values(xtest)
+print("RMTS (B-Spline),  err: " + str(compute_relative_error(t, xtest, ytest)))
+if plot_status:
+    k, m = 0, 0
+    f, axarr = plt.subplots(3, 2)
+    axarr[k, m].plot(ytest, ytest, "-.")
+    axarr[k, m].plot(ytest, y, ".")
+    m += 1
+    axarr[2, 0].arrow(0.3, 0.3, 0.2, 0)
+    axarr[2, 0].arrow(0.3, 0.3, 0.0, 0.4)
+    axarr[2, 0].text(0.25, 0.4, r"$\hat{y}$")
+    axarr[2, 0].text(0.35, 0.15, r"$y_{true}$")
+    axarr[2, 0].axis("off")
+    axarr[2, 1].set_visible(False)
+    axarr[2, 1].axis("off")
+
+    # Fine-tune figure; hide x ticks for top plots and y ticks for right plots
+    plt.setp(axarr[2, 0].get_xticklabels(), visible=False)
+    plt.setp(axarr[2, 0].get_yticklabels(), visible=False)
+    plt.suptitle(
+        "Validation of the RMTS model (B-Spline) (from left to right then from top to bottom): "
+        "validation of the prediction model and the i-th prediction of the derivative---i=1:3"
     )
-    t.set_training_values(xt, yt[:, 0])
-    # Add the gradient information
-    for i in range(ndim):
-        t.set_training_derivatives(xt, yt[:, 1 + i].reshape((yt.shape[0], 1)), i)
-    t.train()
 
-    # Prediction of the validation points
-    y = t.predict_values(xtest)
-    print("RMTB,  err: " + str(compute_relative_error(t, xtest, ytest)))
-    if plot_status:
-        k, m = 0, 0
-        f, axarr = plt.subplots(3, 2)
-        axarr[k, m].plot(ytest, ytest, "-.")
-        axarr[k, m].plot(ytest, y, ".")
-        m += 1
-        axarr[2, 0].arrow(0.3, 0.3, 0.2, 0)
-        axarr[2, 0].arrow(0.3, 0.3, 0.0, 0.4)
-        axarr[2, 0].text(0.25, 0.4, r"$\hat{y}$")
-        axarr[2, 0].text(0.35, 0.15, r"$y_{true}$")
-        axarr[2, 0].axis("off")
-        axarr[2, 1].set_visible(False)
-        axarr[2, 1].axis("off")
-
-        # Fine-tune figure; hide x ticks for top plots and y ticks for right plots
-        plt.setp(axarr[2, 0].get_xticklabels(), visible=False)
-        plt.setp(axarr[2, 0].get_yticklabels(), visible=False)
-        plt.suptitle(
-            "Validation of the RMTB model (from left to right then from top to bottom): \
-                validation of the prediction model and the i-th prediction of the derivative---i=1:3"
-        )
-
-    # Prediction of the derivatives with regards to each direction space
-    yd_prediction = np.zeros((ntest, ndim))
-    for i in range(ndim):
-        yd_prediction[:, i] = t.predict_derivatives(xtest, kx=i).T
-        print(
-            "RMTB, err of the "
-            + str(i)
-            + "-th derivative: "
-            + str(compute_relative_error(t, xtest, ydtest[:, i], kx=i))
-        )
-
-        if plot_status:
-            axarr[k, m].plot(ydtest[:, i], ydtest[:, i], "-.")
-            axarr[k, m].plot(ydtest[:, i], yd_prediction[:, i], ".")
-            if m == 1:
-                m = 0
-                k += 1
-            else:
-                m += 1
-
-    if plot_status:
-        plt.show()
-
-    ########### The RMTC model
-
-    t = RMTC(
-        xlimits=fun.xlimits,
-        min_energy=True,
-        nonlinear_maxiter=20,
-        print_prediction=False,
+# Prediction of the derivatives with regards to each direction space
+yd_prediction = np.zeros((ntest, ndim))
+for i in range(ndim):
+    yd_prediction[:, i] = t.predict_derivatives(xtest, kx=i).T
+    print(
+        "RMTS (B-Spline), err of the "
+        + str(i)
+        + "-th derivative: "
+        + str(compute_relative_error(t, xtest, ydtest[:, i], kx=i))
     )
-    t.set_training_values(xt, yt[:, 0])
-    # Add the gradient information
-    for i in range(ndim):
-        t.set_training_derivatives(xt, yt[:, 1 + i].reshape((yt.shape[0], 1)), i)
-
-    t.train()
-
-    # Prediction of the validation points
-    y = t.predict_values(xtest)
-    print("RMTC,  err: " + str(compute_relative_error(t, xtest, ytest)))
-    if plot_status:
-        k, m = 0, 0
-        f, axarr = plt.subplots(3, 2)
-        axarr[k, m].plot(ytest, ytest, "-.")
-        axarr[k, m].plot(ytest, y, ".")
-        m += 1
-        axarr[2, 0].arrow(0.3, 0.3, 0.2, 0)
-        axarr[2, 0].arrow(0.3, 0.3, 0.0, 0.4)
-        axarr[2, 0].text(0.25, 0.4, r"$\hat{y}$")
-        axarr[2, 0].text(0.35, 0.15, r"$y_{true}$")
-        axarr[2, 0].axis("off")
-        axarr[2, 1].set_visible(False)
-        axarr[2, 1].axis("off")
-
-        # Fine-tune figure; hide x ticks for top plots and y ticks for right plots
-        plt.setp(axarr[2, 0].get_xticklabels(), visible=False)
-        plt.setp(axarr[2, 0].get_yticklabels(), visible=False)
-        plt.suptitle(
-            "Validation of the RMTC model (from left to right then from top to bottom): \
-                validation of the prediction model and the i-th prediction of the derivative---i=1:3"
-        )
-
-    # Prediction of the derivatives with regards to each direction space
-    yd_prediction = np.zeros((ntest, ndim))
-    for i in range(ndim):
-        yd_prediction[:, i] = t.predict_derivatives(xtest, kx=i).T
-        print(
-            "RMTC, err of the "
-            + str(i)
-            + "-th derivative: "
-            + str(compute_relative_error(t, xtest, ydtest[:, i], kx=i))
-        )
-
-        if plot_status:
-            axarr[k, m].plot(ydtest[:, i], ydtest[:, i], "-.")
-            axarr[k, m].plot(ydtest[:, i], yd_prediction[:, i], ".")
-            if m == 1:
-                m = 0
-                k += 1
-            else:
-                m += 1
 
     if plot_status:
-        plt.show()
+        axarr[k, m].plot(ydtest[:, i], ydtest[:, i], "-.")
+        axarr[k, m].plot(ydtest[:, i], yd_prediction[:, i], ".")
+        if m == 1:
+            m = 0
+            k += 1
+        else:
+            m += 1
+
+if plot_status:
+    plt.show()
+
+########### The RMTS model (Cubic Hermite Spline)
+
+t = RMTS(
+    xlimits=fun.xlimits,
+    spline_type="Cubic_Hermite_Spline",
+    min_energy=True,
+    nonlinear_maxiter=20,
+    print_prediction=False,
+)
+t.set_training_values(xt, yt[:, 0])
+# Add the gradient information
+for i in range(ndim):
+    t.set_training_derivatives(xt, yt[:, 1 + i].reshape((yt.shape[0], 1)), i)
+
+t.train()
+
+# Prediction of the validation points
+y = t.predict_values(xtest)
+print(
+    "RMTS (Cubic Hermite Spline),  err: " + str(compute_relative_error(t, xtest, ytest))
+)
+if plot_status:
+    k, m = 0, 0
+    f, axarr = plt.subplots(3, 2)
+    axarr[k, m].plot(ytest, ytest, "-.")
+    axarr[k, m].plot(ytest, y, ".")
+    m += 1
+    axarr[2, 0].arrow(0.3, 0.3, 0.2, 0)
+    axarr[2, 0].arrow(0.3, 0.3, 0.0, 0.4)
+    axarr[2, 0].text(0.25, 0.4, r"$\hat{y}$")
+    axarr[2, 0].text(0.35, 0.15, r"$y_{true}$")
+    axarr[2, 0].axis("off")
+    axarr[2, 1].set_visible(False)
+    axarr[2, 1].axis("off")
+
+    # Fine-tune figure; hide x ticks for top plots and y ticks for right plots
+    plt.setp(axarr[2, 0].get_xticklabels(), visible=False)
+    plt.setp(axarr[2, 0].get_yticklabels(), visible=False)
+    plt.suptitle(
+        "Validation of the RMTS model (Cubic Hermite Spline) (from left to right then from top to bottom): "
+        "validation of the prediction model and the i-th prediction of the derivative---i=1:3"
+    )
+
+# Prediction of the derivatives with regards to each direction space
+yd_prediction = np.zeros((ntest, ndim))
+for i in range(ndim):
+    yd_prediction[:, i] = t.predict_derivatives(xtest, kx=i).T
+    print(
+        "RMTS (Cubic Hermite Spline), err of the "
+        + str(i)
+        + "-th derivative: "
+        + str(compute_relative_error(t, xtest, ydtest[:, i], kx=i))
+    )
+
+    if plot_status:
+        axarr[k, m].plot(ydtest[:, i], ydtest[:, i], "-.")
+        axarr[k, m].plot(ydtest[:, i], yd_prediction[:, i], ".")
+        if m == 1:
+            m = 0
+            k += 1
+        else:
+            m += 1
+
+if plot_status:
+    plt.show()

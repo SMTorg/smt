@@ -288,23 +288,27 @@ class TestMOE(SMTestCase):
         self.assertEqual(expected, sorted(moe.enabled_experts))
 
         moe = MOE(derivatives_support=True)
-        expected = ["IDW", "KPLS", "KPLSK", "KRG", "LS", "QP", "RBF", "RMTB", "RMTC"]
+        expected = ["IDW", "KPLS", "KPLSK", "KRG", "LS", "QP", "RBF", "RMTS"]
         self.assertEqual(expected, sorted(moe.enabled_experts))
 
-        moe = MOE(deny=["KRG", "RMTB"])
-        expected = ["IDW", "KPLS", "KPLSK", "LS", "QP", "RBF", "RMTC"]
+        moe = MOE(deny=["KRG", "RMTS"])
+        expected = ["IDW", "KPLS", "KPLSK", "LS", "QP", "RBF"]
+        self.assertEqual(expected, sorted(moe.enabled_experts))
+
+        moe = MOE(allow=["KRG", "RMTS"])
+        expected = ["KRG", "RMTS"]
         self.assertEqual(expected, sorted(moe.enabled_experts))
 
         moe = MOE(allow=["KRG", "RMTB"])
         expected = ["KRG", "RMTB"]
         self.assertEqual(expected, sorted(moe.enabled_experts))
 
-        moe = MOE(variances_support=True, allow=["KRG", "RMTB"])
+        moe = MOE(variances_support=True, allow=["KRG", "RMTS"])
         expected = ["KRG"]
         self.assertEqual(expected, sorted(moe.enabled_experts))
 
         moe = MOE(derivatives_support=True, deny=["RBF", "IDW", "KPLSK"])
-        expected = ["KPLS", "KRG", "LS", "QP", "RMTB", "RMTC"]
+        expected = ["KPLS", "KRG", "LS", "QP", "RMTS"]
         self.assertEqual(expected, sorted(moe.enabled_experts))
 
     def test_fix_moe_rmts_bug(self):
@@ -373,7 +377,7 @@ class TestMOE(SMTestCase):
             moe.train()
         self.assertEqual(
             "List of experts is empty: check support, allow and deny options wrt "
-            "possible experts: ['KRG', 'KPLS', 'KPLSK', 'LS', 'QP', 'RBF', 'IDW', 'RMTB', 'RMTC']",
+            "possible experts: ['KRG', 'KPLS', 'KPLSK', 'LS', 'QP', 'RBF', 'IDW', 'RMTS']",
             str(context.exception),
         )
 

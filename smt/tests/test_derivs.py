@@ -14,12 +14,13 @@ from smt.design_space import (
 )
 from smt.problems import Sphere
 from smt.sampling_methods import LHS
+from smt.surrogate_models import RMTS
 from smt.utils.misc import compute_relative_error
 from smt.utils.silence import Silence
 from smt.utils.sm_test_case import SMTestCase
 
 try:
-    from smt.surrogate_models import RBF, RMTB, RMTC
+    from smt.surrogate_models import RBF
 
     COMPILED_AVAILABLE = True
 except ImportError:
@@ -39,10 +40,10 @@ class Test(SMTestCase):
         problems["sphere"] = Sphere(ndim=ndim)
 
         sms = OrderedDict()
+        sms["RMTC"] = RMTS(spline_type="Cubic_Hermite_Spline")
+        sms["RMTB"] = RMTS(spline_type="B-Spline")
         if COMPILED_AVAILABLE:
             sms["RBF"] = RBF()
-            sms["RMTC"] = RMTC()
-            sms["RMTB"] = RMTB()
             sms["MFK"] = MFK(theta0=[1e-2] * ndim)
 
         self.nt = nt
@@ -106,11 +107,9 @@ class Test(SMTestCase):
     def test_sphere_RBF(self):
         self.run_test()
 
-    @unittest.skipIf(not COMPILED_AVAILABLE, "Compiled Fortran libraries not available")
     def test_sphere_RMTC(self):
         self.run_test()
 
-    @unittest.skipIf(not COMPILED_AVAILABLE, "Compiled Fortran libraries not available")
     def test_sphere_RMTB(self):
         self.run_test()
 

@@ -1,9 +1,10 @@
 from smt.examples.one_D_step.one_D_step import get_one_d_step, plot_one_d_step
-from smt.surrogate_models import RMTB
+from smt.surrogate_models import RMTS
 
 xt, yt, xlimits = get_one_d_step()
 
-interp = RMTB(
+interp = RMTS(
+    spline_type="B-Spline",
     num_ctrl_pts=100,
     xlimits=xlimits,
     nonlinear_maxiter=20,
