@@ -5,11 +5,13 @@ This package is distributed under New BSD license.
 """
 
 import contextlib
+import warnings
 
 import numpy as np
 import scipy.linalg
 import scipy.sparse.linalg
 
+from smt.utils.checks import _enable_jax_x64
 from smt.utils.options_dictionary import OptionsDictionary
 
 VALID_SOLVERS = (
@@ -25,6 +27,8 @@ VALID_SOLVERS = (
     "jacobi",
     "mg",
     "null",
+    "jax-cg",
+    "jax_cg",
 )
 
 
@@ -51,6 +55,8 @@ def get_solver(solver):
         return solver
     elif solver == "null":
         return NullSolver()
+    elif solver in ("jax-cg", "jax_cg"):
+        return JaxCGSolver()
     elif solver is None:
         return None
 
@@ -228,6 +234,92 @@ class DirectSolver(LinearSolver):
 
             with printer._timed_context("Back solving (%i x %i mtx)" % self.mtx.shape):
                 sol[:] = self.fact.solve(rhs)
+
+        return sol
+
+
+class JaxCGSolver(LinearSolver):
+    """
+    GPU/CPU-accelerated Conjugate Gradient solver using JAX sparse linear algebra.
+    """
+
+    def _initialize(self):
+        self.options.declare("ilimit", 500, types=int)
+        self.options.declare("atol", 1e-15, types=(int, float))
+        self.options.declare("rtol", 1e-15, types=(int, float))
+
+    def _setup(self, mtx, printer, mg_matrices=None):
+        self.printer = printer
+        with self._active(self.options["print_init"]) as printer:
+            try:
+                import jax
+                import jax.numpy as jnp
+                from jax.experimental import sparse as jsparse
+            except ImportError as exc:
+                raise ImportError(
+                    "JaxCGSolver requires JAX. Install it via `pip install smt[jax]`."
+                ) from exc
+
+            self.mtx = mtx
+            mtx_csr = scipy.sparse.csr_matrix(mtx, dtype=np.float64)
+            diag = np.asarray(mtx_csr.diagonal(), dtype=np.float64)
+            safe_diag = np.where(np.abs(diag) > 1e-30, diag, 1.0)
+            with _enable_jax_x64(jax):
+                self.inv_diag_jax = jnp.asarray(1.0 / safe_diag, dtype=jnp.float64)
+                self.mtx_jax = jsparse.CSR(
+                    (
+                        mtx_csr.data,
+                        mtx_csr.indices.astype(np.int32),
+                        mtx_csr.indptr.astype(np.int32),
+                    ),
+                    shape=mtx_csr.shape,
+                )
+
+    def _solve(self, rhs, sol=None, ind_y=0):
+        with self._active(self.options["print_solve"]) as printer:
+            import jax
+            import jax.numpy as jnp
+            import jax.scipy.sparse.linalg as jsp_linalg
+
+            self.rhs = rhs
+            if sol is None:
+                sol = np.zeros_like(rhs)
+
+            with printer._timed_context(
+                "Running JAX CG solver (%i x %i mtx)" % self.mtx.shape
+            ):
+                with _enable_jax_x64(jax):
+                    rhs_j = jnp.asarray(rhs, dtype=jnp.float64)
+                    x0_j = jnp.asarray(sol, dtype=jnp.float64)
+
+                    def matvec(v):
+                        return self.mtx_jax @ v
+
+                    def precond(v):
+                        return self.inv_diag_jax * v
+
+                    rtol = float(self.options["rtol"])
+                    atol = float(self.options["atol"])
+                    sol_j, _ = jsp_linalg.cg(
+                        matvec,
+                        rhs_j,
+                        x0=x0_j,
+                        tol=rtol,
+                        atol=atol,
+                        maxiter=int(self.options["ilimit"]),
+                        M=precond,
+                    )
+                    res_norm = float(jnp.linalg.norm(rhs_j - matvec(sol_j)))
+                    rhs_norm = float(jnp.linalg.norm(rhs_j))
+                    tol_bound = max(rtol * rhs_norm, atol, 1e-11)
+                    if res_norm > tol_bound * 10.0:
+                        warnings.warn(
+                            f"JaxCGSolver did not converge within 10x tolerance "
+                            f"(residual={res_norm:.3e}, bound={tol_bound:.3e}).",
+                            RuntimeWarning,
+                            stacklevel=2,
+                        )
+                    sol[:] = np.asarray(sol_j)
 
         return sol
 

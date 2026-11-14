@@ -13,6 +13,14 @@ def _is_jax_tracer(x):
     return jax is not None and isinstance(x, jax.core.Tracer)
 
 
+def _enable_jax_x64(jax):
+    """Return a context manager temporarily enabling JAX 64-bit precision."""
+    enable = getattr(jax, "enable_x64", None)
+    if enable is None:
+        enable = jax.experimental.enable_x64
+    return enable(True)
+
+
 def is_arraylike(array):
     """
     Return True if ``array`` is a NumPy array or an object exposing the NumPy

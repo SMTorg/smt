@@ -37,6 +37,7 @@ class LS(SurrogateModel):
         )
 
         supports["derivatives"] = True
+        supports["jax"] = True
 
     ############################################################################
     # Model functions
@@ -107,3 +108,33 @@ class LS(SurrogateModel):
     @staticmethod
     def load(filename):
         return persistence.load(filename)
+
+    def get_jax_predictor(self):
+        """
+        Return a pure JAX function predict(x) that is end-to-end differentiable.
+
+        Returns
+        -------
+        predict_fn : Callable
+            Differentiable JAX prediction function.
+        """
+        if not hasattr(self, "mod") or self.mod is None:
+            raise RuntimeError("LS model has not been trained yet. Call train() first.")
+        import jax
+        import jax.numpy as jnp
+
+        dtype = jnp.float64 if jax.config.jax_enable_x64 else jnp.float32
+        coef = jnp.asarray(self.mod.coef_, dtype=dtype)
+        intercept = jnp.asarray(self.mod.intercept_, dtype=dtype)
+        ny = self.ny
+
+        def predict_fn(x):
+            x_in = jnp.asarray(x, dtype=dtype)
+            is_1d = x_in.ndim == 1
+            x_arr = jnp.atleast_2d(x_in)
+            y = jnp.matmul(x_arr, coef.T) + intercept
+            if is_1d:
+                return y[0, 0] if ny == 1 else y[0]
+            return y
+
+        return predict_fn
