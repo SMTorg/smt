@@ -1,4 +1,3 @@
-Cython
 packaging
 numpy
 scipy >= 1.12.0

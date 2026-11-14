@@ -17,12 +17,14 @@ from smt.surrogate_models import (
     GEKPLS,
     GENN,
     GPX,
+    IDW,
     KPLS,
     KPLSK,
     KRG,
     LS,
     MGP,
     QP,
+    RBF,
     RMTS,
     DesignSpace,
     RBFGen,
@@ -32,14 +34,6 @@ from smt.surrogate_models.rbfgen import RBFGEN_AVAILABLE
 from smt.utils.misc import compute_relative_error
 from smt.utils.silence import Silence
 from smt.utils.sm_test_case import SMTestCase
-
-try:
-    from smt.surrogate_models import IDW, RBF
-
-    COMPILED_AVAILABLE = True
-except ImportError:
-    COMPILED_AVAILABLE = False
-
 
 print_output = False
 
@@ -82,10 +76,8 @@ class Test(SMTestCase):
 
         sms["RMTC"] = RMTS(spline_type="Cubic_Hermite_Spline")
         sms["RMTB"] = RMTS(spline_type="B-Spline")
-
-        if COMPILED_AVAILABLE:
-            sms["IDW"] = IDW()
-            sms["RBF"] = RBF()
+        sms["IDW"] = IDW()
+        sms["RBF"] = RBF()
 
         t_errors = {}
         t_errors["LS"] = 1.0
@@ -100,11 +92,10 @@ class Test(SMTestCase):
         t_errors["GENN"] = 1.1
         t_errors["RMTC"] = 1e-1
         t_errors["RMTB"] = 1e-1
+        t_errors["IDW"] = 1e0
+        t_errors["RBF"] = 1e-2
         if RBFGEN_AVAILABLE:
             t_errors["RBFGen"] = 1e0
-        if COMPILED_AVAILABLE:
-            t_errors["IDW"] = 1e0
-            t_errors["RBF"] = 1e-2
 
         e_errors = {}
         e_errors["LS"] = 1.5
@@ -119,11 +110,10 @@ class Test(SMTestCase):
         e_errors["GENN"] = 1e-1
         e_errors["RMTC"] = 2e-1
         e_errors["RMTB"] = 3e-1
+        e_errors["IDW"] = 1e0
+        e_errors["RBF"] = 1e0
         if RBFGEN_AVAILABLE:
             e_errors["RBFGen"] = 3e0
-        if COMPILED_AVAILABLE:
-            e_errors["IDW"] = 1e0
-            e_errors["RBF"] = 1e0
 
         self.nt = nt
         self.ne = ne
@@ -249,11 +239,9 @@ class Test(SMTestCase):
     def test_exp_GPX(self):
         self.run_test()
 
-    @unittest.skipIf(not COMPILED_AVAILABLE, "Compiled Fortran libraries not available")
     def test_exp_IDW(self):
         self.run_test()
 
-    @unittest.skipIf(not COMPILED_AVAILABLE, "Compiled Fortran libraries not available")
     def test_exp_RBF(self):
         self.run_test()
 
@@ -312,11 +300,9 @@ class Test(SMTestCase):
     def test_tanh_GPX(self):
         self.run_test()
 
-    @unittest.skipIf(not COMPILED_AVAILABLE, "Compiled Fortran libraries not available")
     def test_tanh_IDW(self):
         self.run_test()
 
-    @unittest.skipIf(not COMPILED_AVAILABLE, "Compiled Fortran libraries not available")
     def test_tanh_RBF(self):
         self.run_test()
 
@@ -375,11 +361,9 @@ class Test(SMTestCase):
     def test_cos_GPX(self):
         self.run_test()
 
-    @unittest.skipIf(not COMPILED_AVAILABLE, "Compiled Fortran libraries not available")
     def test_cos_IDW(self):
         self.run_test()
 
-    @unittest.skipIf(not COMPILED_AVAILABLE, "Compiled Fortran libraries not available")
     def test_cos_RBF(self):
         self.run_test()
 

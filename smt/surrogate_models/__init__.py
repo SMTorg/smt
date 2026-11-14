@@ -48,11 +48,7 @@ __all__ = [
     "MixHrcKernelType",
 ]
 
-try:
-    from .idw import IDW
-    from .rbf import RBF
+from .idw import IDW
+from .rbf import RBF
 
-    __all__ = __all__ + ["IDW", "RBF"]
-
-except ImportError:
-    pass
+__all__ = __all__ + ["IDW", "RBF"]

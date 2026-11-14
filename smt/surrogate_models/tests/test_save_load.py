@@ -8,24 +8,19 @@ from smt.sampling_methods import LHS
 from smt.surrogate_models import (
     GEKPLS,
     GENN,
+    IDW,
     KPLS,
     KPLSK,
     KRG,
     LS,
     MGP,
     QP,
+    RBF,
     RMTB,
     RMTC,
     RMTS,
     SGP,
 )
-
-try:
-    from smt.surrogate_models import IDW, RBF
-
-    COMPILED_AVAILABLE = True
-except ImportError:
-    COMPILED_AVAILABLE = False
 
 
 class TestSaveLoad(unittest.TestCase):
@@ -144,9 +139,8 @@ class TestSaveLoad(unittest.TestCase):
 
             os.remove(filename)
 
-    @unittest.skipIf(not COMPILED_AVAILABLE, "Compiled C++ libraries not available")
-    def test_save_load_surrogates_cpp(self):
-        surrogates_cpp = [RBF, IDW]
+    def test_save_load_idw_rbf(self):
+        surrogates = [RBF, IDW]
 
         num = 100
         xt = np.array([0.0, 1.0, 2.0, 3.0, 4.0])
@@ -155,7 +149,7 @@ class TestSaveLoad(unittest.TestCase):
 
         filename = "sm_save_test"
 
-        for surrogate in surrogates_cpp:
+        for surrogate in surrogates:
             if surrogate == RBF:
                 sm = RBF(d0=5)
             else:

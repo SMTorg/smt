@@ -7,7 +7,7 @@ This package is distributed under New BSD license.
 import numpy as np
 from scipy.sparse import csc_matrix
 
-from smt.surrogate_models.rbfclib import PyRBF
+from smt.surrogate_models.rbf_idw_backend import rbf_jac
 from smt.surrogate_models.surrogate_model import SurrogateModel
 from smt.utils import persistence
 from smt.utils.caching import cached_operation
@@ -29,7 +29,7 @@ class RBF(SurrogateModel):
         declare(
             "d0",
             1.0,
-            types=(int, float, list, np.ndarray),
+            types=(int, float, np.number, list, tuple, np.ndarray),
             desc="basis function scaling parameter in exp(-d^2 / d0^2)",
         )
         declare(
@@ -60,9 +60,16 @@ class RBF(SurrogateModel):
         options = self.options
 
         nx = self.training_points[None][0][0].shape[1]
-        if isinstance(options["d0"], (int, float)):
-            options["d0"] = [options["d0"]] * nx
-        options["d0"] = np.array(np.atleast_1d(options["d0"]), dtype=float)
+        d0 = np.asarray(options["d0"], dtype=float)
+        if d0.ndim == 0 or d0.size == 1:
+            d0 = np.full(nx, float(d0.reshape(-1)[0]), dtype=float)
+        elif d0.shape != (nx,):
+            raise ValueError(
+                f"Expected scalar or length-{nx} d0, got shape {d0.shape}."
+            )
+        if np.any(d0 <= 0.0) or not np.all(np.isfinite(d0)):
+            raise ValueError(f"Expected strictly positive finite d0, got {d0!r}.")
+        options["d0"] = d0
 
         self.printer.max_print_depth = options["max_print_depth"]
 
@@ -83,36 +90,23 @@ class RBF(SurrogateModel):
 
         self.num = num
 
-        nt = self.training_points[None][0][0].shape[0]
-        xt, yt = self.training_points[None][0]
-
-        self.rbfc = PyRBF()
-        self.rbfc.setup(
-            num["x"],
-            nt,
-            num["dof"],
-            options["poly_degree"],
-            options["d0"],
-            xt.flatten(),
-        )
-
-    def __getstate__(self):
-        state = self.__dict__.copy()
-        state["rbfc"] = None
-        return state
-
     def __setstate__(self, state):
+        # models pickled before the C++ extension was removed carry an
+        # ``rbfc`` entry (always None); drop it
+        state.pop("rbfc", None)
         self.__dict__.update(state)
 
         self._setup()
+
+    def _jac(self, x, kx=None):
+        xt = self.training_points[None][0][0]
+        return rbf_jac(x, xt, self.options["d0"], self.options["poly_degree"], kx)
 
     def _new_train(self):
         num = self.num
 
         xt, yt = self.training_points[None][0]
-        jac = np.empty(num["radial"] * num["dof"])
-        self.rbfc.compute_jac(num["radial"], xt.flatten(), jac)
-        jac = jac.reshape((num["radial"], num["dof"]))
+        jac = self._jac(xt)
 
         mtx = np.zeros((num["dof"], num["dof"]))
         mtx[: num["radial"], :] = jac
@@ -142,13 +136,8 @@ class RBF(SurrogateModel):
         """
         self._setup()
 
-        tmp = self.rbfc
-        self.rbfc = None
-
         inputs = {"self": self}
         with cached_operation(inputs, self.options["data_dir"]) as outputs:
-            self.rbfc = tmp
-
             if outputs:
                 self.sol = outputs["sol"]
             else:
@@ -169,12 +158,7 @@ class RBF(SurrogateModel):
         y : np.ndarray
             Evaluation point output variable values
         """
-        n = x.shape[0]
-        num = self.num
-
-        jac = np.empty(n * num["dof"])
-        self.rbfc.compute_jac(n, x.flatten(), jac)
-        jac = jac.reshape((n, num["dof"]))
+        jac = self._jac(x)
 
         y = jac.dot(self.sol)
         return y
@@ -195,25 +179,17 @@ class RBF(SurrogateModel):
         dy_dx : np.ndarray
             Derivative values.
         """
-        n = x.shape[0]
-        num = self.num
-
-        jac = np.empty(n * num["dof"])
-        self.rbfc.compute_jac_derivs(n, kx, x.flatten(), jac)
-        jac = jac.reshape((n, num["dof"]))
+        jac = self._jac(x, kx)
 
         dy_dx = jac.dot(self.sol)
         return dy_dx
 
     def _predict_output_derivatives(self, x):
-        n = x.shape[0]
         _nt = self.nt
         ny = self.training_points[None][0][1].shape[1]
         num = self.num
 
-        dy_dstates = np.empty(n * num["dof"])
-        self.rbfc.compute_jac(n, x.flatten(), dy_dstates)
-        dy_dstates = dy_dstates.reshape((n, num["dof"]))
+        dy_dstates = self._jac(x)
 
         dstates_dytl = np.linalg.inv(self.mtx)
 

@@ -6,55 +6,36 @@ This package is distributed under New BSD license.
 
 from smt.surrogate_models import (
     GEKPLS,
+    IDW,
     KPLS,
     KPLSK,
     KRG,
     LS,
     MGP,
     QP,
+    RBF,
     RMTS,
     RMTB,
     RMTC,
 )
 from smt.utils.options_dictionary import OptionsDictionary
 
-try:
-    from smt.surrogate_models import IDW, RBF
-
-    COMPILED_AVAILABLE = True
-except ImportError:
-    COMPILED_AVAILABLE = False
-
 
 class SurrogateBasedApplication:
-    if COMPILED_AVAILABLE:
-        _surrogate_type = {
-            "KRG": KRG,
-            "LS": LS,
-            "QP": QP,
-            "KPLS": KPLS,
-            "KPLSK": KPLSK,
-            "GEKPLS": GEKPLS,
-            "RBF": RBF,
-            "RMTS": RMTS,
-            "RMTC": RMTC,
-            "RMTB": RMTB,
-            "IDW": IDW,
-            "MGP": MGP,
-        }
-    else:
-        _surrogate_type = {
-            "KRG": KRG,
-            "LS": LS,
-            "QP": QP,
-            "KPLS": KPLS,
-            "KPLSK": KPLSK,
-            "GEKPLS": GEKPLS,
-            "RMTS": RMTS,
-            "RMTC": RMTC,
-            "RMTB": RMTB,
-            "MGP": MGP,
-        }
+    _surrogate_type = {
+        "KRG": KRG,
+        "LS": LS,
+        "QP": QP,
+        "KPLS": KPLS,
+        "KPLSK": KPLSK,
+        "GEKPLS": GEKPLS,
+        "RBF": RBF,
+        "RMTS": RMTS,
+        "RMTC": RMTC,
+        "RMTB": RMTB,
+        "IDW": IDW,
+        "MGP": MGP,
+    }
 
     def __init__(self, **kwargs):
         """

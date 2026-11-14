@@ -15,17 +15,9 @@ from smt.design_space import (
 )
 from smt.problems import Sphere
 from smt.sampling_methods import FullFactorial
-from smt.surrogate_models import RMTS
+from smt.surrogate_models import IDW, RBF, RMTS
 from smt.utils.silence import Silence
 from smt.utils.sm_test_case import SMTestCase
-
-try:
-    from smt.surrogate_models import IDW, RBF
-
-    COMPILED_AVAILABLE = True
-except ImportError:
-    COMPILED_AVAILABLE = False
-
 
 print_output = False
 
@@ -51,9 +43,8 @@ class Test(SMTestCase):
             nonlinear_maxiter=100,
             solver_tolerance=1e-16,
         )
-        if COMPILED_AVAILABLE:
-            sms["IDW"] = IDW()
-            sms["RBF"] = RBF()
+        sms["IDW"] = IDW()
+        sms["RBF"] = RBF()
 
     def run_test(self):
         method_name = inspect.stack()[1][3]
@@ -106,11 +97,9 @@ class Test(SMTestCase):
 
         self.assert_error(jac_fd, jac_an, rtol=5e-2)
 
-    @unittest.skipIf(not COMPILED_AVAILABLE, "Compiled Fortran libraries not available")
     def test_IDW(self):
         self.run_test()
 
-    @unittest.skipIf(not COMPILED_AVAILABLE, "Compiled Fortran libraries not available")
     def test_RBF(self):
         self.run_test()
 

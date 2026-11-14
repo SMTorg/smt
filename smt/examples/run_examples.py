@@ -12,22 +12,17 @@ from smt.problems import NdimRobotArm, Sphere
 from smt.sampling_methods import LHS
 from smt.surrogate_models import (
     GEKPLS,
+    IDW,
     KPLS,
     KPLSK,
     KRG,
     LS,
     QP,
+    RBF,
     RMTS,
     DesignSpace,
 )
 from smt.utils.misc import compute_relative_error
-
-try:
-    from smt.surrogate_models import IDW, RBF
-
-    COMPILED_AVAILABLE = True
-except ImportError:
-    COMPILED_AVAILABLE = False
 
 try:
     import matplotlib.pyplot as plt
@@ -482,77 +477,77 @@ for i in range(ndim):
 
 if plot_status:
     plt.show()
-if COMPILED_AVAILABLE:
-    ########### The IDW model
 
-    t = IDW(print_prediction=False)
-    t.set_training_values(xt, yt[:, 0])
+########### The IDW model
 
-    t.train()
+t = IDW(print_prediction=False)
+t.set_training_values(xt, yt[:, 0])
 
-    # Prediction of the validation points
-    y = t.predict_values(xtest)
-    print("IDW,  err: " + str(compute_relative_error(t, xtest, ytest)))
-    if plot_status:
-        plt.figure()
-        plt.plot(ytest, ytest, "-.")
-        plt.plot(ytest, y, ".")
-        plt.xlabel(r"$y_{true}$")
-        plt.ylabel(r"$\hat{y}$")
-        plt.title("Validation of the IDW model")
-        plt.show()
+t.train()
 
-    ########### The RBF model
+# Prediction of the validation points
+y = t.predict_values(xtest)
+print("IDW,  err: " + str(compute_relative_error(t, xtest, ytest)))
+if plot_status:
+    plt.figure()
+    plt.plot(ytest, ytest, "-.")
+    plt.plot(ytest, y, ".")
+    plt.xlabel(r"$y_{true}$")
+    plt.ylabel(r"$\hat{y}$")
+    plt.title("Validation of the IDW model")
+    plt.show()
 
-    t = RBF(print_prediction=False, poly_degree=0)
-    t.set_training_values(xt, yt[:, 0])
+########### The RBF model
 
-    t.train()
+t = RBF(print_prediction=False, poly_degree=0)
+t.set_training_values(xt, yt[:, 0])
 
-    # Prediction of the validation points
-    y = t.predict_values(xtest)
-    print("RBF,  err: " + str(compute_relative_error(t, xtest, ytest)))
-    if plot_status:
-        k, m = 0, 0
-        f, axarr = plt.subplots(4, 3)
-        axarr[k, m].plot(ytest, ytest, "-.")
-        axarr[k, m].plot(ytest, y, ".")
-        m += 1
-        axarr[3, 2].arrow(0.3, 0.3, 0.2, 0)
-        axarr[3, 2].arrow(0.3, 0.3, 0.0, 0.4)
-        axarr[3, 2].text(0.25, 0.4, r"$\hat{y}$")
-        axarr[3, 2].text(0.35, 0.15, r"$y_{true}$")
-        axarr[3, 2].axis("off")
-        # Fine-tune figure; hide x ticks for top plots and y ticks for right plots
-        plt.setp(axarr[3, 2].get_xticklabels(), visible=False)
-        plt.setp(axarr[3, 2].get_yticklabels(), visible=False)
-        plt.suptitle(
-            "Validation of the RBF model (from left to right then from top to bottom): \
-                validation of the prediction model and the i-th prediction of the derivative---i=1:10"
-        )
+t.train()
 
-    # Prediction of the derivatives with regards to each direction space
-    yd_prediction = np.zeros((ntest, ndim))
-    for i in range(ndim):
-        yd_prediction[:, i] = t.predict_derivatives(xtest, kx=i).T
-        print(
-            "RBF, err of the "
-            + str(i)
-            + "-th derivative: "
-            + str(compute_relative_error(t, xtest, ydtest[:, i], kx=i))
-        )
+# Prediction of the validation points
+y = t.predict_values(xtest)
+print("RBF,  err: " + str(compute_relative_error(t, xtest, ytest)))
+if plot_status:
+    k, m = 0, 0
+    f, axarr = plt.subplots(4, 3)
+    axarr[k, m].plot(ytest, ytest, "-.")
+    axarr[k, m].plot(ytest, y, ".")
+    m += 1
+    axarr[3, 2].arrow(0.3, 0.3, 0.2, 0)
+    axarr[3, 2].arrow(0.3, 0.3, 0.0, 0.4)
+    axarr[3, 2].text(0.25, 0.4, r"$\hat{y}$")
+    axarr[3, 2].text(0.35, 0.15, r"$y_{true}$")
+    axarr[3, 2].axis("off")
+    # Fine-tune figure; hide x ticks for top plots and y ticks for right plots
+    plt.setp(axarr[3, 2].get_xticklabels(), visible=False)
+    plt.setp(axarr[3, 2].get_yticklabels(), visible=False)
+    plt.suptitle(
+        "Validation of the RBF model (from left to right then from top to bottom): "
+        "validation of the prediction model and the i-th prediction of the derivative---i=1:10"
+    )
 
-        if plot_status:
-            axarr[k, m].plot(ydtest[:, i], ydtest[:, i], "-.")
-            axarr[k, m].plot(ydtest[:, i], yd_prediction[:, i], ".")
-            if m == 2:
-                m = 0
-                k += 1
-            else:
-                m += 1
+# Prediction of the derivatives with regards to each direction space
+yd_prediction = np.zeros((ntest, ndim))
+for i in range(ndim):
+    yd_prediction[:, i] = t.predict_derivatives(xtest, kx=i).T
+    print(
+        "RBF, err of the "
+        + str(i)
+        + "-th derivative: "
+        + str(compute_relative_error(t, xtest, ydtest[:, i], kx=i))
+    )
 
     if plot_status:
-        plt.show()
+        axarr[k, m].plot(ydtest[:, i], ydtest[:, i], "-.")
+        axarr[k, m].plot(ydtest[:, i], yd_prediction[:, i], ".")
+        if m == 2:
+            m = 0
+            k += 1
+        else:
+            m += 1
+
+if plot_status:
+    plt.show()
 
 ########### The RMTS models (B-Splines and Cubic Hermite Splines) are suitable for low-dimensional problems
 
