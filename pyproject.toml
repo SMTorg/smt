@@ -28,7 +28,7 @@ dependencies = [
     "packaging",
     "scikit-learn",
     "pydoe>=1",
-    "scipy",
+    "scipy>=1.12.0",
     "jenn>=2",
 ]
 

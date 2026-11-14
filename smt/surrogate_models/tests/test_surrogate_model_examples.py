@@ -15,15 +15,15 @@ try:
 except ImportError:
     NO_MATPLOTLIB = True
 
+from smt.surrogate_models.gpx import GPX_AVAILABLE
+from smt.surrogate_models.rbfgen import RBFGEN_AVAILABLE
+
 try:
-    from smt.surrogate_models import IDW, RBF, RMTB, RMTC  # noqa: F401
+    from smt.surrogate_models import IDW, RBF  # noqa: F401
 
     NO_COMPILED = False
 except ImportError:
     NO_COMPILED = True
-
-from smt.surrogate_models.gpx import GPX_AVAILABLE
-from smt.surrogate_models.rbfgen import RBFGEN_AVAILABLE
 
 
 class Test(unittest.TestCase):
@@ -81,21 +81,20 @@ class Test(unittest.TestCase):
         plt.legend(["Training data", "Prediction"])
         plt.show()
 
-    @unittest.skipIf(
-        NO_COMPILED or NO_MATPLOTLIB, "C compilation failed or no matplotlib"
-    )
+    @unittest.skipIf(NO_MATPLOTLIB, "Matplotlib not installed")
     def test_rmtb(self):
         import matplotlib.pyplot as plt
         import numpy as np
 
-        from smt.surrogate_models import RMTB
+        from smt.surrogate_models import RMTS
 
         xt = np.array([0.0, 1.0, 2.0, 3.0, 4.0])
         yt = np.array([0.0, 1.0, 1.5, 0.9, 1.0])
 
         xlimits = np.array([[0.0, 4.0]])
 
-        sm = RMTB(
+        sm = RMTS(
+            spline_type="B-Spline",
             xlimits=xlimits,
             order=4,
             num_ctrl_pts=20,
@@ -116,21 +115,20 @@ class Test(unittest.TestCase):
         plt.legend(["Training data", "Prediction"])
         plt.show()
 
-    @unittest.skipIf(
-        NO_COMPILED or NO_MATPLOTLIB, "C compilation failed or no matplotlib"
-    )
+    @unittest.skipIf(NO_MATPLOTLIB, "Matplotlib not installed")
     def test_rmtc(self):
         import matplotlib.pyplot as plt
         import numpy as np
 
-        from smt.surrogate_models import RMTC
+        from smt.surrogate_models import RMTS
 
         xt = np.array([0.0, 1.0, 2.0, 3.0, 4.0])
         yt = np.array([0.0, 1.0, 1.5, 0.9, 1.0])
 
         xlimits = np.array([[0.0, 4.0]])
 
-        sm = RMTC(
+        sm = RMTS(
+            spline_type="Cubic_Hermite_Spline",
             xlimits=xlimits,
             num_elements=6,
             energy_weight=1e-15,

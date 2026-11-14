@@ -73,18 +73,18 @@ The nonlinear formulation is given by
 where :math:`p` is the order given by the approx_order option.
 The number of Newton iterations can be specified via the :code:`nonlinear_maxiter` option.
 
-RMTS is implemented in SMT with two choices of splines:
+RMTS is implemented in SMT as the unified :code:`RMTS` class with two choices of splines via the ``spline_type`` option (the legacy :code:`RMTB` and :code:`RMTC` aliases remain available for backward compatibility and emit a deprecation warning):
 
-1. B-splines (RMTB): RMTB uses B-splines with a uniform knot vector in each dimension.
+1. B-splines (:code:`RMTS(spline_type="B-Spline")`, formerly ``RMTB``): uses B-splines with a uniform knot vector in each dimension.
 The number of B-spline control points and the B-spline order in each dimension are options
 that trade off efficiency and precision of the interpolant.
 
-2. Cubic Hermite splines (RMTC): RMTC divides the domain into tensor-product cubic elements.
+2. Cubic Hermite splines (:code:`RMTS(spline_type="Cubic_Hermite_Spline")`, formerly ``RMTC``): divides the domain into tensor-product cubic elements.
 For adjacent elements, the values and derivatives are continuous.
 The number of elements in each dimension is an option that trades off efficiency and precision.
 
-In general, RMTB is the better choice when training time is the most important,
-while RMTC is the better choice when accuracy of the interpolant is the most important.
+In general, ``spline_type="B-Spline"`` is the better choice when training time is the most important,
+while ``spline_type="Cubic_Hermite_Spline"`` is the better choice when accuracy of the interpolant is the most important.
 
 More details of these methods are given in [1]_. 
 
@@ -95,6 +95,44 @@ as :math:`\alpha'=\alpha` and :math:`\beta'=\alpha\beta`. See the section `3.5 -
 
 .. [1] Hwang, J. T., & Martins, J. R. (2018). A fast-prediction surrogate model for large datasets. Aerospace Science and Technology, 75, 74-87.
 
+Exporting the trained B-spline (SciPy)
+--------------------------------------
+
+A model trained with ``spline_type="B-Spline"`` is a tensor-product B-spline, and its
+full representation is available through the public API (see issue #846):
+
+- ``sm.get_bspline(output=0, physical=True)`` returns a dict with
+
+  - ``"knots"``: tuple of per-dimension knot vectors (open uniform, ``num_ctrl_pts[i] + order[i]`` knots),
+    in physical units (scaled by ``xlimits``) or on ``[0, 1]`` when ``physical=False``;
+  - ``"degree"``: tuple of per-dimension degrees, ``degree[i] = order[i] - 1``;
+  - ``"coefficients"``: array of shape ``tuple(num_ctrl_pts)`` for the selected output,
+    indexed as ``coefficients[i_0, ..., i_{nx-1}]`` (C order, last input varying fastest);
+  - ``"domain"``: the ``(nx, 2)`` bounds used for the knots.
+
+- ``sm.to_scipy(output=0, physical=True)`` returns the equivalent
+  ``scipy.interpolate.NdBSpline`` (requires SciPy >= 1.12), or a 1D
+  ``scipy.interpolate.BSpline`` with ``as_1d=True`` when ``nx == 1``.
+
+The exported spline reproduces ``predict_values`` and ``predict_derivatives`` inside ``xlimits``
+and can be evaluated, differentiated or integrated without SMT at runtime:
+
+.. code-block:: python
+
+  import numpy as np
+  from smt.surrogate_models import RMTS
+
+  xt = np.linspace(0.0, 4.0, 20).reshape(-1, 1)
+  yt = np.sin(xt)
+  sm = RMTS(spline_type="B-Spline", xlimits=np.array([[0.0, 4.0]]), order=4, num_ctrl_pts=12)
+  sm.set_training_values(xt, yt)
+  sm.train()
+
+  bs = sm.get_bspline()      # knots, degree, coefficients, domain
+  spl = sm.to_scipy()        # scipy.interpolate.NdBSpline
+  x = np.array([[1.3], [2.7]])
+  assert np.allclose(spl(x), sm.predict_values(x)[:, 0])
+
 Usage (RMTB)
 ------------
 
@@ -103,14 +141,15 @@ Usage (RMTB)
   import matplotlib.pyplot as plt
   import numpy as np
   
-  from smt.surrogate_models import RMTB
+  from smt.surrogate_models import RMTS
   
   xt = np.array([0.0, 1.0, 2.0, 3.0, 4.0])
   yt = np.array([0.0, 1.0, 1.5, 0.9, 1.0])
   
   xlimits = np.array([[0.0, 4.0]])
   
-  sm = RMTB(
+  sm = RMTS(
+      spline_type="B-Spline",
       xlimits=xlimits,
       order=4,
       num_ctrl_pts=20,
@@ -195,14 +234,15 @@ Usage (RMTC)
   import matplotlib.pyplot as plt
   import numpy as np
   
-  from smt.surrogate_models import RMTC
+  from smt.surrogate_models import RMTS
   
   xt = np.array([0.0, 1.0, 2.0, 3.0, 4.0])
   yt = np.array([0.0, 1.0, 1.5, 0.9, 1.0])
   
   xlimits = np.array([[0.0, 4.0]])
   
-  sm = RMTC(
+  sm = RMTS(
+      spline_type="Cubic_Hermite_Spline",
       xlimits=xlimits,
       num_elements=6,
       energy_weight=1e-15,

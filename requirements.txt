@@ -1,7 +1,7 @@
 Cython
 packaging
 numpy
-scipy
+scipy >= 1.12.0
 scikit-learn
 pydoe >= 1.0
 numba           # JIT compiler

@@ -26,8 +26,7 @@ MOE_EXPERT_NAMES = [
     "QP",
     "RBF",
     "IDW",
-    "RMTB",
-    "RMTC",
+    "RMTS",
 ]
 
 
@@ -174,29 +173,10 @@ class MOE(SurrogateBasedApplication):
         return list(self._enabled_expert_types.keys())
 
     def __getstate__(self):
-        state = self.__dict__.copy()
-        for expert in self._experts:
-            if expert == "IDW":
-                state["idwc"] = None
-            elif expert == "RMTC":
-                state["rmtsc"] = None
-            elif expert == "RMTB":
-                state["rmtsc"] = None
-            elif expert == "RBF":
-                state["rbfc"] = None
-        return state
+        return self.__dict__.copy()
 
     def __setstate__(self, state):
         self.__dict__.update(state)
-        for expert in self._experts:
-            if expert == "IDW":
-                expert._setup()
-            elif expert == "RMTC":
-                expert._setup()
-            elif expert == "RMTB":
-                expert._setup()
-            elif expert == "RBF":
-                expert._setup()
 
     def set_training_values(self, xt, yt, name=None):
         """
@@ -363,11 +343,23 @@ class MOE(SurrogateBasedApplication):
         """
         Select relevant surrogate models (experts) regarding MOE feature options
         """
-        prototypes = {
-            name: smclass()
-            for name, smclass in self._surrogate_type.items()
-            if name in MOE_EXPERT_NAMES
-        }
+        allow = self.options["allow"]
+        deny = self.options["deny"]
+        if self._surrogate_type is SurrogateBasedApplication._surrogate_type:
+            candidate_names = [
+                name for name in MOE_EXPERT_NAMES if name in self._surrogate_type
+            ]
+        else:
+            candidate_names = list(self._surrogate_type.keys())
+        if allow:
+            for name in allow:
+                if name in self._surrogate_type and name not in candidate_names:
+                    candidate_names.append(name)
+            candidate_names = [name for name in candidate_names if name in allow]
+        if deny:
+            candidate_names = [name for name in candidate_names if name not in deny]
+
+        prototypes = {name: self._surrogate_type[name]() for name in candidate_names}
         if self.options["derivatives_support"]:
             prototypes = {
                 name: proto
@@ -379,18 +371,6 @@ class MOE(SurrogateBasedApplication):
                 name: proto
                 for name, proto in prototypes.items()
                 if proto.supports["variances"]
-            }
-        if self.options["allow"]:
-            prototypes = {
-                name: proto
-                for name, proto in prototypes.items()
-                if name in self.options["allow"]
-            }
-        if self.options["deny"]:
-            prototypes = {
-                name: proto
-                for name, proto in prototypes.items()
-                if name not in self.options["deny"]
             }
         if not prototypes:
             raise ValueError(
@@ -572,7 +552,7 @@ class MOE(SurrogateBasedApplication):
 
         for name, sm_class in self._enabled_expert_types.items():
             kwargs = {}
-            if name in ["RMTB", "RMTC"]:
+            if name in ["RMTB", "RMTC", "RMTS"]:
                 # Note: RMTS checks for xlimits,
                 # we take limits on all x (not just the trained_values ones) as
                 # the surrogate is finally re-trained on the whole x set.

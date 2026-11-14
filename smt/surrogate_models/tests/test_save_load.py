@@ -8,18 +8,24 @@ from smt.sampling_methods import LHS
 from smt.surrogate_models import (
     GEKPLS,
     GENN,
-    IDW,
     KPLS,
     KPLSK,
     KRG,
     LS,
     MGP,
     QP,
-    RBF,
     RMTB,
     RMTC,
+    RMTS,
     SGP,
 )
+
+try:
+    from smt.surrogate_models import IDW, RBF
+
+    COMPILED_AVAILABLE = True
+except ImportError:
+    COMPILED_AVAILABLE = False
 
 
 class TestSaveLoad(unittest.TestCase):
@@ -68,7 +74,19 @@ class TestSaveLoad(unittest.TestCase):
         os.remove(filename)
 
     def test_save_load_surrogates(self):
-        surrogates = [KRG, KPLS, KPLSK, MGP, SGP, QP, GENN, LS]
+        surrogates = [
+            KRG,
+            KPLS,
+            KPLSK,
+            MGP,
+            SGP,
+            QP,
+            GENN,
+            LS,
+            RMTS,
+            RMTB,
+            RMTC,
+        ]
         rng = np.random.default_rng(42)
         N_inducing = 30
         num = 100
@@ -76,11 +94,39 @@ class TestSaveLoad(unittest.TestCase):
         xt = np.array([0.0, 1.0, 2.0, 3.0, 4.0])
         yt = np.array([0.0, 1.0, 1.5, 0.9, 1.0])
         x = np.linspace(0.0, 4.0, num).reshape(-1, 1)
+        xlimits = np.array([[0.0, 4.0]])
 
         for surrogate in surrogates:
             filename = "sm_save_test"
 
-            sm = surrogate(print_global=False)
+            if surrogate == RMTS:
+                sm = RMTS(
+                    xlimits=xlimits,
+                    spline_type="Cubic_Hermite_Spline",
+                    num_elements=6,
+                    energy_weight=1e-15,
+                    regularization_weight=0.0,
+                    print_global=False,
+                )
+            elif surrogate == RMTB:
+                sm = RMTB(
+                    xlimits=xlimits,
+                    order=4,
+                    num_ctrl_pts=20,
+                    energy_weight=1e-15,
+                    regularization_weight=0.0,
+                    print_global=False,
+                )
+            elif surrogate == RMTC:
+                sm = RMTC(
+                    xlimits=xlimits,
+                    num_elements=6,
+                    energy_weight=1e-15,
+                    regularization_weight=0.0,
+                    print_global=False,
+                )
+            else:
+                sm = surrogate(print_global=False)
             sm.set_training_values(xt, yt)
 
             if surrogate == SGP:
@@ -98,34 +144,19 @@ class TestSaveLoad(unittest.TestCase):
 
             os.remove(filename)
 
+    @unittest.skipIf(not COMPILED_AVAILABLE, "Compiled C++ libraries not available")
     def test_save_load_surrogates_cpp(self):
-        surrogates_cpp = [RBF, RMTC, RMTB, IDW]
+        surrogates_cpp = [RBF, IDW]
 
         num = 100
         xt = np.array([0.0, 1.0, 2.0, 3.0, 4.0])
         yt = np.array([0.0, 1.0, 1.5, 0.9, 1.0])
         x = np.linspace(0.0, 4.0, num)
-        xlimits = np.array([[0.0, 4.0]])
 
         filename = "sm_save_test"
 
         for surrogate in surrogates_cpp:
-            if surrogate == RMTB:
-                sm = RMTB(
-                    xlimits=xlimits,
-                    order=4,
-                    num_ctrl_pts=20,
-                    energy_weight=1e-15,
-                    regularization_weight=0.0,
-                )
-            elif surrogate == RMTC:
-                sm = RMTC(
-                    xlimits=xlimits,
-                    num_elements=6,
-                    energy_weight=1e-15,
-                    regularization_weight=0.0,
-                )
-            elif surrogate == RBF:
+            if surrogate == RBF:
                 sm = RBF(d0=5)
             else:
                 sm = IDW(p=2)

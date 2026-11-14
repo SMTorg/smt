@@ -15,11 +15,12 @@ from smt.design_space import (
 )
 from smt.problems import Sphere
 from smt.sampling_methods import FullFactorial
+from smt.surrogate_models import RMTS
 from smt.utils.silence import Silence
 from smt.utils.sm_test_case import SMTestCase
 
 try:
-    from smt.surrogate_models import IDW, RBF, RMTB, RMTC
+    from smt.surrogate_models import IDW, RBF
 
     COMPILED_AVAILABLE = True
 except ImportError:
@@ -38,19 +39,21 @@ class Test(SMTestCase):
         self.problem = Sphere(ndim=ndim)
 
         self.sms = sms = OrderedDict()
+        sms["RMTB"] = RMTS(
+            spline_type="B-Spline",
+            regularization_weight=1e-8,
+            nonlinear_maxiter=100,
+            solver_tolerance=1e-16,
+        )
+        sms["RMTC"] = RMTS(
+            spline_type="Cubic_Hermite_Spline",
+            regularization_weight=1e-8,
+            nonlinear_maxiter=100,
+            solver_tolerance=1e-16,
+        )
         if COMPILED_AVAILABLE:
             sms["IDW"] = IDW()
             sms["RBF"] = RBF()
-            sms["RMTB"] = RMTB(
-                regularization_weight=1e-8,
-                nonlinear_maxiter=100,
-                solver_tolerance=1e-16,
-            )
-            sms["RMTC"] = RMTC(
-                regularization_weight=1e-8,
-                nonlinear_maxiter=100,
-                solver_tolerance=1e-16,
-            )
 
     def run_test(self):
         method_name = inspect.stack()[1][3]
@@ -111,11 +114,9 @@ class Test(SMTestCase):
     def test_RBF(self):
         self.run_test()
 
-    @unittest.skipIf(not COMPILED_AVAILABLE, "Compiled Fortran libraries not available")
     def test_RMTB(self):
         self.run_test()
 
-    @unittest.skipIf(not COMPILED_AVAILABLE, "Compiled Fortran libraries not available")
     def test_RMTC(self):
         self.run_test()
 
