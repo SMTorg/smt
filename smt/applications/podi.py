@@ -148,7 +148,7 @@ class SubspacesInterpolation:
         ----------
         P0: np.ndarray[n_DoF,n_modes]
             Initial guess for the Frechet mean.
-        iter_max: int, default = 20
+        itermax: int, default = 20
             Maximum number of iterations in the gradient descend.
         epsilon: float, defaut = 1e-6
             Threshold for the stopping criterion.
@@ -334,7 +334,7 @@ class SubspacesInterpolation:
         ----------
         mu: np.ndarray[n_new,n_mu]
             Parametric points where the interpolation should be provided.
-        realizations: bool (default=False)
+        compute_realizations: bool (default=False)
             Compute n_real random realizations of the interpolation.
         n_real: float
             Number of random realizations.
@@ -506,7 +506,7 @@ class PODI(SurrogateBasedApplication):
         xt1 : np.ndarray[nt1, dim]
             The input scalar values corresponding to each local bases.
             dim = dimension of parametric space for local bases
-        input_bases : list[np.ndarray[ny, n_modes]]
+        input_matrices : list[np.ndarray[ny, n_modes]]
             List containing the local bases for the subspaces' interpolation.
             Each matrix is associated to a scalar value from xt1.
         xn1 : np.ndarray[nn, dim]
@@ -537,10 +537,10 @@ class PODI(SurrogateBasedApplication):
         Examples
         --------
         #normal case
-        >>> bases = PODI.interp_subspaces(xt1=xt1, input_bases=matrices, xn1=xn1)
+        >>> bases = PODI.interp_subspaces(xt1=xt1, input_matrices=matrices, xn1=xn1)
         #use of frechet
         >>> bases = PODI.interp_subspaces(
-                            xt1=xt1, input_bases=matrices, xn1=xn1,
+                            xt1=xt1, input_matrices=matrices, xn1=xn1,
                             frechet=True,
                             frechet_guess=frechet_matrix
                             )
