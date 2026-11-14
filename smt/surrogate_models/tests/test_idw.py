@@ -9,6 +9,15 @@ import unittest
 import numpy as np
 
 from smt.surrogate_models import IDW
+from smt.surrogate_models import rbf_idw_backend as bk
+
+try:
+    import jax
+    import jax.numpy as jnp
+
+    HAS_JAX = True
+except ImportError:
+    HAS_JAX = False
 
 
 def _data(seed, nt, nx, ny, ne):
@@ -352,6 +361,215 @@ class TestIDWCppRegression(unittest.TestCase):
         for name in CASES:
             with self.subTest(case=name):
                 self._check(name)
+
+
+class TestIDWJAX(unittest.TestCase):
+    @unittest.skipUnless(HAS_JAX, "JAX not installed")
+    def test_jax_predictor_and_autodiff(self):
+        rng = np.random.RandomState(42)
+        xt = rng.rand(12, 2)
+        yt = np.sin(3.0 * xt[:, :1]) + 0.5 * np.cos(2.0 * xt[:, 1:2])
+
+        sm = IDW(p=2.5, print_global=False)
+        sm.set_training_values(xt, yt)
+        sm.train()
+
+        prev_x64 = bool(jax.config.jax_enable_x64)
+        pred_default = sm.get_jax_predictor()
+        self.assertEqual(bool(jax.config.jax_enable_x64), prev_x64)
+
+        x_eval_np = np.array([[0.23, 0.77], [0.81, 0.19]])
+        y_np = sm.predict_values(x_eval_np)
+        y_default = np.asarray(jax.jit(pred_default)(jnp.asarray(x_eval_np)))
+        np.testing.assert_allclose(y_default, y_np, atol=1e-5)
+
+        val_1d_default = pred_default(jnp.asarray(x_eval_np[0]))
+        self.assertEqual(val_1d_default.ndim, 0)
+        np.testing.assert_allclose(float(val_1d_default), y_np[0, 0], atol=1e-5)
+
+        with bk._enable_x64(jax):
+            pred_jax = sm.get_jax_predictor()
+            x_eval = jnp.array(x_eval_np, dtype=jnp.float64)
+            np.testing.assert_allclose(np.asarray(pred_jax(x_eval)), y_np, atol=1e-12)
+
+            def scalar_pred(x_vec):
+                return pred_jax(x_vec)
+
+            grad_fn = jax.jacobian(scalar_pred)
+            for idx in range(x_eval_np.shape[0]):
+                g = np.asarray(grad_fn(x_eval[idx]))
+                dy_0 = sm.predict_derivatives(x_eval_np[idx : idx + 1], 0)[0, 0]
+                dy_1 = sm.predict_derivatives(x_eval_np[idx : idx + 1], 1)[0, 0]
+                np.testing.assert_allclose(g, [dy_0, dy_1], atol=1e-10)
+
+        self.assertEqual(bool(jax.config.jax_enable_x64), prev_x64)
+
+    @unittest.skipUnless(HAS_JAX, "JAX not installed")
+    def test_jax_predictor_multioutput_and_edge_cases(self):
+        sm_untrained = IDW(p=2.5, print_global=False)
+        with self.assertRaises(RuntimeError):
+            sm_untrained.get_jax_predictor()
+
+        rng = np.random.RandomState(10)
+        xt = rng.rand(8, 2)
+        yt = np.column_stack([xt[:, 0] ** 2, np.sin(xt[:, 1])])
+        xt_dup = np.vstack([xt, xt[0:1]])
+        yt_dup = np.vstack([yt, yt[0:1] + 5.0])  # first exact match must win
+
+        sm = IDW(p=2.5, print_global=False)
+        sm.set_training_values(xt_dup, yt_dup)
+        sm.train()
+
+        with bk._enable_x64(jax):
+            pred = sm.get_jax_predictor()
+            out_1d = np.asarray(pred(jnp.asarray(xt_dup[0])))
+            self.assertEqual(out_1d.shape, (2,))
+            np.testing.assert_allclose(out_1d, yt_dup[0], atol=1e-12)
+
+            def first_out(x_vec):
+                return pred(jnp.expand_dims(x_vec, 0))[0, 0]
+
+            g_at_node = np.asarray(jax.jacobian(first_out)(jnp.asarray(xt_dup[0])))
+            self.assertTrue(np.all(np.isfinite(g_at_node)))
+            np.testing.assert_allclose(g_at_node, 0.0, atol=1e-12)
+
+            # Single training point (nt = 1)
+            sm_single = IDW(p=2.0, print_global=False)
+            sm_single.set_training_values(np.array([[0.5, 0.5]]), np.array([[3.0]]))
+            sm_single.train()
+            pred_single = sm_single.get_jax_predictor()
+            np.testing.assert_allclose(
+                np.asarray(pred_single(jnp.array([[0.1, 0.2], [0.5, 0.5]]))),
+                [[3.0], [3.0]],
+                atol=1e-12,
+            )
+
+            # Distance underflow fallback to nearest training point
+            sm_far = IDW(p=100.0, print_global=False)
+            sm_far.set_training_values(
+                np.array([[0.0, 0.0], [10.0, 10.0]]), np.array([[1.0], [7.0]])
+            )
+            sm_far.train()
+            pred_far = sm_far.get_jax_predictor()
+            np.testing.assert_allclose(
+                np.asarray(pred_far(jnp.array([[1e4, 1e4]]))), [[7.0]], atol=1e-12
+            )
+            np.testing.assert_allclose(
+                bk.idw_jac(
+                    np.array([[1e4, 1e4]]),
+                    np.array([[0.0, 0.0], [10.0, 10.0]]),
+                    100.0,
+                    kx=0,
+                    _backend="jax",
+                ),
+                [[0.0, 0.0]],
+                atol=1e-12,
+            )
+
+            # 0D scalar input for 1D model, vmap batching & mismatched feature count
+            sm_1d = IDW(p=2.0, print_global=False)
+            sm_1d.set_training_values(
+                np.array([[0.0], [1.0]]), np.array([[1.0], [3.0]])
+            )
+            sm_1d.train()
+            pred_1d = sm_1d.get_jax_predictor()
+            out_0d = pred_1d(0.5)
+            self.assertEqual(out_0d.ndim, 0)
+            np.testing.assert_allclose(float(out_0d), 2.0, atol=1e-12)
+            vmap_out = np.asarray(jax.vmap(pred_1d)(jnp.array([0.0, 0.5, 1.0])))
+            np.testing.assert_allclose(vmap_out, [1.0, 2.0, 3.0], atol=1e-12)
+            with self.assertRaises(ValueError):
+                pred(0.5)
+
+            # FP64 near-hit overflow prevention (both predictor/grad and idw_jac)
+            sm_near64 = IDW(p=4.0, print_global=False)
+            sm_near64.set_training_values(
+                np.array([[0.0], [1.0]]), np.array([[1.0], [3.0]])
+            )
+            sm_near64.train()
+            pred_near64 = sm_near64.get_jax_predictor()
+            x_near64 = jnp.array(1e-100, dtype=jnp.float64)
+            val_near64 = pred_near64(x_near64)
+            grad_near64 = jax.grad(pred_near64)(x_near64)
+            self.assertTrue(np.isfinite(float(val_near64)))
+            self.assertTrue(np.isfinite(float(grad_near64)))
+            np.testing.assert_allclose(float(val_near64), 1.0, atol=1e-12)
+            np.testing.assert_allclose(float(grad_near64), 0.0, atol=1e-12)
+            np.testing.assert_allclose(
+                bk.idw_jac(
+                    np.array([[1e-100], [0.0]]),
+                    np.array([[0.0], [1.0]]),
+                    4.0,
+                    _backend="jax",
+                ),
+                [[1.0, 0.0], [1.0, 0.0]],
+                atol=1e-12,
+            )
+            np.testing.assert_allclose(
+                bk.idw_jac(
+                    np.array([[1e-100], [0.0]]),
+                    np.array([[0.0], [1.0]]),
+                    4.0,
+                    kx=0,
+                    _backend="jax",
+                ),
+                [[0.0, 0.0], [0.0, 0.0]],
+                atol=1e-12,
+            )
+
+            sm_pair64 = IDW(p=4.0, print_global=False)
+            sm_pair64.set_training_values(
+                np.array([[0.0], [1e-100]]), np.array([[1.0], [3.0]])
+            )
+            sm_pair64.train()
+            pred_pair64 = sm_pair64.get_jax_predictor()
+            x_mid64 = jnp.array(0.5e-100, dtype=jnp.float64)
+            np.testing.assert_allclose(float(pred_pair64(x_mid64)), 2.0, atol=1e-12)
+            np.testing.assert_allclose(
+                float(jax.grad(pred_pair64)(x_mid64)), 8e100, rtol=1e-12
+            )
+            np.testing.assert_allclose(
+                float(jax.grad(pred_pair64)(jnp.array(0.0, dtype=jnp.float64))),
+                0.0,
+                atol=1e-12,
+            )
+
+    @unittest.skipUnless(HAS_JAX, "JAX not installed")
+    def test_jax_near_hit_fp32_overflow_guard(self):
+        sm = IDW(p=4.0, print_global=False)
+        sm.set_training_values(np.array([[0.0], [1.0]]), np.array([[1.0], [3.0]]))
+        sm.train()
+
+        prev_x64 = bool(jax.config.jax_enable_x64)
+        jax.config.update("jax_enable_x64", False)
+        try:
+            pred = sm.get_jax_predictor()
+            x_near = jnp.array(1e-10, dtype=jnp.float32)
+            val_near = pred(x_near)
+            grad_near = jax.grad(pred)(x_near)
+            self.assertTrue(np.isfinite(float(val_near)))
+            self.assertTrue(np.isfinite(float(grad_near)))
+            np.testing.assert_allclose(float(val_near), 1.0, atol=1e-6)
+            np.testing.assert_allclose(float(grad_near), 0.0, atol=1e-6)
+
+            sm_pair = IDW(p=4.0, print_global=False)
+            sm_pair.set_training_values(
+                np.array([[0.0], [1e-10]]), np.array([[1.0], [3.0]])
+            )
+            sm_pair.train()
+            pred_pair = sm_pair.get_jax_predictor()
+            x_mid = jnp.array(0.5e-10, dtype=jnp.float32)
+            np.testing.assert_allclose(float(pred_pair(x_mid)), 2.0, atol=1e-6)
+            np.testing.assert_allclose(
+                float(jax.grad(pred_pair)(x_mid)), 8e10, rtol=1e-5
+            )
+            np.testing.assert_allclose(
+                float(jax.grad(pred_pair)(jnp.array(0.0, dtype=jnp.float32))),
+                0.0,
+                atol=1e-6,
+            )
+        finally:
+            jax.config.update("jax_enable_x64", prev_x64)
 
 
 if __name__ == "__main__":
