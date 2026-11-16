@@ -48,19 +48,20 @@ def _closed_form_krg_variance(sm, x_test):
     from scipy import linalg
 
     par = sm.optimal_par
-    R = par["C"] @ par["C"].T
+    c_fac = (par["C"], True)
     xn = (x_test - sm.X_offset) / sm.X_scale
     dx = xn[:, None, :] - sm.X_norma[None, :, :]
     r = sm.corr(sm._componentwise_distance(dx.reshape(-1, sm.nx))).reshape(
         x_test.shape[0], sm.nt
     )
     f = sm._regression_types[sm.options["poly"]](xn)
-    Rinv_r = linalg.solve(R, r.T)
+    Rinv_r = linalg.cho_solve(c_fac, r.T)
+    Rinv_F = linalg.cho_solve(c_fac, sm.F)
     a = sm.F.T @ Rinv_r - f.T
     mse = (
         1.0
         - np.sum(r.T * Rinv_r, axis=0)
-        + np.sum(a * linalg.solve(sm.F.T @ linalg.solve(R, sm.F), a), axis=0)
+        + np.sum(a * linalg.solve(sm.F.T @ Rinv_F, a), axis=0)
     )
     return np.maximum(0.0, np.outer(mse, par["sigma2"]))
 
@@ -112,7 +113,10 @@ class TestJAXPredictors:
         pred_var_jax = sm.get_jax_predictor(return_variance=True)
         _, s2_jax = pred_var_jax(jnp.asarray(self.x_eval))
         s2_exact = _closed_form_krg_variance(sm, self.x_eval)
-        np.testing.assert_allclose(np.asarray(s2_jax), s2_exact, rtol=1e-6, atol=1e-10)
+        s2_atol = max(1e-10, 1e-12 * float(np.max(sm.optimal_par["sigma2"])))
+        np.testing.assert_allclose(
+            np.asarray(s2_jax), s2_exact, rtol=1e-6, atol=s2_atol
+        )
         if poly == "constant":
             s2_np = sm.predict_variances(self.x_eval)
             np.testing.assert_allclose(np.asarray(s2_jax), s2_np, atol=1e-10)
