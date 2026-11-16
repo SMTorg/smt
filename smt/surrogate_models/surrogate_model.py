@@ -62,6 +62,7 @@ class SurrogateModel(metaclass=ABCMeta):
         supports["variances"] = False
         supports["variance_derivatives"] = False
         supports["x_hierarchy"] = False
+        supports["jax"] = False
 
         declare = self.options.declare
 
@@ -256,7 +257,6 @@ class SurrogateModel(metaclass=ABCMeta):
         """
         Train the model
         """
-
         n_exact = self.training_points[None][0][0].shape[0]
 
         self.printer.active = self.options["print_global"]
@@ -440,6 +440,34 @@ class SurrogateModel(metaclass=ABCMeta):
         with self.printer._timed_context("Predicting", key="prediction"):
             y = self._predict_variance_gradient(x)
         return self._post_predict(x, y)
+
+    def get_jax_predictor(self):
+        """
+        Return a pure JAX differentiable callable ``f(x) -> y`` for this trained surrogate.
+
+        The returned callable accepts JAX arrays (0D scalar when ``nx == 1``,
+        1D point ``(nx,)``, or 2D batch ``(n, nx)``) and supports JAX transformations
+        including ``jax.jit``, ``jax.grad``, ``jax.jacobian``, and ``jax.vmap``.
+
+        Notes
+        -----
+        * **Snapshot semantics:** The returned predictor captures a snapshot of the
+          trained model parameters at the time ``get_jax_predictor()`` is called.
+          Call ``get_jax_predictor()`` again after ``train()``, ``update_model()``,
+          or ``set_training_values()`` to obtain an updated callable.
+        * **Floating-point precision:** Follows the caller's active JAX floating-point
+          precision setting (``jax.config.jax_enable_x64``: uses ``float64`` when
+          enabled and ``float32`` otherwise) without mutating global JAX state.
+
+        Raises
+        ------
+        NotImplementedError
+            If this surrogate model does not implement a dedicated JAX predictor.
+        """
+        check_support(self, "jax")
+        raise NotImplementedError(
+            f"{self.__class__.__name__} does not implement get_jax_predictor."
+        )
 
     def _initialize(self):
         """

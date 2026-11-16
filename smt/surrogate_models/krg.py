@@ -48,6 +48,7 @@ class KRG(KrgBased):
             desc="Correlation function type",
             types=(str, Kernel),
         )
+        self.supports["jax"] = True
 
     def _componentwise_distance(self, dx, theta=None, return_derivative=False):
         d = componentwise_distance(

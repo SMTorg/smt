@@ -1291,6 +1291,36 @@ class KrgBased(SurrogateModel):
     def load(filename):
         return persistence.load(filename)
 
+    def get_jax_predictor(self, return_variance: bool = False, is_ri: bool = False):
+        """
+        Return a pure JAX function ``predict(x)`` that is end-to-end differentiable.
+
+        Parameters
+        ----------
+        return_variance : bool, optional
+            If True, the returned function returns a tuple ``(y, s2)`` of predicted
+            values and variances. Default is False (returns ``y`` only).
+        is_ri : bool, optional
+            If True and the model was trained under noisy observations with
+            reinterpolation available (``options['is_ri']=True``), return the
+            reinterpolated variance matching ``predict_variances(x, is_ri=True)``.
+            Default is False.
+
+        Returns
+        -------
+        predict_fn : Callable
+            Differentiable JAX prediction function capturing a snapshot of the
+            currently trained model. Call ``get_jax_predictor()`` again after
+            ``train()`` or ``update_model()`` to obtain an updated callable. Uses
+            ``float64`` when ``jax.config.jax_enable_x64`` is True, else ``float32``.
+        """
+        check_support(self, "jax")
+        from smt.surrogate_models.krg_based.krg_jax import make_krg_jax_predictor
+
+        return make_krg_jax_predictor(
+            self, return_variance=return_variance, is_ri=is_ri
+        )
+
     def _predict_variance_derivatives(self, x, kx):
         """
         Provide the derivatives of the variance of the model at a set of points

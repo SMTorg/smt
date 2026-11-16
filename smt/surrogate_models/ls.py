@@ -14,6 +14,7 @@ from sklearn import linear_model
 from smt.surrogate_models.surrogate_model import SurrogateModel
 from smt.utils import persistence
 from smt.utils.caching import cached_operation
+from smt.utils.checks import _prepare_jax_inputs
 
 
 class LS(SurrogateModel):
@@ -37,6 +38,7 @@ class LS(SurrogateModel):
         )
 
         supports["derivatives"] = True
+        supports["jax"] = True
 
     ############################################################################
     # Model functions
@@ -107,3 +109,35 @@ class LS(SurrogateModel):
     @staticmethod
     def load(filename):
         return persistence.load(filename)
+
+    def get_jax_predictor(self):
+        """
+        Return a pure JAX function ``predict(x)`` that is end-to-end differentiable.
+
+        Captures a snapshot of the trained model (call again after ``train()``)
+        and follows ``jax.config.jax_enable_x64`` without mutating global state.
+
+        Returns
+        -------
+        predict_fn : Callable
+            Differentiable JAX prediction function.
+        """
+        if getattr(self, "mod", None) is None:
+            raise RuntimeError("LS model has not been trained yet. Call train() first.")
+        import jax
+        import jax.numpy as jnp
+
+        dtype = jnp.float64 if jax.config.jax_enable_x64 else jnp.float32
+        coef = jnp.asarray(self.mod.coef_, dtype=dtype)
+        intercept = jnp.asarray(self.mod.intercept_, dtype=dtype)
+        nx = self.nx
+        ny = self.ny
+
+        def predict_fn(x):
+            x_arr, is_scalar = _prepare_jax_inputs(jnp, x, nx, dtype)
+            y = jnp.matmul(x_arr, coef.T) + intercept
+            if is_scalar:
+                return y[0, 0] if ny == 1 else y[0]
+            return y
+
+        return predict_fn
