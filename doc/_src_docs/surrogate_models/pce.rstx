@@ -1,0 +1,60 @@
+Polynomial Chaos Expansion (PCE & SparsePCE)
+============================================
+
+Polynomial Chaos Expansion (PCE) [1]_ represents a square-integrable model response
+:math:`Y = \mathcal{M}(\mathbf{X})` with independent continuous input random variables
+:math:`\mathbf{X} = (X_1, \dots, X_{nx})` as a convergent expansion on multivariate
+orthonormal polynomials:
+
+.. math ::
+  \mathcal{M}(\mathbf{x}) \approx \sum_{\boldsymbol{\alpha} \in \mathcal{A}} c_{\boldsymbol{\alpha}} \Psi_{\boldsymbol{\alpha}}(\mathbf{z}(\mathbf{x})),
+  \qquad \Psi_{\boldsymbol{\alpha}}(\mathbf{z}) = \prod_{j=1}^{nx} \psi_{\alpha_j}^{(j)}(z_j),
+
+where :math:`\{\psi_k^{(j)}\}_{k \ge 0}` satisfies the Favard symmetric three-term recurrence
+orthonormal with respect to marginal :math:`j` (:math:`\mathbb{E}[\Psi_{\boldsymbol{\alpha}}\Psi_{\boldsymbol{\beta}}] = \delta_{\boldsymbol{\alpha}\boldsymbol{\beta}}`).
+
+Key Capabilities
+----------------
+
+- **Orthonormal polynomial bases**: Wiener-Askey families (Legendre for Uniform,
+  probabilist's Hermite for Normal, Laguerre for Gamma/Exponential, Jacobi for Beta),
+  discretized Stieltjes orthogonal polynomials for arbitrary SciPy continuous RVs
+  (``("stieltjes", scipy_rv)``), data-driven empirical/aPCE marginals
+  (``("empirical", samples)``), and CDF-Hermite fallback for general SciPy RVs.
+- **Hyperbolic and anisotropic truncation**: Total-degree and hyperbolic :math:`q`-norm
+  truncation :math:`\left(\sum_{j=1}^{nx} (w_j \alpha_j)^q\right)^{1/q} \le p` via
+  ``q_norm``, ``anisotropy_weights``, ``max_interaction``, and ``max_basis``.
+- **Solvers and adaptive selection**: Ordinary least squares (``"ols"``), weighted
+  regression and coherence-optimal inverse Christoffel weighting
+  (``weights="christoffel"`` and ``christoffel_weights()``), Gauss quadrature projection
+  (``"quadrature"`` + ``quadrature_points()``), and Blatman-Sudret [2]_ adaptive sparse
+  selection via Modified Leave-One-Out error (``"lars"``, ``"omp"``, ``"lasso"``,
+  ``"sp"`` Subspace Pursuit, and ``"bcs"`` Bayesian Compressive Sensing).
+- **Analytical UQ and sensitivity**: Exact post-processing via ``mean()``, ``variance()``,
+  ``std()``, ``skewness()``, ``kurtosis()``, ``moments()``, ``sobol_indices()``,
+  ``subset_sobol()``, and ``conditional_expectation()``.
+- **Differentiable JAX predictor**: ``get_jax_predictor()`` exports an end-to-end
+  differentiable pure-JAX callable for affine polynomial families (including ``stieltjes``).
+
+.. [1] Xiu, D. and Karniadakis, G. E. (2002). "The Wiener-Askey polynomial chaos for stochastic differential equations." SIAM Journal on Scientific Computing, 24(2), 619-644.
+.. [2] Blatman, G. and Sudret, B. (2011). "Adaptive sparse polynomial chaos expansion based on least angle regression." Journal of Computational Physics, 230(6), 2345-2367.
+
+Usage (PCE)
+-----------
+
+.. embed-test-print-plot :: smt.surrogate_models.tests.test_surrogate_model_examples , Test , test_pce , 80
+
+Usage (SparsePCE)
+-----------------
+
+.. embed-test-print-plot :: smt.surrogate_models.tests.test_surrogate_model_examples , Test , test_sparse_pce , 80
+
+Options (PCE)
+-------------
+
+.. embed-options-table :: smt.surrogate_models , PCE , options
+
+Options (SparsePCE)
+-------------------
+
+.. embed-options-table :: smt.surrogate_models , SparsePCE , options

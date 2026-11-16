@@ -1116,6 +1116,72 @@ class Test(unittest.TestCase):
         plt.legend()
         plt.show()
 
+    @unittest.skipIf(NO_MATPLOTLIB, "Matplotlib not installed")
+    def test_pce(self):
+        import matplotlib.pyplot as plt
+        import numpy as np
+
+        from smt.surrogate_models import PCE
+
+        xt = np.linspace(0.0, 4.0, 9).reshape(-1, 1)
+        yt = (xt * np.sin(xt)).reshape(-1, 1)
+
+        sm = PCE(degree=5, xlimits=np.array([[0.0, 4.0]]), method="ols")
+        sm.set_training_values(xt, yt)
+        sm.train()
+
+        print("Mean:", np.round(sm.mean(), 4), "Std:", np.round(sm.std(), 4))
+
+        num = 100
+        x = np.linspace(0.0, 4.0, num).reshape(-1, 1)
+        y = sm.predict_values(x)
+
+        plt.plot(xt, yt, "o")
+        plt.plot(x, y)
+        plt.xlabel("x")
+        plt.ylabel("y")
+        plt.legend(["Training data", "Prediction"])
+        plt.show()
+
+    @unittest.skipIf(NO_MATPLOTLIB, "Matplotlib not installed")
+    def test_sparse_pce(self):
+        import matplotlib.pyplot as plt
+        import numpy as np
+
+        from smt.surrogate_models import SparsePCE
+
+        xlimits = np.array([[-np.pi, np.pi]] * 3)
+        sm = SparsePCE(xlimits=xlimits, degree=range(2, 8), method="lars")
+        xt = sm.sample_design(128, sampling="sobol", seed=7)
+        yt = (
+            np.sin(xt[:, 0])
+            + 7.0 * np.sin(xt[:, 1]) ** 2
+            + 0.1 * (xt[:, 2] ** 4) * np.sin(xt[:, 0])
+        )[:, None]
+
+        sm.set_training_values(xt, yt)
+        sm.train()
+
+        sobol = sm.sobol_indices()
+        print("Mean:", np.round(sm.mean(), 4), "Std:", np.round(sm.std(), 4))
+        print("First-order Sobol:", np.round(sobol["first_order"], 4))
+        print("Total Sobol:", np.round(sobol["total"], 4))
+
+        x_val = sm.sample_design(100, sampling="halton", seed=13)
+        y_true = (
+            np.sin(x_val[:, 0])
+            + 7.0 * np.sin(x_val[:, 1]) ** 2
+            + 0.1 * (x_val[:, 2] ** 4) * np.sin(x_val[:, 0])
+        )
+        y_pred = sm.predict_values(x_val).ravel()
+
+        plt.plot(y_true, y_pred, "o")
+        lims = [min(y_true.min(), y_pred.min()), max(y_true.max(), y_pred.max())]
+        plt.plot(lims, lims, "k--")
+        plt.xlabel("Exact Ishigami")
+        plt.ylabel("SparsePCE Prediction")
+        plt.show()
+
 
 if __name__ == "__main__":
     unittest.main()

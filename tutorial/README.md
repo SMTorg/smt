@@ -9,6 +9,13 @@ More advanced notebooks or script could be find here: https://github.com/SMTorg/
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/SMTorg/smt/blob/master/tutorial/SMT_Tutorial.ipynb)
 
 
+## Polynomial Chaos Expansion and Uncertainty Quantification
+
+* ### Polynomial Chaos Expansion (PCE, SparsePCE, QMC Sampling, Sobol Indices, Stieltjes/aPCE, Conditional Expectation, and JAX)
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/SMTorg/smt/blob/master/tutorial/PCE/SMT_PCE_tutorial.ipynb)
+
+
 ## Surrogate-based Optimization
 
 * ### Efficient Global Optimization: How to start?

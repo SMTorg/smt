@@ -13,6 +13,7 @@ These are listed below.
    sampling_methods/lhs
    sampling_methods/full_factorial
    sampling_methods/pydoe
+   sampling_methods/qmc
 
 Usage
 -----

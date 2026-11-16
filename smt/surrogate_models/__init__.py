@@ -49,6 +49,7 @@ __all__ = [
 ]
 
 from .idw import IDW
+from .pce import PCE, SparsePCE
 from .rbf import RBF
 
-__all__ = __all__ + ["IDW", "RBF"]
+__all__ = __all__ + ["IDW", "RBF", "PCE", "SparsePCE"]

@@ -1,0 +1,35 @@
+Quasi-Monte Carlo sampling (Sobol & Halton)
+===========================================
+
+SMT exposes wrapped SciPy Quasi-Monte Carlo (QMC) low-discrepancy sequence
+generators [1]_ (`Sobol` and `Halton`) through the standard `SamplingMethod`
+interface (`ScaledSamplingMethod`), automatically mapping samples from the unit
+hypercube :math:`[0, 1]^{nx}` to user-specified `xlimits`.
+
+.. [1] Owen, A. B. (1995). "Randomly permuted (t, m, s)-nets and (t, s)-sequences." Monte Carlo and Quasi-Monte Carlo Methods in Scientific Computing, pp. 299-317.
+
+Sobol sampling
+--------------
+
+Usage
+^^^^^
+
+.. embed-test-print-plot :: smt.sampling_methods.tests.test_sampling_method_examples , Test , run_sobol , 80
+
+Options
+^^^^^^^
+
+.. embed-options-table :: smt.sampling_methods , Sobol , options
+
+Halton sampling
+---------------
+
+Usage
+^^^^^
+
+.. embed-test-print-plot :: smt.sampling_methods.tests.test_sampling_method_examples , Test , run_halton , 80
+
+Options
+^^^^^^^
+
+.. embed-options-table :: smt.sampling_methods , Halton , options

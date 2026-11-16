@@ -12,11 +12,13 @@ from smt.surrogate_models import (
     KRG,
     LS,
     MGP,
+    PCE,
     QP,
     RBF,
     RMTS,
     RMTB,
     RMTC,
+    SparsePCE,
 )
 from smt.utils.options_dictionary import OptionsDictionary
 
@@ -35,6 +37,8 @@ class SurrogateBasedApplication:
         "RMTB": RMTB,
         "IDW": IDW,
         "MGP": MGP,
+        "PCE": PCE,
+        "SparsePCE": SparsePCE,
     }
 
     def __init__(self, **kwargs):

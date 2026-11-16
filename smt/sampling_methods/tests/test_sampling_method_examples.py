@@ -158,6 +158,46 @@ class Test(unittest.TestCase):
         ax.set_zlabel("x2")
         plt.show()
 
+    @staticmethod
+    def run_sobol():
+        import matplotlib.pyplot as plt
+        import numpy as np
+
+        from smt.sampling_methods import Sobol
+
+        xlimits = np.array([[0.0, 4.0], [0.0, 3.0]])
+        sampling = Sobol(xlimits=xlimits, seed=42)
+
+        num = 64
+        x = sampling(num)
+
+        print(x.shape)
+
+        plt.plot(x[:, 0], x[:, 1], "o")
+        plt.xlabel("x0")
+        plt.ylabel("x1")
+        plt.show()
+
+    @staticmethod
+    def run_halton():
+        import matplotlib.pyplot as plt
+        import numpy as np
+
+        from smt.sampling_methods import Halton
+
+        xlimits = np.array([[0.0, 4.0], [0.0, 3.0]])
+        sampling = Halton(xlimits=xlimits, seed=42)
+
+        num = 60
+        x = sampling(num)
+
+        print(x.shape)
+
+        plt.plot(x[:, 0], x[:, 1], "o")
+        plt.xlabel("x0")
+        plt.ylabel("x1")
+        plt.show()
+
     @unittest.skipIf(NO_MATPLOTLIB, "Matplotlib not installed")
     def test_sampling_methods_examples(self):
         self.run_lhs()
@@ -167,6 +207,8 @@ class Test(unittest.TestCase):
         self.run_box_behnken()
         self.run_factorial()
         self.run_gsd()
+        self.run_sobol()
+        self.run_halton()
 
 
 if __name__ == "__main__":
