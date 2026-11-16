@@ -4,7 +4,9 @@ Author: Dr. John T. Hwang <hwangjt@umich.edu>
 This package is distributed under New BSD license.
 """
 
+import contextlib
 import sys
+
 import numpy as np
 
 
@@ -13,8 +15,25 @@ def _is_jax_tracer(x):
     return jax is not None and isinstance(x, jax.core.Tracer)
 
 
+def _get_jax():
+    """Optionally import JAX and jax.numpy, returning ``(None, None)`` if absent."""
+    try:
+        import jax
+        import jax.numpy as jnp
+    except ImportError:
+        return None, None
+    return jax, jnp
+
+
+def has_jax():
+    """Return True if JAX is importable."""
+    return _get_jax()[0] is not None
+
+
 def _enable_jax_x64(jax):
     """Return a context manager temporarily enabling JAX 64-bit precision."""
+    if bool(jax.config.jax_enable_x64):
+        return contextlib.nullcontext()
     enable = getattr(jax, "enable_x64", None)
     if enable is None:
         enable = jax.experimental.enable_x64

@@ -124,7 +124,13 @@ class IDW(SurrogateModel):
         return dy_dyt
 
     def get_jax_predictor(self):
-        """Return a pure JAX differentiable callable ``predict(x)`` for IDW."""
+        """
+        Return a pure JAX differentiable callable ``predict(x)`` for IDW.
+
+        Captures a snapshot of the current training points and ``p`` (call again
+        after updating training values or options) and follows
+        ``jax.config.jax_enable_x64`` without mutating global state.
+        """
         if (
             not self.training_points
             or None not in self.training_points

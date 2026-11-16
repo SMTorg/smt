@@ -203,8 +203,13 @@ class RBF(SurrogateModel):
         return {None: dy_dyt}
 
     def get_jax_predictor(self):
-        """Return a pure JAX differentiable callable ``predict(x)`` for RBF."""
-        if not hasattr(self, "sol") or self.sol is None:
+        """
+        Return a pure JAX differentiable callable ``predict(x)`` for RBF.
+
+        Captures a snapshot of the trained model (call again after ``train()``)
+        and follows ``jax.config.jax_enable_x64`` without mutating global state.
+        """
+        if getattr(self, "sol", None) is None:
             raise RuntimeError(
                 "RBF model has not been trained yet. Call train() first."
             )

@@ -46,7 +46,6 @@ class MGP(KrgBased):
         )
         self.options["hyper_opt"] = "TNC"
         self.options["corr"] = "act_exp"
-        self.supports["jax"] = False
 
     def _componentwise_distance(self, dx, small=False):
         """

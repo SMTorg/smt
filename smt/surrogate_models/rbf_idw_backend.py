@@ -17,13 +17,17 @@ Engines
 The public model APIs (options, outputs, shapes) are unchanged.
 """
 
-import contextlib
 import os
 
 import numpy as np
 from scipy.spatial.distance import cdist
 
-from smt.utils.checks import _prepare_jax_inputs
+from smt.utils.checks import (
+    _enable_jax_x64 as _enable_x64,
+    _get_jax,
+    _prepare_jax_inputs,
+    has_jax,
+)
 
 
 def _parse_bool_env(name, default=0):
@@ -58,30 +62,6 @@ def _get_numba():
 def has_numba():
     """Return True if Numba is importable."""
     return _get_numba()[0] is not None
-
-
-def _get_jax():
-    try:
-        import jax
-        import jax.numpy as jnp
-    except ImportError:
-        return None, None
-    return jax, jnp
-
-
-def has_jax():
-    """Return True if JAX is importable."""
-    return _get_jax()[0] is not None
-
-
-def _enable_x64(jax):
-    """Return a context manager temporarily enabling JAX 64-bit precision."""
-    if bool(jax.config.jax_enable_x64):
-        return contextlib.nullcontext()
-    enable = getattr(jax, "enable_x64", None)
-    if enable is None:
-        enable = jax.experimental.enable_x64
-    return enable(True)
 
 
 def _resolve_backend(_backend=None):

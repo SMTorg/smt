@@ -183,14 +183,6 @@ class RMTS(SurrogateModel):
             desc="Maximum depth (level of nesting) to print operation descriptions and times",
         )
 
-        declare(
-            "jax_dtype",
-            "float64",
-            values=["float64", "float32"],
-            types=str,
-            desc="Computation precision for JAX acceleration ('float64' or 'float32')",
-        )
-
         supports["training_derivatives"] = True
         supports["derivatives"] = True
         supports["output_derivatives"] = True
@@ -434,7 +426,7 @@ class RMTS(SurrogateModel):
         return full_hess
 
     def __getstate__(self):
-        state = super().__getstate__()
+        state = self.__dict__.copy()
         state["_backend"] = None
         state["_jax_opt_cache"] = None
         return state
@@ -958,39 +950,35 @@ class RMTS(SurrogateModel):
 
     def get_jax_predictor(self, dtype=None):
         """
-        Return a pure JAX function predict(x) that is end-to-end differentiable.
+        Return a pure JAX function ``predict(x)`` that is end-to-end differentiable.
 
         Parameters
         ----------
         dtype : DTypeLike or str, optional
-            Computation precision, e.g. jnp.float64 (default) or jnp.float32 for
-            maximum GPU throughput on consumer Tensor Cores. If None, checks
-            self.options["jax_dtype"].
+            Computation precision (``jnp.float64`` or ``jnp.float32``). When None
+            (default), follows the caller's active ``jax.config.jax_enable_x64``
+            setting (``float64`` when True, ``float32`` otherwise) without mutating
+            global JAX state.
 
         Returns
         -------
         predict_fn : Callable
-            Differentiable JAX prediction function with weights cached in device VRAM.
+            Differentiable JAX prediction function capturing a snapshot of the
+            trained model (call ``get_jax_predictor()`` again after ``train()``).
         """
-        if not hasattr(self, "sol_coeff") or self.sol_coeff is None:
+        if getattr(self, "sol_coeff", None) is None:
             raise RuntimeError(
                 f"{self.__class__.__name__} model has not been trained yet. Call train() first."
             )
         import jax
         import jax.numpy as jnp
 
-        opt_dtype = (
-            self.options["jax_dtype"] if "jax_dtype" in self.options else "float64"
-        )
-        raw_dtype = dtype if dtype is not None else opt_dtype
-        if isinstance(raw_dtype, str):
-            want_64 = "32" not in raw_dtype
+        if dtype is None:
+            use_dtype = jnp.float64 if bool(jax.config.jax_enable_x64) else jnp.float32
+        elif isinstance(dtype, str):
+            use_dtype = jnp.float32 if "32" in dtype else jnp.float64
         else:
-            want_64 = jnp.dtype(raw_dtype) == jnp.float64
-        if dtype is None and want_64 and not jax.config.jax_enable_x64:
-            use_dtype = jnp.float32
-        else:
-            use_dtype = jnp.float64 if want_64 else jnp.float32
+            use_dtype = jnp.float64 if jnp.dtype(dtype) == jnp.float64 else jnp.float32
 
         spline_type = _normalize_spline_type(self.options["spline_type"])
         extrapolate = bool(self.options["extrapolate"])

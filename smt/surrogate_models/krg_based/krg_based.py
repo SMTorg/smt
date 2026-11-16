@@ -231,7 +231,6 @@ class KrgBased(SurrogateModel):
         supports["variances"] = True
         supports["variance_derivatives"] = True
         supports["x_hierarchy"] = True
-        supports["jax"] = True
 
     def _final_initialize(self):
         self.rng = np.random.default_rng(self.options["seed"])
@@ -1070,12 +1069,7 @@ class KrgBased(SurrogateModel):
 
         # Evaluate the unknown points using the specified model-method
         with self.printer._timed_context("Predicting", key="prediction"):
-            if is_acting is None:
-                y = self._predict_values_with_jax(
-                    x2, lambda: self._predict_values(x2, is_acting=None)
-                )
-            else:
-                y = self._predict_values(x2, is_acting=is_acting)
+            y = self._predict_values(x2, is_acting=is_acting)
         time_pt = self.printer._time("prediction")[-1] / n
         self.printer()
         self.printer("Prediction time/pt. (sec) : %10.7f" % time_pt)
@@ -1277,7 +1271,6 @@ class KrgBased(SurrogateModel):
             self.optimal_par["G"].T,
             np.dot(self.optimal_par["Ft"].T, rt)
             - self._regression_types[self.options["poly"]](X_cont).T,
-            lower=True,
         )
         is_noisy = np.max(self._noise0) > 0.0 or self._eval_noise
         if is_noisy and is_ri:
@@ -1298,35 +1291,35 @@ class KrgBased(SurrogateModel):
     def load(filename):
         return persistence.load(filename)
 
-    def _can_use_jax(self) -> bool:
-        return (
-            super()._can_use_jax()
-            and getattr(self, "is_continuous", True)
-            and isinstance(self.options["corr"], str)
-            and self.options["corr"]
-            in {"squar_exp", "abs_exp", "pow_exp", "matern32", "matern52"}
-            and self.options["poly"] in {"constant", "linear", "quadratic"}
-        )
-
-    def get_jax_predictor(self, return_variance: bool = False):
+    def get_jax_predictor(self, return_variance: bool = False, is_ri: bool = False):
         """
-        Return a pure JAX function predict(x) that is end-to-end differentiable.
+        Return a pure JAX function ``predict(x)`` that is end-to-end differentiable.
 
         Parameters
         ----------
         return_variance : bool, optional
             If True, the returned function returns a tuple ``(y, s2)`` of predicted
             values and variances. Default is False (returns ``y`` only).
+        is_ri : bool, optional
+            If True and the model was trained under noisy observations with
+            reinterpolation available (``options['is_ri']=True``), return the
+            reinterpolated variance matching ``predict_variances(x, is_ri=True)``.
+            Default is False.
 
         Returns
         -------
         predict_fn : Callable
-            Differentiable JAX prediction function.
+            Differentiable JAX prediction function capturing a snapshot of the
+            currently trained model. Call ``get_jax_predictor()`` again after
+            ``train()`` or ``update_model()`` to obtain an updated callable. Uses
+            ``float64`` when ``jax.config.jax_enable_x64`` is True, else ``float32``.
         """
         check_support(self, "jax")
         from smt.surrogate_models.krg_based.krg_jax import make_krg_jax_predictor
 
-        return make_krg_jax_predictor(self, return_variance=return_variance)
+        return make_krg_jax_predictor(
+            self, return_variance=return_variance, is_ri=is_ri
+        )
 
     def _predict_variance_derivatives(self, x, kx):
         """

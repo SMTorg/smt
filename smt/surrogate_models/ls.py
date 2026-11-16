@@ -112,14 +112,17 @@ class LS(SurrogateModel):
 
     def get_jax_predictor(self):
         """
-        Return a pure JAX function predict(x) that is end-to-end differentiable.
+        Return a pure JAX function ``predict(x)`` that is end-to-end differentiable.
+
+        Captures a snapshot of the trained model (call again after ``train()``)
+        and follows ``jax.config.jax_enable_x64`` without mutating global state.
 
         Returns
         -------
         predict_fn : Callable
             Differentiable JAX prediction function.
         """
-        if not hasattr(self, "mod") or self.mod is None:
+        if getattr(self, "mod", None) is None:
             raise RuntimeError("LS model has not been trained yet. Call train() first.")
         import jax
         import jax.numpy as jnp

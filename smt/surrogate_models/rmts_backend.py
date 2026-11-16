@@ -13,7 +13,12 @@ from functools import lru_cache
 import numpy as np
 import scipy.sparse
 
-from smt.utils.checks import _prepare_jax_inputs
+from smt.utils.checks import (
+    _enable_jax_x64 as _enable_x64,
+    _get_jax,
+    _prepare_jax_inputs,
+    has_jax,
+)
 
 
 def _parse_bool_env(name, default=0):
@@ -50,23 +55,6 @@ def _is_numba_enabled():
     return bool(USE_NUMBA_JIT)
 
 
-def _enable_x64(jax):
-    """Return a context manager temporarily enabling JAX 64-bit precision."""
-    enable = getattr(jax, "enable_x64", None)
-    if enable is None:
-        enable = jax.experimental.enable_x64
-    return enable(True)
-
-
-def _get_jax():
-    try:
-        import jax
-        import jax.numpy as jnp
-    except ImportError:
-        return None, None
-    return jax, jnp
-
-
 def _get_numba():
     try:
         from numba import njit
@@ -79,11 +67,6 @@ def _get_numba():
 def has_numba():
     """Return True if Numba is importable."""
     return _get_numba()[0] is not None
-
-
-def has_jax():
-    """Return True if JAX is importable."""
-    return _get_jax()[0] is not None
 
 
 def _use_jax_opt():

@@ -19,7 +19,7 @@ from sklearn.cross_decomposition import PLSRegression as pls
 
 from smt.design_space import ensure_design_space
 from smt.sampling_methods import LHS
-from smt.utils.checks import ensure_2d_array
+from smt.utils.checks import check_support, ensure_2d_array
 from smt.surrogate_models.krg_based import (
     KrgBased,
     MixIntKernelType,
@@ -178,6 +178,7 @@ class MFK(KrgBased):
         self.X2_norma = {}
         self.X2_offset = {}
         self.X2_scale = {}
+        self.supports["jax"] = True
 
     # --- Polymorphic hook overrides ---
 
@@ -683,13 +684,18 @@ class MFK(KrgBased):
 
     def get_jax_predictor(self):
         """
-        Return a pure JAX function predict(x) that is end-to-end differentiable.
+        Return a pure JAX function ``predict(x)`` that is end-to-end differentiable.
+
+        Returns the mean prediction only (MFK JAX predictors do not export
+        variance). Captures a snapshot of the trained model (call again after
+        ``train()``) and respects ``jax.config.jax_enable_x64``.
 
         Returns
         -------
         predict_fn : Callable
             Differentiable JAX prediction function.
         """
+        check_support(self, "jax")
         from smt.surrogate_models.krg_based.krg_jax import make_mfk_jax_predictor
 
         return make_mfk_jax_predictor(self)

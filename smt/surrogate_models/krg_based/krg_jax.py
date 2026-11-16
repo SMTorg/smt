@@ -154,12 +154,14 @@ def eval_corr_jax(corr_name: str, dx, theta, power: float = 2.0, coeff_pls=None)
         )
 
 
-def make_krg_jax_predictor(sm, return_variance: bool = False) -> Callable:
+def make_krg_jax_predictor(
+    sm, return_variance: bool = False, is_ri: bool = False
+) -> Callable:
     """
     Build a pure JAX predictor function for a trained Kriging model.
 
-    Supports single-point ``(nx,)`` or batched ``(n, nx)`` inputs and automatic
-    differentiation via ``jax.grad`` and ``jax.jacobian``.
+    Supports 0D (``nx == 1``), single-point ``(nx,)``, or batched ``(n, nx)`` inputs
+    and automatic differentiation via ``jax.grad`` and ``jax.jacobian``.
 
     Parameters
     ----------
@@ -167,19 +169,40 @@ def make_krg_jax_predictor(sm, return_variance: bool = False) -> Callable:
         Trained Kriging-based surrogate model instance.
     return_variance : bool, optional
         If True, the predictor returns ``(y, s2)``. Default is False.
+    is_ri : bool, optional
+        If True, match ``predict_variances(x, is_ri=True)`` using ``sigma2_ri``
+        for noisy models. Default is False.
 
     Returns
     -------
     predict_fn : Callable
-        Differentiable JAX prediction function.
+        Differentiable JAX prediction function capturing a snapshot of ``sm``.
     """
-    if not hasattr(sm, "optimal_par") or sm.optimal_par is None:
+    optimal_par = getattr(sm, "optimal_par", None)
+    if not optimal_par or "beta" not in optimal_par:
         raise RuntimeError(
             f"{sm.__class__.__name__} model has not been trained yet. Call train() first."
         )
     if not getattr(sm, "is_continuous", True):
         raise NotImplementedError(
             "get_jax_predictor is currently supported for continuous design spaces."
+        )
+
+    corr_name = sm.options["corr"]
+    poly_name = sm.options["poly"]
+    if not isinstance(corr_name, str) or corr_name not in {
+        "squar_exp",
+        "abs_exp",
+        "pow_exp",
+        "matern32",
+        "matern52",
+    }:
+        raise NotImplementedError(
+            f"Correlation kernel {corr_name!r} is not implemented in JAX predictor."
+        )
+    if poly_name not in {"constant", "linear", "quadratic"}:
+        raise NotImplementedError(
+            f"Polynomial trend {poly_name!r} is not implemented in JAX predictor."
         )
 
     import jax
@@ -192,8 +215,8 @@ def make_krg_jax_predictor(sm, return_variance: bool = False) -> Callable:
     X_scale = jnp.asarray(sm.X_scale, dtype=dtype)
     y_mean = jnp.asarray(sm.y_mean, dtype=dtype)
     y_std = jnp.asarray(sm.y_std, dtype=dtype)
-    beta = jnp.asarray(sm.optimal_par["beta"], dtype=dtype)
-    gamma = jnp.asarray(sm.optimal_par["gamma"], dtype=dtype)
+    beta = jnp.asarray(optimal_par["beta"], dtype=dtype)
+    gamma = jnp.asarray(optimal_par["gamma"], dtype=dtype)
     theta = jnp.asarray(sm.optimal_theta, dtype=dtype)
 
     has_pls = getattr(sm, "coeff_pls", None) is not None and not getattr(
@@ -201,21 +224,23 @@ def make_krg_jax_predictor(sm, return_variance: bool = False) -> Callable:
     )
     coeff_pls = jnp.asarray(sm.coeff_pls, dtype=dtype) if has_pls else None
 
-    corr_name = sm.options["corr"]
-    poly_name = sm.options["poly"]
     power = float(getattr(sm, "_pow_exp_power", 2.0))
     nx = sm.nx
     ny = sm.ny
 
     if return_variance:
-        C = jnp.asarray(sm.optimal_par["C"], dtype=dtype)
-        G = jnp.asarray(sm.optimal_par["G"], dtype=dtype)
-        Ft = jnp.asarray(sm.optimal_par["Ft"], dtype=dtype)
+        C = jnp.asarray(optimal_par["C"], dtype=dtype)
+        G = jnp.asarray(optimal_par["G"], dtype=dtype)
+        Ft = jnp.asarray(optimal_par["Ft"], dtype=dtype)
         is_noisy = np.max(sm._noise0) > 0.0 or sm._eval_noise
-        if is_noisy and sm.options["is_ri"]:
-            A = jnp.asarray(sm.optimal_par["sigma2_ri"], dtype=dtype)
+        if is_noisy and is_ri:
+            if optimal_par.get("sigma2_ri") is None:
+                raise RuntimeError(
+                    "is_ri=True requested, but reinterpolated variance (sigma2_ri) is not available for this model."
+                )
+            A = jnp.asarray(optimal_par["sigma2_ri"], dtype=dtype)
         else:
-            A = jnp.asarray(sm.optimal_par["sigma2"], dtype=dtype)
+            A = jnp.asarray(optimal_par["sigma2"], dtype=dtype)
 
     def predict_fn(x):
         x_arr, is_scalar = _prepare_jax_inputs(jnp, x, nx, dtype)
@@ -261,11 +286,38 @@ def make_mfk_jax_predictor(sm) -> Callable:
     predict_fn : Callable
         Differentiable JAX prediction function.
     """
-    if not hasattr(sm, "optimal_par") or sm.optimal_par is None:
+    optimal_par = getattr(sm, "optimal_par", None)
+    if (
+        not optimal_par
+        or not isinstance(optimal_par, list)
+        or any(lvl is None or "beta" not in lvl for lvl in optimal_par)
+    ):
         raise RuntimeError("MFK model has not been trained yet. Call train() first.")
     if not getattr(sm, "is_continuous", True):
         raise NotImplementedError(
             "get_jax_predictor is currently supported for continuous design spaces."
+        )
+
+    corr_name = sm.options["corr"]
+    poly_name = sm.options["poly"]
+    rho_regr = sm.options["rho_regr"]
+    if not isinstance(corr_name, str) or corr_name not in {
+        "squar_exp",
+        "abs_exp",
+        "pow_exp",
+        "matern32",
+        "matern52",
+    }:
+        raise NotImplementedError(
+            f"Correlation kernel {corr_name!r} is not implemented in JAX predictor."
+        )
+    if poly_name not in {"constant", "linear", "quadratic"} or rho_regr not in {
+        "constant",
+        "linear",
+        "quadratic",
+    }:
+        raise NotImplementedError(
+            "Polynomial trend is not implemented in JAX predictor."
         )
 
     import jax
@@ -280,17 +332,14 @@ def make_mfk_jax_predictor(sm) -> Callable:
 
     X_norma_all = [jnp.asarray(sm.X_norma_all[i], dtype=dtype) for i in range(nlvl)]
     thetas = [jnp.asarray(sm.optimal_theta[i], dtype=dtype) for i in range(nlvl)]
-    betas = [jnp.asarray(sm.optimal_par[i]["beta"], dtype=dtype) for i in range(nlvl)]
-    gammas = [jnp.asarray(sm.optimal_par[i]["gamma"], dtype=dtype) for i in range(nlvl)]
+    betas = [jnp.asarray(optimal_par[i]["beta"], dtype=dtype) for i in range(nlvl)]
+    gammas = [jnp.asarray(optimal_par[i]["gamma"], dtype=dtype) for i in range(nlvl)]
 
     has_pls = getattr(sm, "coeff_pls", None) is not None and not getattr(
         sm, "kplsk_second_loop", False
     )
     coeff_pls = jnp.asarray(sm.coeff_pls, dtype=dtype) if has_pls else None
 
-    corr_name = sm.options["corr"]
-    poly_name = sm.options["poly"]
-    rho_regr = sm.options["rho_regr"]
     power = float(getattr(sm, "_pow_exp_power", 2.0))
     nx = sm.nx
     ny = betas[-1].shape[1]
