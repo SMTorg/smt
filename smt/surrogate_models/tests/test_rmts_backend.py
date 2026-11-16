@@ -960,6 +960,21 @@ class TestRMTSBackend(unittest.TestCase):
                     np.array([1.0]), np.ones(6), [0.0], [2.0], [2], nterm_list=[3]
                 )
                 self.assertEqual(np.asarray(y_c).shape, ())
+                # 0D scalar inputs work for both predict_rmtb_jax and predict_rmtc_jax
+                self.assertEqual(
+                    np.asarray(
+                        rb.predict_rmtb_jax(0.5, np.ones(5), [0.0], [2.0], [3], [5])
+                    ).shape,
+                    (),
+                )
+                self.assertEqual(
+                    np.asarray(
+                        rb.predict_rmtc_jax(
+                            1.0, np.ones(6), [0.0], [2.0], [2], nterm_list=[3]
+                        )
+                    ).shape,
+                    (),
+                )
 
 
 if __name__ == "__main__":

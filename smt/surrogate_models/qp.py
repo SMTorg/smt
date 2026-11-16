@@ -14,6 +14,7 @@ import scipy
 from smt.surrogate_models.surrogate_model import SurrogateModel
 from smt.utils import persistence
 from smt.utils.caching import cached_operation
+from smt.utils.checks import _prepare_jax_inputs
 from smt.utils.misc import standardization
 
 
@@ -35,6 +36,7 @@ class QP(SurrogateModel):
             desc="Directory for loading / saving cached data; None means do not save or load",
         )
         supports["derivatives"] = True
+        supports["jax"] = True
 
     ############################################################################
     # Model functions
@@ -62,7 +64,7 @@ class QP(SurrogateModel):
             )
 
         X = self._response_surface(self.X_norma)
-        self.coef = np.dot(np.linalg.inv(np.dot(X.T, X)), (np.dot(X.T, self.y_norma)))
+        self.coef = np.linalg.lstsq(X, self.y_norma, rcond=None)[0]
 
     def _train(self):
         """
@@ -121,27 +123,23 @@ class QP(SurrogateModel):
         """
         dim = self.nx
         x = (x - self.X_offset) / self.X_scale
-        linear_coef = self.coef[1 + kx, :]
-        quad_coef = 2 * self.coef[1 + dim + kx, :] * x[:, kx]
-        neval = np.size(quad_coef, 0)
-        cross_coef = np.zeros(neval)
+        neval = x.shape[0]
+        linear_coef = self.coef[1 + kx, :][np.newaxis, :]
+        quad_coef = 2 * self.coef[1 + dim + kx, :][np.newaxis, :] * x[:, kx : kx + 1]
+        cross_coef = np.zeros((neval, self.ny))
 
         for i in range(dim):
             if i > kx:
                 k = int(
                     2 * dim + 2 + (kx) * dim - ((kx + 1) * (kx)) / 2 + (i - (kx + 2))
                 )
-                cross_coef += self.coef[k, :] * x[:, i]
+                cross_coef += self.coef[k, :][np.newaxis, :] * x[:, i : i + 1]
             elif i < kx:
                 k = int(2 * dim + 2 + (i) * dim - ((i + 1) * (i)) / 2 + (kx - (i + 2)))
-                cross_coef += self.coef[k, :] * x[:, i]
+                cross_coef += self.coef[k, :][np.newaxis, :] * x[:, i : i + 1]
 
-        y = (
-            (linear_coef + quad_coef + cross_coef).reshape((x.shape[0], self.ny))
-            * self.y_std
-            / self.X_scale[kx]
-        )
-        return y
+        y = (linear_coef + quad_coef + cross_coef) * self.y_std / self.X_scale[kx]
+        return y.reshape((neval, self.ny))
 
     def _predict_values(self, x):
         """
@@ -170,3 +168,49 @@ class QP(SurrogateModel):
     @staticmethod
     def load(filename):
         return persistence.load(filename)
+
+    def get_jax_predictor(self):
+        """
+        Return a pure JAX function ``predict(x)`` that is end-to-end differentiable.
+
+        Captures a snapshot of the trained model (call again after ``train()``)
+        and follows ``jax.config.jax_enable_x64`` without mutating global state.
+
+        Returns
+        -------
+        predict_fn : Callable
+            Differentiable JAX prediction function.
+        """
+        if getattr(self, "coef", None) is None:
+            raise RuntimeError("QP model has not been trained yet. Call train() first.")
+        import jax
+        import jax.numpy as jnp
+
+        dtype = jnp.float64 if jax.config.jax_enable_x64 else jnp.float32
+        X_offset = jnp.asarray(self.X_offset, dtype=dtype)
+        X_scale = jnp.asarray(self.X_scale, dtype=dtype)
+        y_mean = jnp.asarray(self.y_mean, dtype=dtype)
+        y_std = jnp.asarray(self.y_std, dtype=dtype)
+        qp_coef = jnp.asarray(self.coef, dtype=dtype)
+        dim = self.nx
+        ny = self.ny
+
+        def predict_fn(x):
+            x_arr, is_scalar = _prepare_jax_inputs(jnp, x, dim, dtype)
+            x_norm = (x_arr - X_offset) / X_scale
+            parts = [
+                jnp.ones((x_norm.shape[0], 1), dtype=dtype),
+                x_norm,
+                x_norm**2,
+            ]
+            for i in range(dim - 1):
+                for j in range(i + 1, dim):
+                    parts.append(x_norm[:, i : i + 1] * x_norm[:, j : j + 1])
+            M = jnp.concatenate(parts, axis=1)
+            y_norma = jnp.matmul(M, qp_coef)
+            y = y_mean + y_std * y_norma
+            if is_scalar:
+                return y[0, 0] if ny == 1 else y[0]
+            return y
+
+        return predict_fn

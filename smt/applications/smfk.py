@@ -56,6 +56,7 @@ class SMFK(MFK):
         self.X2_offset = {}
         self.X2_scale = {}
         self.Z = None
+        self.supports["jax"] = False
 
     def _new_train_iteration(self, lvl):
         # n_samples = self.nt_all

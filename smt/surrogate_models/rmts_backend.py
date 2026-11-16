@@ -13,6 +13,13 @@ from functools import lru_cache
 import numpy as np
 import scipy.sparse
 
+from smt.utils.checks import (
+    _enable_jax_x64 as _enable_x64,
+    _get_jax,
+    _prepare_jax_inputs,
+    has_jax,
+)
+
 
 def _parse_bool_env(name, default=0):
     val = os.getenv(name)
@@ -48,23 +55,6 @@ def _is_numba_enabled():
     return bool(USE_NUMBA_JIT)
 
 
-def _enable_x64(jax):
-    """Return a context manager temporarily enabling JAX 64-bit precision."""
-    enable = getattr(jax, "enable_x64", None)
-    if enable is None:
-        enable = jax.experimental.enable_x64
-    return enable(True)
-
-
-def _get_jax():
-    try:
-        import jax
-        import jax.numpy as jnp
-    except ImportError:
-        return None, None
-    return jax, jnp
-
-
 def _get_numba():
     try:
         from numba import njit
@@ -77,11 +67,6 @@ def _get_numba():
 def has_numba():
     """Return True if Numba is importable."""
     return _get_numba()[0] is not None
-
-
-def has_jax():
-    """Return True if JAX is importable."""
-    return _get_jax()[0] is not None
 
 
 def _use_jax_opt():
@@ -622,13 +607,19 @@ def _get_predict_rmtb_jax_fn(order_tuple, ncp_tuple, extrapolate):
         x_b = jnp.where(
             x_pt < lower_j, lower_j, jnp.where(x_pt > upper_j, upper_j, x_pt)
         )
+        is_outside = jnp.any(x_pt != x_b)
         if not extrapolate:
-            return eval_interior(x_b, coeff_nd, lower_j, upper_j, knots_tuple)
+            x_b_eval = jnp.where(is_outside, jax.lax.stop_gradient(x_b), x_b)
+            return eval_interior(x_b_eval, coeff_nd, lower_j, upper_j, knots_tuple)
         val_b = eval_interior(x_b, coeff_nd, lower_j, upper_j, knots_tuple)
-        jac_b = jax.jacfwd(eval_interior, argnums=0)(
-            x_b, coeff_nd, lower_j, upper_j, knots_tuple
-        )
-        return val_b + jac_b @ (x_pt - x_b)
+
+        def _eval_extrap():
+            jac_b = jax.jacfwd(eval_interior, argnums=0)(
+                x_b, coeff_nd, lower_j, upper_j, knots_tuple
+            )
+            return val_b + jac_b @ (x_pt - x_b)
+
+        return jax.lax.cond(is_outside, _eval_extrap, lambda: val_b)
 
     return jax.jit(jax.vmap(eval_single, in_axes=(0, None, None, None, None)))
 
@@ -675,10 +666,7 @@ def predict_rmtb_jax(
     ny = coeff_arr.shape[1]
     coeff_nd = coeff_arr.reshape(ncp_tuple + (ny,))
 
-    x_j = jnp.asarray(x, dtype=dtype)
-    squeeze_x = x_j.ndim == 1
-    if squeeze_x:
-        x_j = x_j[None, :]
+    x_j, squeeze_x = _prepare_jax_inputs(jnp, x, len(order_tuple), dtype)
 
     fn = _get_predict_rmtb_jax_fn(order_tuple, ncp_tuple, bool(extrapolate))
     y = fn(x_j, coeff_nd, lower_j, upper_j, knots_tuple)
@@ -745,11 +733,17 @@ def _get_predict_rmtc_jax_fn(nelem_tuple, nterm_tuple, extrapolate):
                 val = jnp.tensordot(p_d, val, axes=(0, 0))
             return val
 
+        is_outside = jnp.any(x_pt != x_b)
         if not extrapolate:
-            return eval_in_elem(x_b)
+            x_b_eval = jnp.where(is_outside, jax.lax.stop_gradient(x_b), x_b)
+            return eval_in_elem(x_b_eval)
         val_b = eval_in_elem(x_b)
-        jac_b = jax.jacfwd(eval_in_elem)(x_b)
-        return val_b + jac_b @ (x_pt - x_b)
+
+        def _eval_extrap():
+            jac_b = jax.jacfwd(eval_in_elem)(x_b)
+            return val_b + jac_b @ (x_pt - x_b)
+
+        return jax.lax.cond(is_outside, _eval_extrap, lambda: val_b)
 
     return jax.jit(jax.vmap(eval_single, in_axes=(0, None, None, None)))
 
@@ -797,10 +791,7 @@ def predict_rmtc_jax(
     ny = coeff_arr.shape[1]
     coeff_nd = coeff_arr.reshape((nelem, nterm, ny))
 
-    x_j = jnp.asarray(x, dtype=dtype)
-    squeeze_x = x_j.ndim == 1
-    if squeeze_x:
-        x_j = x_j[None, :]
+    x_j, squeeze_x = _prepare_jax_inputs(jnp, x, len(nelem_tuple), dtype)
 
     fn = _get_predict_rmtc_jax_fn(nelem_tuple, nterm_tuple, bool(extrapolate))
     y = fn(x_j, coeff_nd, lower_j, upper_j)

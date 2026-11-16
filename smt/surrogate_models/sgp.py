@@ -102,6 +102,7 @@ class SGP(KRG):
         supports["variances"] = True
         supports["variance_derivatives"] = True
         supports["x_hierarchy"] = False
+        supports["jax"] = False
 
         self.Z = None
         self.woodbury_data = {"vec": None, "inv": None}

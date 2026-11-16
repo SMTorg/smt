@@ -86,6 +86,7 @@ class KPLS(KrgBased):
             types=list,
             desc="Number of components for PLS categorical kernel",
         )
+        self.supports["jax"] = True
 
     def _compute_pls(self, X, y):
         _pls = pls(self.options["n_comp"])

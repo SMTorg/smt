@@ -17,11 +17,17 @@ Engines
 The public model APIs (options, outputs, shapes) are unchanged.
 """
 
-import contextlib
 import os
 
 import numpy as np
 from scipy.spatial.distance import cdist
+
+from smt.utils.checks import (
+    _enable_jax_x64 as _enable_x64,
+    _get_jax,
+    _prepare_jax_inputs,
+    has_jax,
+)
 
 
 def _parse_bool_env(name, default=0):
@@ -56,30 +62,6 @@ def _get_numba():
 def has_numba():
     """Return True if Numba is importable."""
     return _get_numba()[0] is not None
-
-
-def _get_jax():
-    try:
-        import jax
-        import jax.numpy as jnp
-    except ImportError:
-        return None, None
-    return jax, jnp
-
-
-def has_jax():
-    """Return True if JAX is importable."""
-    return _get_jax()[0] is not None
-
-
-def _enable_x64(jax):
-    """Return a context manager temporarily enabling JAX 64-bit precision."""
-    if bool(jax.config.jax_enable_x64):
-        return contextlib.nullcontext()
-    enable = getattr(jax, "enable_x64", None)
-    if enable is None:
-        enable = jax.experimental.enable_x64
-    return enable(True)
 
 
 def _resolve_backend(_backend=None):
@@ -375,15 +357,6 @@ def _idw_jax(x, xt, p, kx):
         else:
             res = derivs_jit(x_j, xt_j, p, int(kx))
         return np.asarray(res, dtype=float)
-
-
-def _prepare_jax_inputs(jnp, x, nx, dtype):
-    x_in = jnp.asarray(x, dtype=dtype)
-    is_scalar = x_in.ndim <= 1
-    x_arr = jnp.atleast_2d(x_in)
-    if x_arr.shape[-1] != nx:
-        raise ValueError(f"Expected input with {nx} features, got shape {x_in.shape}.")
-    return x_arr, is_scalar
 
 
 def make_idw_jax_predictor(xt, yt, p):
