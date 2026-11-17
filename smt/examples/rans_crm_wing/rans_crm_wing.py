@@ -451,3 +451,276 @@ def plot_rans_crm_wing(xt, yt, limits, interp):
     axs[2, 1].set_title("CL")
 
     plt.show()
+
+
+def plot_rans_crm_wing_uq(xt, yt, limits, interp):
+    """Like `plot_rans_crm_wing`, but for a surrogate that also exposes
+    `predict_variances` (e.g. `RMTBUQ`): shows a shaded +/-2 posterior
+    standard-deviation band around each mean curve, alongside the training
+    data it was fit to."""
+    import matplotlib
+    import numpy as np
+
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+
+    rad2deg = 180.0 / np.pi
+
+    num = 500
+
+    x = np.zeros((num, 2))
+    colors = ["b", "g", "r", "c", "m", "k", "y"]
+
+    fig, axs = plt.subplots(2, 2, figsize=(15, 10))
+
+    # -----------------------------------------------------------------------------
+
+    mach_numbers = [0.45, 0.68, 0.80, 0.86]
+
+    alpha_sweep = np.linspace(0.0, 8.0, num)
+
+    for ind, mach in enumerate(mach_numbers):
+        x[:, 0] = alpha_sweep / rad2deg
+        x[:, 1] = mach
+        mean = interp.predict_values(x)
+        std = np.sqrt(interp.predict_variances(x))
+        CD, CD_std = mean[:, 0], std[:, 0]
+        CL, CL_std = mean[:, 1], std[:, 1]
+        label = "M={}".format(mach)
+
+        mask = np.abs(xt[:, 1] - mach) < 1e-10
+        axs[0, 0].plot(xt[mask, 0] * rad2deg, yt[mask, 0], "o" + colors[ind])
+        axs[0, 0].plot(alpha_sweep, CD, colors[ind], label=label)
+        axs[0, 0].fill_between(
+            alpha_sweep, CD - 2 * CD_std, CD + 2 * CD_std, color=colors[ind], alpha=0.2
+        )
+
+        axs[0, 1].plot(xt[mask, 0] * rad2deg, yt[mask, 1], "o" + colors[ind])
+        axs[0, 1].plot(alpha_sweep, CL, colors[ind], label=label)
+        axs[0, 1].fill_between(
+            alpha_sweep, CL - 2 * CL_std, CL + 2 * CL_std, color=colors[ind], alpha=0.2
+        )
+
+    data_proxy = plt.Line2D(
+        [], [], color="k", marker="o", linestyle="", label="training data"
+    )
+    axs[0, 0].set(xlabel="alpha (deg)", ylabel="CD")
+    axs[0, 0].legend(handles=[*axs[0, 0].get_legend_handles_labels()[0], data_proxy])
+    axs[0, 0].set_title("CD +/- 2 posterior std, by Mach number")
+
+    axs[0, 1].set(xlabel="alpha (deg)", ylabel="CL")
+    axs[0, 1].legend(handles=[*axs[0, 1].get_legend_handles_labels()[0], data_proxy])
+    axs[0, 1].set_title("CL +/- 2 posterior std, by Mach number")
+
+    # -----------------------------------------------------------------------------
+
+    alphas = [2.0, 4.0, 6.0]
+
+    mach_sweep = np.linspace(0.45, 0.86, num)
+
+    for ind, alpha in enumerate(alphas):
+        x[:, 0] = alpha / rad2deg
+        x[:, 1] = mach_sweep
+        mean = interp.predict_values(x)
+        std = np.sqrt(interp.predict_variances(x))
+        CD, CD_std = mean[:, 0], std[:, 0]
+        CL, CL_std = mean[:, 1], std[:, 1]
+        label = "alpha={}".format(alpha)
+
+        axs[1, 0].plot(mach_sweep, CD, colors[ind], label=label)
+        axs[1, 0].fill_between(
+            mach_sweep, CD - 2 * CD_std, CD + 2 * CD_std, color=colors[ind], alpha=0.2
+        )
+        axs[1, 1].plot(mach_sweep, CL, colors[ind], label=label)
+        axs[1, 1].fill_between(
+            mach_sweep, CL - 2 * CL_std, CL + 2 * CL_std, color=colors[ind], alpha=0.2
+        )
+
+    axs[1, 0].set(xlabel="Mach number", ylabel="CD")
+    axs[1, 0].legend()
+    axs[1, 0].set_title("CD +/- 2 posterior std, by alpha")
+
+    axs[1, 1].set(xlabel="Mach number", ylabel="CL")
+    axs[1, 1].legend()
+    axs[1, 1].set_title("CL +/- 2 posterior std, by alpha")
+
+    plt.show()
+
+
+def plot_rans_crm_wing_uq_maps(xt, yt, limits, interp):
+    """2-D (alpha, mach) response maps for a surrogate that also exposes
+    `predict_variances` (e.g. `RMTBUQ`): the same mean contour/pcolormesh
+    maps `plot_rans_crm_wing` draws for `cd`/`cl`, plus a std-dev map on
+    the same footprint for each output -- the uncertainty surface plain
+    `RMTB`'s own example has no way to show."""
+    import numpy as np
+    import matplotlib.pyplot as plt
+
+    rad2deg = 180.0 / np.pi
+    num_a = 90
+    num_M = 90
+
+    ga, gm = np.meshgrid(
+        np.linspace(0.0, 8.0, num_a), np.linspace(0.45, 0.86, num_M), indexing="ij"
+    )
+    xq = np.column_stack([ga.ravel() / rad2deg, gm.ravel()])
+
+    mean = interp.predict_values(xq)
+    std = np.sqrt(np.clip(interp.predict_variances(xq), 0.0, None))
+    mean_cd = mean[:, 0].reshape(ga.shape)
+    mean_cl = mean[:, 1].reshape(ga.shape)
+    std_cd = std[:, 0].reshape(ga.shape)
+    std_cl = std[:, 1].reshape(ga.shape)
+
+    fig, axs = plt.subplots(2, 2, figsize=(13, 10), constrained_layout=True)
+
+    for ax, Z, lbl in zip(axs[0], [mean_cd, mean_cl], ["CD", "CL"]):
+        ax.plot(xt[:, 1], xt[:, 0] * rad2deg, "ko", ms=4)
+        ax.contour(gm, ga, Z, 20, colors="k", linewidths=0.4)
+        pcm = ax.pcolormesh(gm, ga, Z, cmap="rainbow", shading="auto")
+        fig.colorbar(pcm, ax=ax)
+        ax.set(xlabel="Mach number", ylabel="alpha (deg)", title=f"{lbl}: mean")
+
+    for ax, Z, lbl in zip(axs[1], [std_cd, std_cl], ["CD", "CL"]):
+        ax.plot(xt[:, 1], xt[:, 0] * rad2deg, "wo", mec="k", ms=4)
+        pcm = ax.pcolormesh(gm, ga, Z, cmap="viridis", shading="auto")
+        fig.colorbar(pcm, ax=ax)
+        ax.set(xlabel="Mach number", ylabel="alpha (deg)", title=f"{lbl}: std-dev")
+
+    plt.show()
+
+
+def plot_rans_crm_wing_uq_combined(xt, yt, limits, interp):
+    """Single figure: the four 1-D alpha/mach sweeps (with +/-2 posterior
+    std bands) on the left, the four 2-D (alpha, mach) response maps --
+    `cd`/`cl` mean and `cd`/`cl` std-dev -- on the right. The std-dev maps
+    use a log-scaled, high-contrast colormap (`inferno`): posterior std
+    here spans ~2-3 orders of magnitude (near-zero on a sampled Mach
+    level, much larger between levels -- see Test 1c/1d in this
+    project's own validation notebook), which a linear scale mostly hides."""
+    import numpy as np
+    import matplotlib.pyplot as plt
+    from matplotlib.colors import LogNorm
+
+    rad2deg = 180.0 / np.pi
+    colors = ["b", "g", "r", "c", "m", "k", "y"]
+
+    fig = plt.figure(figsize=(20, 9), constrained_layout=True)
+    gs = fig.add_gridspec(2, 4)
+    sweep_axs = np.array([[fig.add_subplot(gs[r, c]) for c in (0, 1)] for r in (0, 1)])
+    map_axs = np.array([[fig.add_subplot(gs[r, c]) for c in (2, 3)] for r in (0, 1)])
+
+    # --- left: 1-D sweeps (same data/logic as plot_rans_crm_wing_uq) ---
+    num = 500
+    x = np.zeros((num, 2))
+
+    mach_numbers = [0.45, 0.68, 0.80, 0.86]
+    alpha_sweep = np.linspace(0.0, 8.0, num)
+    for ind, mach in enumerate(mach_numbers):
+        x[:, 0] = alpha_sweep / rad2deg
+        x[:, 1] = mach
+        mean = interp.predict_values(x)
+        std = np.sqrt(np.clip(interp.predict_variances(x), 0.0, None))
+        CD, CD_std = mean[:, 0], std[:, 0]
+        CL, CL_std = mean[:, 1], std[:, 1]
+        label = "M={}".format(mach)
+
+        mask = np.abs(xt[:, 1] - mach) < 1e-10
+        sweep_axs[0, 0].plot(xt[mask, 0] * rad2deg, yt[mask, 0], "o" + colors[ind])
+        sweep_axs[0, 0].plot(alpha_sweep, CD, colors[ind], label=label)
+        sweep_axs[0, 0].fill_between(
+            alpha_sweep, CD - 2 * CD_std, CD + 2 * CD_std, color=colors[ind], alpha=0.2
+        )
+        sweep_axs[0, 1].plot(xt[mask, 0] * rad2deg, yt[mask, 1], "o" + colors[ind])
+        sweep_axs[0, 1].plot(alpha_sweep, CL, colors[ind], label=label)
+        sweep_axs[0, 1].fill_between(
+            alpha_sweep, CL - 2 * CL_std, CL + 2 * CL_std, color=colors[ind], alpha=0.2
+        )
+
+    data_proxy = plt.Line2D(
+        [], [], color="k", marker="o", linestyle="", label="training data"
+    )
+    sweep_axs[0, 0].set(
+        xlabel="alpha (deg)", ylabel="CD", title="CD +/- 2 std, by Mach"
+    )
+    sweep_axs[0, 0].legend(
+        handles=[*sweep_axs[0, 0].get_legend_handles_labels()[0], data_proxy],
+        fontsize=8,
+    )
+    sweep_axs[0, 1].set(
+        xlabel="alpha (deg)", ylabel="CL", title="CL +/- 2 std, by Mach"
+    )
+    sweep_axs[0, 1].legend(
+        handles=[*sweep_axs[0, 1].get_legend_handles_labels()[0], data_proxy],
+        fontsize=8,
+    )
+
+    alphas = [2.0, 4.0, 6.0]
+    mach_sweep = np.linspace(0.45, 0.86, num)
+    for ind, alpha in enumerate(alphas):
+        x[:, 0] = alpha / rad2deg
+        x[:, 1] = mach_sweep
+        mean = interp.predict_values(x)
+        std = np.sqrt(np.clip(interp.predict_variances(x), 0.0, None))
+        CD, CD_std = mean[:, 0], std[:, 0]
+        CL, CL_std = mean[:, 1], std[:, 1]
+        label = "alpha={}".format(alpha)
+
+        sweep_axs[1, 0].plot(mach_sweep, CD, colors[ind], label=label)
+        sweep_axs[1, 0].fill_between(
+            mach_sweep, CD - 2 * CD_std, CD + 2 * CD_std, color=colors[ind], alpha=0.2
+        )
+        sweep_axs[1, 1].plot(mach_sweep, CL, colors[ind], label=label)
+        sweep_axs[1, 1].fill_between(
+            mach_sweep, CL - 2 * CL_std, CL + 2 * CL_std, color=colors[ind], alpha=0.2
+        )
+
+    sweep_axs[1, 0].set(
+        xlabel="Mach number", ylabel="CD", title="CD +/- 2 std, by alpha"
+    )
+    sweep_axs[1, 0].legend(fontsize=8)
+    sweep_axs[1, 1].set(
+        xlabel="Mach number", ylabel="CL", title="CL +/- 2 std, by alpha"
+    )
+    sweep_axs[1, 1].legend(fontsize=8)
+
+    # --- right: 2-D maps (same data/logic as plot_rans_crm_wing_uq_maps) ---
+    num_a = 90
+    num_M = 90
+    ga, gm = np.meshgrid(
+        np.linspace(0.0, 8.0, num_a), np.linspace(0.45, 0.86, num_M), indexing="ij"
+    )
+    xq = np.column_stack([ga.ravel() / rad2deg, gm.ravel()])
+
+    mean = interp.predict_values(xq)
+    std = np.sqrt(np.clip(interp.predict_variances(xq), 0.0, None))
+    mean_cd = mean[:, 0].reshape(ga.shape)
+    mean_cl = mean[:, 1].reshape(ga.shape)
+    std_cd = std[:, 0].reshape(ga.shape)
+    std_cl = std[:, 1].reshape(ga.shape)
+
+    for ax, Z, lbl in zip(map_axs[0], [mean_cd, mean_cl], ["CD", "CL"]):
+        ax.plot(xt[:, 1], xt[:, 0] * rad2deg, "ko", ms=4)
+        ax.contour(gm, ga, Z, 20, colors="k", linewidths=0.4)
+        pcm = ax.pcolormesh(gm, ga, Z, cmap="rainbow", shading="auto")
+        fig.colorbar(pcm, ax=ax)
+        ax.set(xlabel="Mach number", ylabel="alpha (deg)", title=f"{lbl}: mean")
+
+    for ax, Z, lbl in zip(map_axs[1], [std_cd, std_cl], ["CD", "CL"]):
+        ax.plot(xt[:, 1], xt[:, 0] * rad2deg, "wo", mec="k", ms=4)
+        pcm = ax.pcolormesh(
+            gm,
+            ga,
+            Z,
+            cmap="inferno",
+            norm=LogNorm(vmin=Z.min(), vmax=Z.max()),
+            shading="auto",
+        )
+        fig.colorbar(pcm, ax=ax)
+        ax.set(
+            xlabel="Mach number",
+            ylabel="alpha (deg)",
+            title=f"{lbl}: std-dev (log scale)",
+        )
+
+    plt.show()
