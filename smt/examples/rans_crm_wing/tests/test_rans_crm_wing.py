@@ -20,10 +20,7 @@ class Test(unittest.TestCase):
         # just check import
         from smt.examples.rans_crm_wing import run_rans_crm_wing_rmtc  # noqa: F401
 
-    @unittest.skipIf(
-        NO_COMPILED or NO_MATPLOTLIB,
-        "C compilation failed or matplotlib not installed",
-    )
+    @unittest.skipIf(NO_MATPLOTLIB, "Matplotlib not installed")
     def test_rmtbuq(self):
         # just check import
         from smt.examples.rans_crm_wing import run_rans_crm_wing_rmtbuq  # noqa: F401

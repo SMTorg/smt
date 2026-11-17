@@ -11,6 +11,7 @@ from .sgp import SGP
 from .cckrg import CoopCompKRG
 from .rbfgen import RBFGen
 from .rmts import RMTS, RMTB, RMTC
+from .rmtb_uq import RMTBUQ
 
 from .krg_based import MixIntKernelType
 
@@ -39,6 +40,7 @@ __all__ = [
     "RMTS",
     "RMTC",
     "RMTB",
+    "RMTBUQ",
     "MixIntKernelType",
     "DesignSpace",
     "FloatVariable",
