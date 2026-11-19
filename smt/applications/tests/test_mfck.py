@@ -72,6 +72,14 @@ def toy_levels(x, level):
     )
 
 
+def sasena2002_hf(x):
+    return -np.sin(x) - np.exp(x / 100) + 10
+
+
+def sasena2002_lf(x):
+    return sasena_hf(x) + 0.3 + 0.03 * (x - 3) ** 2
+
+
 def build_untrained_model(
     n_levels=2,
     dim=1,
@@ -654,6 +662,70 @@ class TestMFCK(SMTestCase):
         np.testing.assert_allclose(
             np.asarray(covariances[-1]).ravel(), all_levels[:, -1], rtol=1e-10
         )
+
+    def test_level_covariances_match_variances(self):
+        """predict_level_covariances(X, i, i) must equal the level variances."""
+        x = np.linspace(0.0, 1.0, 17).reshape(-1, 1)
+        for kwargs in (
+            dict(eval_noise=False),
+            dict(eval_noise=True, noise0=[1e-3], opt_max_eval=60),
+        ):
+            sm = train_forrester(**kwargs)
+            last = sm.lvl - 1
+            variance = np.asarray(sm.predict_variances(x)).ravel()
+            cov = sm.predict_level_covariances(x)
+            self.assertEqual(cov.shape, (17, 1))
+            np.testing.assert_allclose(cov.ravel(), variance, rtol=1e-10)
+            np.testing.assert_allclose(
+                sm.predict_level_covariances(x, last, last).ravel(),
+                variance,
+                rtol=1e-10,
+            )
+            all_levels = sm.predict_variances_all_levels(x)
+            for lvl in range(sm.lvl):
+                np.testing.assert_allclose(
+                    sm.predict_level_covariances(x, lvl, lvl).ravel(),
+                    all_levels[:, lvl],
+                    rtol=1e-10,
+                )
+
+    def test_level_correlation_vanishes_at_sampled_points(self):
+        """
+        Posterior LF/HF correlation drops to 0 where either level is already
+        sampled, and stays high where neither is (Sasena 2002 test case).
+        """
+        def level_correlation(sm, x, eps=1e-8):
+            """corr(f_LF(x), f_HF(x)) | data; 0 where a variance is below eps."""
+            c00 = sm.predict_level_covariances(x, 0, 0).ravel()
+            c11 = sm.predict_level_covariances(x, 1, 1).ravel()
+            c10 = sm.predict_level_covariances(x, 1, 0).ravel()
+            ok = (c00 > eps) & (c11 > eps)
+            corr = np.zeros_like(c10)
+            corr[ok] = c10[ok] / np.sqrt(c00[ok] * c11[ok])
+            return corr
+
+        xt = [np.array([0.0, 2, 4, 6, 8, 10]), np.array([3.5, 6.5])]
+        sm = MFCK(
+            print_global=False,
+            hyper_opt="Cobyla",
+            n_start=3,
+            rho_bounds=[-10.0, 10.0],
+            sequential_opt=False,
+        )
+        sm.set_training_values(xt[0].reshape(-1, 1), sasena_lf(xt[0]).reshape(-1, 1), name=0)
+        sm.set_training_values(xt[1].reshape(-1, 1), sasena_hf(xt[1]).reshape(-1, 1))
+        with Silence():
+            sm.train()
+
+        # HF-sampled (3.5, 6.5) and LF-sampled (0, 2, 4, 6, 8, 10) locations
+        x_hf = xt[1].reshape(-1, 1)
+        x_lf = xt[0].reshape(-1, 1)
+        np.testing.assert_allclose(level_correlation(sm, x_hf), 0.0, atol=1e-3)
+        np.testing.assert_allclose(level_correlation(sm, x_lf), 0.0, atol=1e-3)
+
+        # control: unsampled locations remain strongly correlated
+        x_free = np.array([[1.0], [5.0]])
+        self.assertTrue(np.all(level_correlation(sm, x_free) > 0.9))
 
     def test_single_fidelity_consistency(self):
         """One level: training and prediction use the same normalisation."""
