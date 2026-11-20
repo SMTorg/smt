@@ -1077,7 +1077,6 @@ class MFCK(KrgBased):
 
         return self.y_std * np.dot(beta1.T, alpha1) + self.y_mean
 
-
     def _latent_level_cov(
         self, X_norm: np.ndarray, lvli: int, lvlj: int, L: np.ndarray
     ) -> np.ndarray:
@@ -1106,9 +1105,7 @@ class MFCK(KrgBased):
         """
         kp = self._get_kernel_params()
         # compute_diag_K requires its first level >= second; covariance is symmetric
-        k_xx = self.compute_diag_K(
-            X_norm, X_norm, max(lvli, lvlj), min(lvli, lvlj), kp
-        )
+        k_xx = self.compute_diag_K(X_norm, X_norm, max(lvli, lvlj), min(lvli, lvlj), kp)
 
         beta_i = solve_triangular(
             L, np.vstack(self._compute_cross_covariance_list(X_norm, lvli)), lower=True
@@ -1117,7 +1114,9 @@ class MFCK(KrgBased):
             beta_j = beta_i  # avoid a second triangular solve
         else:
             beta_j = solve_triangular(
-                L, np.vstack(self._compute_cross_covariance_list(X_norm, lvlj)), lower=True
+                L,
+                np.vstack(self._compute_cross_covariance_list(X_norm, lvlj)),
+                lower=True,
             )
         return k_xx - np.sum(beta_i * beta_j, axis=0)
 
@@ -1165,10 +1164,10 @@ class MFCK(KrgBased):
 
         same = lvli == lvlj
         if include_noise and same and noises is not None:
-            cov = cov + noises[lvli]            # normalized units, as before
+            cov = cov + noises[lvli]  # normalized units, as before
         cov = cov * self.y_std**2
         if include_noise and same and noise_pred is not None:
-            cov = cov.reshape(-1, 1) + noise_pred[lvli]   # original units, as before
+            cov = cov.reshape(-1, 1) + noise_pred[lvli]  # original units, as before
         return cov.reshape(-1, 1)
 
     def predict_variances(

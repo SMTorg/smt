@@ -77,7 +77,7 @@ def sasena2002_hf(x):
 
 
 def sasena2002_lf(x):
-    return sasena_hf(x) + 0.3 + 0.03 * (x - 3) ** 2
+    return sasena2002_hf(x) + 0.3 + 0.03 * (x - 3) ** 2
 
 
 def build_untrained_model(
@@ -694,6 +694,7 @@ class TestMFCK(SMTestCase):
         Posterior LF/HF correlation drops to 0 where either level is already
         sampled, and stays high where neither is (Sasena 2002 test case).
         """
+
         def level_correlation(sm, x, eps=1e-8):
             """corr(f_LF(x), f_HF(x)) | data; 0 where a variance is below eps."""
             c00 = sm.predict_level_covariances(x, 0, 0).ravel()
@@ -712,8 +713,12 @@ class TestMFCK(SMTestCase):
             rho_bounds=[-10.0, 10.0],
             sequential_opt=False,
         )
-        sm.set_training_values(xt[0].reshape(-1, 1), sasena_lf(xt[0]).reshape(-1, 1), name=0)
-        sm.set_training_values(xt[1].reshape(-1, 1), sasena_hf(xt[1]).reshape(-1, 1))
+        sm.set_training_values(
+            xt[0].reshape(-1, 1), sasena2002_lf(xt[0]).reshape(-1, 1), name=0
+        )
+        sm.set_training_values(
+            xt[1].reshape(-1, 1), sasena2002_hf(xt[1]).reshape(-1, 1)
+        )
         with Silence():
             sm.train()
 
