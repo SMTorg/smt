@@ -705,6 +705,14 @@ class TestMFCK(SMTestCase):
                 # guard against a vacuous pass (e.g. both calls returning zeros)
                 self.assertGreater(np.max(np.abs(c01)), 1e-6)
 
+    def test_level_covariances_invalid_levels(self):
+        """Out-of-range (including negative) level indices raise a ValueError."""
+        sm = train_forrester(eval_noise=False)
+        x = np.array([[0.5]])
+        for lvli, lvlj in ((-1, 0), (0, -1), (0, sm.lvl), (sm.lvl, sm.lvl)):
+            with self.assertRaises(ValueError):
+                sm.predict_level_covariances(x, lvli, lvlj)
+
     def test_level_correlation_vanishes_at_sampled_points(self):
         """
         Posterior LF/HF correlation drops to 0 where either level is already

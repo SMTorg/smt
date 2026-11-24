@@ -1155,6 +1155,11 @@ class MFCK(KrgBased):
         """
         lvli = self.lvl - 1 if lvli is None else lvli
         lvlj = self.lvl - 1 if lvlj is None else lvlj
+        for name, lvl in (("lvli", lvli), ("lvlj", lvlj)):
+            if not 0 <= lvl < self.lvl:
+                raise ValueError(
+                    f"{name}={lvl} is out of range; expected 0 <= {name} < {self.lvl}"
+                )
 
         noise_pred = self._predicted_noise_or_none(X)
         Xn = (X - self.X_offset) / self.X_scale
