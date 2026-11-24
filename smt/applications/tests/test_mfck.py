@@ -689,6 +689,22 @@ class TestMFCK(SMTestCase):
                     rtol=1e-10,
                 )
 
+    def test_level_covariances_symmetric(self):
+        """cov(i, j) == cov(j, i): swapping the two levels must not change the result."""
+        x = np.linspace(0.0, 1.0, 17).reshape(-1, 1)
+        for kwargs in (
+            dict(eval_noise=False),
+            dict(eval_noise=True, noise0=[1e-3], opt_max_eval=60),
+        ):
+            sm = train_forrester(**kwargs)
+            for include_noise in (True, False):
+                c01 = sm.predict_level_covariances(x, 0, 1, include_noise=include_noise)
+                c10 = sm.predict_level_covariances(x, 1, 0, include_noise=include_noise)
+                self.assertEqual(c01.shape, (17, 1))
+                np.testing.assert_allclose(c01, c10, rtol=1e-10, atol=1e-14)
+                # guard against a vacuous pass (e.g. both calls returning zeros)
+                self.assertGreater(np.max(np.abs(c01)), 1e-6)
+
     def test_level_correlation_vanishes_at_sampled_points(self):
         """
         Posterior LF/HF correlation drops to 0 where either level is already
