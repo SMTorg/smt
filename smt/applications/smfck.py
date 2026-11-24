@@ -365,3 +365,10 @@ class SMFCK(MFCK):
         """Conditional variances of all the fidelity levels (sparse model)."""
         _, covariances = self.predict_all_levels(x)
         return np.hstack([np.asarray(c).reshape(-1, 1) for c in covariances])
+
+    def predict_level_covariances(self, X, lvli=None, lvlj=None, include_noise=True):
+        raise NotImplementedError(
+            "SMFCK: the posterior cross-level covariance is not implemented for "
+            "the sparse (FITC/VFE) model; use MFCK, or predict_variances / "
+            "predict_variances_all_levels for per-level variances."
+        )
