@@ -1152,6 +1152,16 @@ class MFCK(KrgBased):
         covariance : np.ndarray [n_evals, 1]
             Posterior covariance between levels lvli and lvlj, in the original
             (unnormalized) output scale.
+
+        Notes
+        -----
+        When lvli == lvlj, the latent variance is clamped at 0 before the noise is
+        added, so that roundoff does not produce tiny negative variances (of the
+        order of -1e-16) near noiseless points, which would make
+        ``np.sqrt(c_ii * c_jj)`` return NaN. Where this triggers, the result can
+        differ from ``predict_variances`` by that roundoff amount only. The
+        covariance between two different levels is not clamped, since it can
+        legitimately be negative.
         """
         lvli = self.lvl - 1 if lvli is None else lvli
         lvlj = self.lvl - 1 if lvlj is None else lvlj
@@ -1169,12 +1179,15 @@ class MFCK(KrgBased):
         _, L, noises = self._compute_K_and_cholesky()
 
         cov = self._latent_level_cov(Xn, lvli, lvlj, L)
+        if same_lvl:
+            cov = np.maximum(cov, 0.0)  # clamp variance
 
         if include_noise and same_lvl and noises is not None:
             cov = cov + noises[lvli]  # normalized units, as before
         cov = cov * self.y_std**2
         if include_noise and same_lvl and noise_pred is not None:
             cov = cov.reshape(-1, 1) + noise_pred[lvli]  # original units, as before
+
         return cov.reshape(-1, 1)
 
     def predict_variances(
