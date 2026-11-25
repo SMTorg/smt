@@ -1161,17 +1161,19 @@ class MFCK(KrgBased):
                     f"{name}={lvl} is out of range; expected 0 <= {name} < {self.lvl}"
                 )
 
-        noise_pred = self._predicted_noise_or_none(X)
+        same_lvl = lvli == lvlj
+        noise_pred = (
+            self._predicted_noise_or_none(X) if include_noise and same_lvl else None
+        )
         Xn = (X - self.X_offset) / self.X_scale
         _, L, noises = self._compute_K_and_cholesky()
 
         cov = self._latent_level_cov(Xn, lvli, lvlj, L)
 
-        same = lvli == lvlj
-        if include_noise and same and noises is not None:
+        if include_noise and same_lvl and noises is not None:
             cov = cov + noises[lvli]  # normalized units, as before
         cov = cov * self.y_std**2
-        if include_noise and same and noise_pred is not None:
+        if include_noise and same_lvl and noise_pred is not None:
             cov = cov.reshape(-1, 1) + noise_pred[lvli]  # original units, as before
         return cov.reshape(-1, 1)
 

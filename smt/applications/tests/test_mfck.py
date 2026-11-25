@@ -705,6 +705,39 @@ class TestMFCK(SMTestCase):
                 # guard against a vacuous pass (e.g. both calls returning zeros)
                 self.assertGreater(np.max(np.abs(c01)), 1e-6)
 
+    def test_level_covariances_include_noise(self):
+        """include_noise adds exactly the level's noise, and only when lvli == lvlj."""
+        x = np.linspace(0.0, 1.0, 17).reshape(-1, 1)
+        eval_sm = train_forrester(eval_noise=True, noise0=[1e-3], opt_max_eval=60)
+        het_sm, _ = train_het_noise(predict_with_noise=True, opt_max_eval=40)
+
+        def expected_noise(sm, lvl):
+            if sm.options["use_het_noise"]:
+                return sm.predict_noise(x, level=lvl)  # original units, per point
+            noise = np.ravel(sm.optimal_theta[-sm.lvl :][lvl])[0]  # normalized units
+            return float(noise * np.ravel(sm.y_std)[0] ** 2)  # constant, original units
+
+        for sm in (eval_sm, het_sm):
+            for lvl in range(sm.lvl):
+                with_noise = sm.predict_level_covariances(
+                    x, lvl, lvl, include_noise=True
+                )
+                latent = sm.predict_level_covariances(x, lvl, lvl, include_noise=False)
+                self.assertTrue(np.all(with_noise > latent))
+                np.testing.assert_allclose(
+                    (with_noise - latent).ravel(),
+                    expected_noise(sm, lvl),
+                    rtol=1e-8,
+                    atol=1e-12,
+                )
+            # noise is independent across levels: cross-level covariance is unaffected
+            np.testing.assert_allclose(
+                sm.predict_level_covariances(x, 0, 1, include_noise=True),
+                sm.predict_level_covariances(x, 0, 1, include_noise=False),
+                rtol=1e-12,
+                atol=1e-14,
+            )
+
     def test_level_covariances_invalid_levels(self):
         """Out-of-range (including negative) level indices raise a ValueError."""
         sm = train_forrester(eval_noise=False)
