@@ -18,6 +18,7 @@ Unit tests for the MFCK application, covering the original behaviour plus:
   * the prediction API (shapes, variance scaling, single fidelity level).
 """
 
+import itertools
 import unittest
 
 import numpy as np
@@ -58,6 +59,10 @@ OPT_BUDGET_SLACK = 5
 # ----------------------------------------------------------------------
 def forrester_hf(x):
     return ((x * 6 - 2) ** 2) * np.sin((x * 6 - 2) * 2)
+
+
+def forrester_mf(x):
+    return ((5.5 * x - 2.5) ** 2.0) * np.sin(12.0 * x - 4.0)
 
 
 def forrester_lf(x):
@@ -184,6 +189,24 @@ def train_forrester(n_hf=8, n_lf=16, seed=1380, **options):
     options.setdefault("print_global", False)
     model = MFCK(**options)
     model.set_training_values(x_lf, forrester_lf(x_lf), name=0)
+    model.set_training_values(x_hf, forrester_hf(x_hf))
+    with Silence():
+        model.train()
+    return model
+
+
+def train_forrester_3levels(**options):
+    """A small trained three-fidelity model (LF -> MF -> HF)."""
+    x_lf = np.linspace(0.0, 1.0, 11).reshape(-1, 1)
+    x_mf = np.linspace(0.0, 1.0, 7).reshape(-1, 1)
+    x_hf = np.array([[0.1], [0.4], [0.7], [0.95]])
+    options.setdefault("theta0", [1.0])
+    options.setdefault("n_start", 1)
+    options.setdefault("opt_max_eval", 60)
+    options.setdefault("print_global", False)
+    model = MFCK(**options)
+    model.set_training_values(x_lf, forrester_lf(x_lf), name=0)
+    model.set_training_values(x_mf, forrester_mf(x_mf), name=1)
     model.set_training_values(x_hf, forrester_hf(x_hf))
     with Silence():
         model.train()
@@ -745,6 +768,61 @@ class TestMFCK(SMTestCase):
         for lvli, lvlj in ((-1, 0), (0, -1), (0, sm.lvl), (sm.lvl, sm.lvl)):
             with self.assertRaises(ValueError):
                 sm.predict_level_covariances(x, lvli, lvlj)
+
+    def test_level_covariances_three_levels(self):
+        """All level pairs match k_ij(x,x) - k_i(x,X) K^-1 k_j(X,x) and are symmetric."""
+        sm = train_forrester_3levels()
+        x = np.linspace(0.02, 0.98, 13).reshape(-1, 1)
+        xn = (x - sm.X_offset) / sm.X_scale
+        kp = sm._get_kernel_params()
+        n = sum(len(a) for a in sm.X_norma_all)
+        K = sm.compute_blockwise_K(sm.X_norma_all, sm.X_norma_all, kp)
+        K = K + sm.options["nugget"] * np.eye(n)
+        cross = [
+            np.vstack(sm._compute_cross_covariance_list(xn, lvl))
+            for lvl in range(sm.lvl)
+        ]
+        for i, j in itertools.product(range(sm.lvl), repeat=2):
+            prior = np.diag(sm.compute_cross_K(xn, xn, max(i, j), min(i, j), kp))
+            expected = (
+                prior - np.sum(cross[i] * np.linalg.solve(K, cross[j]), axis=0)
+            ) * sm.y_std**2
+            got = sm.predict_level_covariances(x, i, j, include_noise=False)
+            np.testing.assert_allclose(got.ravel(), expected, rtol=1e-6, atol=1e-10)
+
+        for i, j in itertools.combinations(range(sm.lvl), 2):
+            np.testing.assert_allclose(
+                sm.predict_level_covariances(x, i, j),
+                sm.predict_level_covariances(x, j, i),
+                rtol=1e-12,
+                atol=1e-14,
+            )
+        with self.assertRaises(ValueError):
+            sm.predict_level_covariances(x, 0, sm.lvl)
+
+    def test_level_covariances_negative_rho(self):
+        """cov_ij = eta_i * eta_j * Var(f_0 | data) when the discrepancies vanish."""
+        sm = train_forrester_3levels()
+        rho1, rho2 = -0.8, -1.2
+        # hyperparameter layout (nx=1): [s0, l0, s1, l1, rho1, s2, l2, rho2];
+        # tiny discrepancy variances and short length scales, so that the LF
+        # level stays uncertain between samples
+        sm.optimal_theta = np.array([1.0, 50.0, 1e-8, 50.0, rho1, 1e-8, 50.0, rho2])
+        eta = [1.0, rho1, rho1 * rho2]
+        x = np.linspace(0.03, 0.97, 25).reshape(-1, 1)
+
+        c00 = sm.predict_level_covariances(x, 0, 0, include_noise=False).ravel()
+        self.assertGreater(np.max(c00), 1.0)  # guard against a vacuous pass
+        for i, j in ((1, 0), (2, 1), (2, 0)):
+            cov = sm.predict_level_covariances(x, i, j, include_noise=False).ravel()
+            np.testing.assert_allclose(
+                cov, eta[i] * eta[j] * c00, rtol=1e-5, atol=1e-6 * np.max(c00)
+            )
+        # rho1 < 0 and rho2 < 0: cov(1, 0) < 0, cov(2, 1) < 0, cov(2, 0) > 0
+        for i, j, sign in ((1, 0, -1), (2, 1, -1), (2, 0, +1)):
+            cov = sm.predict_level_covariances(x, i, j, include_noise=False).ravel()
+            self.assertTrue(np.all(sign * cov >= -1e-8))
+            self.assertGreater(np.max(sign * cov), 1.0)
 
     def test_level_correlation_vanishes_at_sampled_points(self):
         """
