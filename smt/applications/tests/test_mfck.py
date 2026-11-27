@@ -18,7 +18,9 @@ Unit tests for the MFCK application, covering the original behaviour plus:
   * the prediction API (shapes, variance scaling, single fidelity level).
 """
 
+import itertools
 import unittest
+from unittest import mock
 
 import numpy as np
 
@@ -60,6 +62,10 @@ def forrester_hf(x):
     return ((x * 6 - 2) ** 2) * np.sin((x * 6 - 2) * 2)
 
 
+def forrester_mf(x):
+    return ((5.5 * x - 2.5) ** 2.0) * np.sin(12.0 * x - 4.0)
+
+
 def forrester_lf(x):
     return 0.5 * forrester_hf(x) + (x - 0.5) * 10.0 - 5
 
@@ -70,6 +76,14 @@ def toy_levels(x, level):
     return (
         np.sin(3.0 * total) + 0.3 * level * total + 0.1 * level * np.cos(7.0 * x[:, :1])
     )
+
+
+def sasena2002_hf(x):
+    return -np.sin(x) - np.exp(x / 100) + 10
+
+
+def sasena2002_lf(x):
+    return sasena2002_hf(x) + 0.3 + 0.03 * (x - 3) ** 2
 
 
 def build_untrained_model(
@@ -176,6 +190,24 @@ def train_forrester(n_hf=8, n_lf=16, seed=1380, **options):
     options.setdefault("print_global", False)
     model = MFCK(**options)
     model.set_training_values(x_lf, forrester_lf(x_lf), name=0)
+    model.set_training_values(x_hf, forrester_hf(x_hf))
+    with Silence():
+        model.train()
+    return model
+
+
+def train_forrester_3levels(**options):
+    """A small trained three-fidelity model (LF -> MF -> HF)."""
+    x_lf = np.linspace(0.0, 1.0, 11).reshape(-1, 1)
+    x_mf = np.linspace(0.0, 1.0, 7).reshape(-1, 1)
+    x_hf = np.array([[0.1], [0.4], [0.7], [0.95]])
+    options.setdefault("theta0", [1.0])
+    options.setdefault("n_start", 1)
+    options.setdefault("opt_max_eval", 60)
+    options.setdefault("print_global", False)
+    model = MFCK(**options)
+    model.set_training_values(x_lf, forrester_lf(x_lf), name=0)
+    model.set_training_values(x_mf, forrester_mf(x_mf), name=1)
     model.set_training_values(x_hf, forrester_hf(x_hf))
     with Silence():
         model.train()
@@ -654,6 +686,214 @@ class TestMFCK(SMTestCase):
         np.testing.assert_allclose(
             np.asarray(covariances[-1]).ravel(), all_levels[:, -1], rtol=1e-10
         )
+
+    def test_level_covariances_match_variances(self):
+        """predict_level_covariances(X, i, i) must equal the level variances."""
+        x = np.linspace(0.0, 1.0, 17).reshape(-1, 1)
+        for kwargs in (
+            dict(eval_noise=False),
+            dict(eval_noise=True, noise0=[1e-3], opt_max_eval=60),
+        ):
+            sm = train_forrester(**kwargs)
+            last = sm.lvl - 1
+            variance = np.asarray(sm.predict_variances(x)).ravel()
+            cov = sm.predict_level_covariances(x)
+            self.assertEqual(cov.shape, (17, 1))
+            np.testing.assert_allclose(cov.ravel(), variance, rtol=1e-10)
+            np.testing.assert_allclose(
+                sm.predict_level_covariances(x, last, last).ravel(),
+                variance,
+                rtol=1e-10,
+            )
+            all_levels = sm.predict_variances_all_levels(x)
+            for lvl in range(sm.lvl):
+                np.testing.assert_allclose(
+                    sm.predict_level_covariances(x, lvl, lvl).ravel(),
+                    all_levels[:, lvl],
+                    rtol=1e-10,
+                )
+
+    def test_level_covariances_symmetric(self):
+        """cov(i, j) == cov(j, i): swapping the two levels must not change the result."""
+        x = np.linspace(0.0, 1.0, 17).reshape(-1, 1)
+        for kwargs in (
+            dict(eval_noise=False),
+            dict(eval_noise=True, noise0=[1e-3], opt_max_eval=60),
+        ):
+            sm = train_forrester(**kwargs)
+            for include_noise in (True, False):
+                c01 = sm.predict_level_covariances(x, 0, 1, include_noise=include_noise)
+                c10 = sm.predict_level_covariances(x, 1, 0, include_noise=include_noise)
+                self.assertEqual(c01.shape, (17, 1))
+                np.testing.assert_allclose(c01, c10, rtol=1e-10, atol=1e-14)
+                # guard against a vacuous pass (e.g. both calls returning zeros)
+                self.assertGreater(np.max(np.abs(c01)), 1e-6)
+
+    def test_level_covariances_include_noise(self):
+        """include_noise adds exactly the level's noise, and only when lvli == lvlj."""
+        x = np.linspace(0.0, 1.0, 17).reshape(-1, 1)
+        eval_sm = train_forrester(eval_noise=True, noise0=[1e-3], opt_max_eval=60)
+        het_sm, _ = train_het_noise(predict_with_noise=True, opt_max_eval=40)
+
+        def expected_noise(sm, lvl):
+            if sm.options["use_het_noise"]:
+                return sm.predict_noise(x, level=lvl)  # original units, per point
+            noise = np.ravel(sm.optimal_theta[-sm.lvl :][lvl])[0]  # normalized units
+            return float(noise * np.ravel(sm.y_std)[0] ** 2)  # constant, original units
+
+        for sm in (eval_sm, het_sm):
+            for lvl in range(sm.lvl):
+                with_noise = sm.predict_level_covariances(
+                    x, lvl, lvl, include_noise=True
+                )
+                latent = sm.predict_level_covariances(x, lvl, lvl, include_noise=False)
+                self.assertTrue(np.all(with_noise > latent))
+                np.testing.assert_allclose(
+                    (with_noise - latent).ravel(),
+                    expected_noise(sm, lvl),
+                    rtol=1e-8,
+                    atol=1e-12,
+                )
+            # noise is independent across levels: cross-level covariance is unaffected
+            np.testing.assert_allclose(
+                sm.predict_level_covariances(x, 0, 1, include_noise=True),
+                sm.predict_level_covariances(x, 0, 1, include_noise=False),
+                rtol=1e-12,
+                atol=1e-14,
+            )
+
+    def test_level_covariances_invalid_levels(self):
+        """Out-of-range (including negative) level indices raise a ValueError."""
+        sm = train_forrester(eval_noise=False)
+        x = np.array([[0.5]])
+        for lvli, lvlj in ((-1, 0), (0, -1), (-1, -1), (0, sm.lvl), (sm.lvl, sm.lvl)):
+            with self.assertRaises(ValueError):
+                sm.predict_level_covariances(x, lvli, lvlj)
+
+    def test_level_covariances_skip_unused_noise_prediction(self):
+        """The auxiliary noise model is only evaluated when its noise is added."""
+        sm, _ = train_het_noise(predict_with_noise=True, opt_max_eval=40)
+        x = np.linspace(0.0, 1.0, 5).reshape(-1, 1)
+        with mock.patch.object(
+            sm, "predict_noise_all_levels", wraps=sm.predict_noise_all_levels
+        ) as spy:
+            sm.predict_level_covariances(x, 0, 1)  # cross-level
+            sm.predict_level_covariances(x, 1, 0)  # cross-level, other order
+            sm.predict_level_covariances(x, 1, 1, include_noise=False)  # latent only
+            spy.assert_not_called()
+            sm.predict_level_covariances(x, 1, 1)  # noise is needed here
+            spy.assert_called_once()
+
+    def test_level_covariances_clamp_negative_variance(self):
+        """Roundoff-negative variances are clamped to 0; cross-level values are not."""
+        sm = train_forrester(eval_noise=False)
+        x = np.linspace(0.1, 0.9, 3).reshape(-1, 1)
+        negative = np.array([-1e-16, -3e-17, 2e-3])
+        with mock.patch.object(sm, "_latent_level_cov", return_value=negative.copy()):
+            diag = sm.predict_level_covariances(x, 1, 1, include_noise=False).ravel()
+        with mock.patch.object(sm, "_latent_level_cov", return_value=negative.copy()):
+            cross = sm.predict_level_covariances(x, 0, 1, include_noise=False).ravel()
+        self.assertTrue(np.all(diag >= 0.0))
+        self.assertEqual(diag[0], 0.0)
+        self.assertLess(cross[0], 0.0)  # cross-level covariances can be negative
+
+    def test_level_covariances_three_levels(self):
+        """All level pairs match k_ij(x,x) - k_i(x,X) K^-1 k_j(X,x) and are symmetric."""
+        sm = train_forrester_3levels()
+        x = np.linspace(0.02, 0.98, 13).reshape(-1, 1)
+        xn = (x - sm.X_offset) / sm.X_scale
+        kp = sm._get_kernel_params()
+        n = sum(len(a) for a in sm.X_norma_all)
+        K = sm.compute_blockwise_K(sm.X_norma_all, sm.X_norma_all, kp)
+        K = K + sm.options["nugget"] * np.eye(n)
+        cross = [
+            np.vstack(sm._compute_cross_covariance_list(xn, lvl))
+            for lvl in range(sm.lvl)
+        ]
+        for i, j in itertools.product(range(sm.lvl), repeat=2):
+            prior = np.diag(sm.compute_cross_K(xn, xn, max(i, j), min(i, j), kp))
+            expected = (
+                prior - np.sum(cross[i] * np.linalg.solve(K, cross[j]), axis=0)
+            ) * sm.y_std**2
+            got = sm.predict_level_covariances(x, i, j, include_noise=False)
+            np.testing.assert_allclose(got.ravel(), expected, rtol=1e-6, atol=1e-10)
+
+        for i, j in itertools.combinations(range(sm.lvl), 2):
+            np.testing.assert_allclose(
+                sm.predict_level_covariances(x, i, j),
+                sm.predict_level_covariances(x, j, i),
+                rtol=1e-12,
+                atol=1e-14,
+            )
+        with self.assertRaises(ValueError):
+            sm.predict_level_covariances(x, 0, sm.lvl)
+
+    def test_level_covariances_negative_rho(self):
+        """cov_ij = eta_i * eta_j * Var(f_0 | data) when the discrepancies vanish."""
+        sm = train_forrester_3levels()
+        rho1, rho2 = -0.8, -1.2
+        # hyperparameter layout (nx=1): [s0, l0, s1, l1, rho1, s2, l2, rho2];
+        # tiny discrepancy variances and short length scales, so that the LF
+        # level stays uncertain between samples
+        sm.optimal_theta = np.array([1.0, 50.0, 1e-8, 50.0, rho1, 1e-8, 50.0, rho2])
+        eta = [1.0, rho1, rho1 * rho2]
+        x = np.linspace(0.03, 0.97, 25).reshape(-1, 1)
+
+        c00 = sm.predict_level_covariances(x, 0, 0, include_noise=False).ravel()
+        self.assertGreater(np.max(c00), 1.0)  # guard against a vacuous pass
+        for i, j in ((1, 0), (2, 1), (2, 0)):
+            cov = sm.predict_level_covariances(x, i, j, include_noise=False).ravel()
+            np.testing.assert_allclose(
+                cov, eta[i] * eta[j] * c00, rtol=1e-5, atol=1e-6 * np.max(c00)
+            )
+        # rho1 < 0 and rho2 < 0: cov(1, 0) < 0, cov(2, 1) < 0, cov(2, 0) > 0
+        for i, j, sign in ((1, 0, -1), (2, 1, -1), (2, 0, +1)):
+            cov = sm.predict_level_covariances(x, i, j, include_noise=False).ravel()
+            self.assertTrue(np.all(sign * cov >= -1e-8))
+            self.assertGreater(np.max(sign * cov), 1.0)
+
+    def test_level_correlation_vanishes_at_sampled_points(self):
+        """
+        Posterior LF/HF correlation drops to 0 where either level is already
+        sampled, and stays high where neither is (Sasena 2002 test case).
+        """
+
+        def level_correlation(sm, x, eps=1e-8):
+            """corr(f_LF(x), f_HF(x)) | data; 0 where a variance is below eps."""
+            c00 = sm.predict_level_covariances(x, 0, 0).ravel()
+            c11 = sm.predict_level_covariances(x, 1, 1).ravel()
+            c10 = sm.predict_level_covariances(x, 1, 0).ravel()
+            ok = (c00 > eps) & (c11 > eps)
+            corr = np.zeros_like(c10)
+            corr[ok] = c10[ok] / np.sqrt(c00[ok] * c11[ok])
+            return corr
+
+        xt = [np.array([0.0, 2, 4, 6, 8, 10]), np.array([3.5, 6.5])]
+        sm = MFCK(
+            print_global=False,
+            hyper_opt="Cobyla",
+            n_start=3,
+            rho_bounds=[-10.0, 10.0],
+            sequential_opt=False,
+        )
+        sm.set_training_values(
+            xt[0].reshape(-1, 1), sasena2002_lf(xt[0]).reshape(-1, 1), name=0
+        )
+        sm.set_training_values(
+            xt[1].reshape(-1, 1), sasena2002_hf(xt[1]).reshape(-1, 1)
+        )
+        with Silence():
+            sm.train()
+
+        # HF-sampled (3.5, 6.5) and LF-sampled (0, 2, 4, 6, 8, 10) locations
+        x_hf = xt[1].reshape(-1, 1)
+        x_lf = xt[0].reshape(-1, 1)
+        np.testing.assert_allclose(level_correlation(sm, x_hf), 0.0, atol=1e-3)
+        np.testing.assert_allclose(level_correlation(sm, x_lf), 0.0, atol=1e-3)
+
+        # control: unsampled locations remain strongly correlated
+        x_free = np.array([[1.0], [5.0]])
+        self.assertTrue(np.all(level_correlation(sm, x_free) > 0.9))
 
     def test_single_fidelity_consistency(self):
         """One level: training and prediction use the same normalisation."""

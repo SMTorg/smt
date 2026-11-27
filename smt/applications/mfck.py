@@ -1077,6 +1077,119 @@ class MFCK(KrgBased):
 
         return self.y_std * np.dot(beta1.T, alpha1) + self.y_mean
 
+    def _latent_level_cov(
+        self, X_norm: np.ndarray, lvli: int, lvlj: int, L: np.ndarray
+    ) -> np.ndarray:
+        """
+        Evaluates the posterior covariance between the latent (noise-free) functions
+        of two fidelity levels at a set of points, in the normalized output scale.
+
+        Arguments
+        ---------
+        X_norm : np.ndarray [n_evals, dim]
+            Evaluation point input variable values, already normalized with
+            X_offset and X_scale.
+        lvli : int
+            First fidelity level (0-based index).
+        lvlj : int
+            Second fidelity level (0-based index).
+        L : np.ndarray [n_train_total, n_train_total]
+            Lower Cholesky factor of the joint training covariance matrix
+            (including nugget and noise, as returned by _compute_K_and_cholesky).
+
+        Returns
+        -------
+        covariance : np.ndarray [n_evals,]
+            Diagonal of the posterior covariance between levels lvli and lvlj,
+            in the normalized output scale and without observation noise.
+        """
+        kp = self._get_kernel_params()
+        # compute_diag_K requires its first level >= second; covariance is symmetric
+        k_xx = self.compute_diag_K(X_norm, X_norm, max(lvli, lvlj), min(lvli, lvlj), kp)
+
+        beta_i = solve_triangular(
+            L, np.vstack(self._compute_cross_covariance_list(X_norm, lvli)), lower=True
+        )
+        if lvlj == lvli:
+            beta_j = beta_i  # avoid a second triangular solve
+        else:
+            beta_j = solve_triangular(
+                L,
+                np.vstack(self._compute_cross_covariance_list(X_norm, lvlj)),
+                lower=True,
+            )
+        return k_xx - np.sum(beta_i * beta_j, axis=0)
+
+    def predict_level_covariances(
+        self,
+        X: np.ndarray,
+        lvli: int = None,
+        lvlj: int = None,
+        include_noise: bool = True,
+    ) -> np.ndarray:
+        """
+        Evaluates the posterior covariance between two fidelity levels at a set of
+        points. When lvli == lvlj this is the prediction variance of that level.
+
+        Arguments
+        ---------
+        X : np.ndarray [n_evals, dim]
+            Evaluation point input variable values
+        lvli : int
+            First fidelity level (0-based index). If not specified, it is set to
+            the highest fidelity level.
+        lvlj : int
+            Second fidelity level (0-based index). If not specified, it is set to
+            the highest fidelity level.
+        include_noise : bool
+            If True, the observation noise of the level is added to the covariance
+            when lvli == lvlj (noise is independent across levels, so it never
+            contributes when lvli != lvlj). If False, the covariance of the latent
+            noise-free functions is returned.
+
+        Returns
+        -------
+        covariance : np.ndarray [n_evals, 1]
+            Posterior covariance between levels lvli and lvlj, in the original
+            (unnormalized) output scale.
+
+        Notes
+        -----
+        When lvli == lvlj, the latent variance is clamped at 0 before the noise is
+        added, so that roundoff does not produce tiny negative variances (of the
+        order of -1e-16) near noiseless points, which would make
+        ``np.sqrt(c_ii * c_jj)`` return NaN. Where this triggers, the result can
+        differ from ``predict_variances`` by that roundoff amount only. The
+        covariance between two different levels is not clamped, since it can
+        legitimately be negative.
+        """
+        lvli = self.lvl - 1 if lvli is None else lvli
+        lvlj = self.lvl - 1 if lvlj is None else lvlj
+        for name, lvl in (("lvli", lvli), ("lvlj", lvlj)):
+            if not 0 <= lvl < self.lvl:
+                raise ValueError(
+                    f"{name}={lvl} is out of range; expected 0 <= {name} < {self.lvl}"
+                )
+
+        same_lvl = lvli == lvlj
+        noise_pred = (
+            self._predicted_noise_or_none(X) if include_noise and same_lvl else None
+        )
+        Xn = (X - self.X_offset) / self.X_scale
+        _, L, noises = self._compute_K_and_cholesky()
+
+        cov = self._latent_level_cov(Xn, lvli, lvlj, L)
+        if same_lvl:
+            cov = np.maximum(cov, 0.0)  # clamp variance
+
+        if include_noise and same_lvl and noises is not None:
+            cov = cov + noises[lvli]  # normalized units, as before
+        cov = cov * self.y_std**2
+        if include_noise and same_lvl and noise_pred is not None:
+            cov = cov.reshape(-1, 1) + noise_pred[lvli]  # original units, as before
+
+        return cov.reshape(-1, 1)
+
     def predict_variances(
         self, X: np.ndarray, is_acting=None, is_ri=False
     ) -> np.ndarray:

@@ -179,6 +179,12 @@ class TestSMFCK(SMTestCase):
 
             self.assert_error(t_error, 0.0, 5e-1, 5e-1)
 
+    def test_level_covariances_not_implemented(self):
+        """The dense MFCK cross-level covariance must not be inherited silently."""
+        model, _ = train_smfck()
+        with self.assertRaises(NotImplementedError):
+            model.predict_level_covariances(np.array([[0.5]]))
+
     def test_smfck_error_branches(self):
         """Covers ValueError in eta and inconsistent n_inducing."""
         sm = SMFCK()
