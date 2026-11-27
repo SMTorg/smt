@@ -20,6 +20,7 @@ Unit tests for the MFCK application, covering the original behaviour plus:
 
 import itertools
 import unittest
+from unittest import mock
 
 import numpy as np
 
@@ -765,9 +766,36 @@ class TestMFCK(SMTestCase):
         """Out-of-range (including negative) level indices raise a ValueError."""
         sm = train_forrester(eval_noise=False)
         x = np.array([[0.5]])
-        for lvli, lvlj in ((-1, 0), (0, -1), (0, sm.lvl), (sm.lvl, sm.lvl)):
+        for lvli, lvlj in ((-1, 0), (0, -1), (-1, -1), (0, sm.lvl), (sm.lvl, sm.lvl)):
             with self.assertRaises(ValueError):
                 sm.predict_level_covariances(x, lvli, lvlj)
+
+    def test_level_covariances_skip_unused_noise_prediction(self):
+        """The auxiliary noise model is only evaluated when its noise is added."""
+        sm, _ = train_het_noise(predict_with_noise=True, opt_max_eval=40)
+        x = np.linspace(0.0, 1.0, 5).reshape(-1, 1)
+        with mock.patch.object(
+            sm, "predict_noise_all_levels", wraps=sm.predict_noise_all_levels
+        ) as spy:
+            sm.predict_level_covariances(x, 0, 1)  # cross-level
+            sm.predict_level_covariances(x, 1, 0)  # cross-level, other order
+            sm.predict_level_covariances(x, 1, 1, include_noise=False)  # latent only
+            spy.assert_not_called()
+            sm.predict_level_covariances(x, 1, 1)  # noise is needed here
+            spy.assert_called_once()
+
+    def test_level_covariances_clamp_negative_variance(self):
+        """Roundoff-negative variances are clamped to 0; cross-level values are not."""
+        sm = train_forrester(eval_noise=False)
+        x = np.linspace(0.1, 0.9, 3).reshape(-1, 1)
+        negative = np.array([-1e-16, -3e-17, 2e-3])
+        with mock.patch.object(sm, "_latent_level_cov", return_value=negative.copy()):
+            diag = sm.predict_level_covariances(x, 1, 1, include_noise=False).ravel()
+        with mock.patch.object(sm, "_latent_level_cov", return_value=negative.copy()):
+            cross = sm.predict_level_covariances(x, 0, 1, include_noise=False).ravel()
+        self.assertTrue(np.all(diag >= 0.0))
+        self.assertEqual(diag[0], 0.0)
+        self.assertLess(cross[0], 0.0)  # cross-level covariances can be negative
 
     def test_level_covariances_three_levels(self):
         """All level pairs match k_ij(x,x) - k_i(x,X) K^-1 k_j(X,x) and are symmetric."""
